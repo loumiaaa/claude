@@ -55,8 +55,8 @@
   }
 
   function render() {
-    U.$$('[data-chrono]').forEach(function (el) {
-      if (el.tagName === 'SECTION') U.keepFocus(el, function () { el.innerHTML = widgetHTML(); });
+    U.$$('[data-chrono-widget]').forEach(function (el) {
+      U.keepFocus(el, function () { el.innerHTML = widgetHTML(); });
     });
     var pill = U.$('[data-chrono-pill]');
     if (pill) {
@@ -92,7 +92,7 @@
       var prev = S.task(res.stopped.taskId);
       U.toast({
         kind: 'success', icon: 'timer', title: 'Chrono basculé sur « ' + t.title + ' »',
-        text: (prev ? '« ' + prev.title + ' » : ' : '') + D.duration(res.stopped.minutes) + ' enregistrée' + (res.stopped.minutes >= 120 ? 's' : '') + '. Un seul chrono à la fois.'
+        text: (prev ? 'Temps enregistré sur « ' + prev.title + ' » : ' : 'Temps enregistré : ') + D.duration(res.stopped.minutes) + '. Un seul chrono à la fois.'
       });
     } else {
       U.toast({ icon: 'play', title: 'Chrono lancé', text: '« ' + t.title + ' ». Bon courage !', duration: 3500 });
@@ -137,11 +137,11 @@
     var t = S.task(res.taskId);
     U.toast({
       kind: 'success', icon: 'check',
-      title: D.duration(res.minutes) + ' enregistrée' + (res.minutes >= 120 ? 's' : ''),
+      title: 'Temps enregistré : ' + D.duration(res.minutes),
       text: t ? 'Sur « ' + t.title + ' ». Tu peux corriger l’entrée dans le détail.' : '',
       actions: t ? [{ label: 'Voir la tâche', fn: function () { L.drawer.open(t.id, { section: 'hours' }); } }] : []
     });
-    U.announce('Chrono arrêté, ' + D.duration(res.minutes) + ' enregistrées');
+    U.announce('Chrono arrêté. Temps enregistré : ' + D.duration(res.minutes));
   }
 
   function stop() {
