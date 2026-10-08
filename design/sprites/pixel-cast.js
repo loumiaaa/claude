@@ -66,121 +66,96 @@
       '%': '#2B215030' // ombre portée au sol
     },
     parts: {
+      pen: { y: 21, rows: [
+        '................................',
+        '...........noo..................',
+        '..........osso..................',
+        '.........ossSSo.................',
+        '........ossoon..................',
+        '.......osSo...n.................',
+        '........oo.....o................'
+      ]},
       shadowSmall: { y: 46, rows: [
         '................................',
         '..........%%%%%%%%%%%%..........'
       ]},
-      penD: { y: 20, rows: [
-        '................................',
-        '................................',
-        '................................',
-        '.........n......................',
-        '..........noooo.................',
-        '........ooossso.................',
-        '.......ossossSo.................',
-        '.......oSSoooon.................',
-        '........oooo...o................',
-        '................................',
-        '................................',
-        '................................'
-      ]},
-      penC: { y: 20, rows: [
-        '................................',
-        '...........n....................',
-        '............noooo...............',
-        '............ossso...............',
-        '..........ooossSo...............',
-        '........oossoooon...............',
-        '.......ossSSoo...o..............',
-        '.......oSSoo....................',
-        '........oo......................',
-        '................................',
-        '................................',
-        '................................'
-      ]},
-      penB: { y: 20, rows: [
-        '................................',
-        '................................',
-        '..........n.....................',
-        '...........noooo................',
-        '...........ossso................',
-        '........oooossSo................',
-        '.......osssoooon................',
-        '.......oSSSoo...o...............',
-        '........ooo.....................',
-        '................................',
-        '................................',
-        '................................'
-      ]},
-      penA: { y: 20, rows: [
-        '................................',
-        '........n.......................',
-        '.........noooo..................',
-        '.........ossso..................',
-        '.........ossSo..................',
-        '........ooooon..................',
-        '.......osSo...o.................',
-        '.......oSo......................',
-        '........o.......................',
-        '................................',
-        '................................',
-        '................................'
-      ]},
       armsTablet: { y: 21, rows: [
-        '........ou............to........',
-        '.......outt..........ttto.......',
-        '......outttT........Ttttto......',
-        '......oTTTTo........oTTTTo......',
-        '.......osSo..........osSo.......',
-        '.......osSo.........ossSo.......',
+        '........ou..............to......',
+        '.......outt............ttto.....',
+        '......outttT..........TtttTo....',
+        '......oTTTTo..........oTTTTo....',
+        '.......osSo............osSo.....',
+        '.......osSo............osSo.....',
+        '.......osSo............osSo.....',
+        '........oo............osSSo.....',
+        '...................oossso.......',
         '...................osssSo.......',
-        '...................osssoo.......',
-        '....................ooo.........'
+        '....................oooo........'
       ]},
-      tablet4: { y: 23, rows: [
+      tablet4: { y: 21, rows: [
         '................................',
-        '...........dddddddddd...........',
-        '..........dDDDkDkDDYDd..........',
-        '..........dDDkkkkkDDDd..........',
-        '..........dDyDkkkDDDDd..........',
-        '..........dDDDDkDDDDDd..........',
-        '..........dddddddddddd..........'
+        '................................',
+        '................................',
+        '................................',
+        '.............ddddddddd..........',
+        '............dDyDkDkDYd..........',
+        '............dDDkkkkkDd..........',
+        '............dDDDkkkDDd..........',
+        '............dDyDDkDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dddddddddd..........'
       ]},
-      tablet3: { y: 23, rows: [
+      tablet3: { y: 21, rows: [
         '................................',
-        '...........dddddddddd...........',
-        '..........dDDDkDkDDDDd..........',
-        '..........dDDkkkkkDDDd..........',
-        '..........dDDDkkDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dddddddddddd..........'
+        '................................',
+        '................................',
+        '................................',
+        '.............ddddddddd..........',
+        '............dDDDkDkDDd..........',
+        '............dDDkkkkkDd..........',
+        '............dDDDkkkDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dddddddddd..........'
       ]},
-      tablet2: { y: 23, rows: [
+      tablet2: { y: 21, rows: [
         '................................',
-        '...........dddddddddd...........',
-        '..........dDDDkDkDDDDd..........',
-        '..........dDDkkkkDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dddddddddddd..........'
+        '................................',
+        '................................',
+        '................................',
+        '.............ddddddddd..........',
+        '............dDDDkDDDDd..........',
+        '............dDDkkkDDDd..........',
+        '............dDDDkkDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dddddddddd..........'
       ]},
-      tablet1: { y: 23, rows: [
+      tablet1: { y: 21, rows: [
         '................................',
-        '...........dddddddddd...........',
-        '..........dDDDkDkDDDDd..........',
-        '..........dDDkDDDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dddddddddddd..........'
+        '................................',
+        '................................',
+        '................................',
+        '.............ddddddddd..........',
+        '............dDDDkDDDDd..........',
+        '............dDDkkDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dddddddddd..........'
       ]},
-      tablet0: { y: 23, rows: [
+      tablet0: { y: 21, rows: [
         '................................',
-        '...........dddddddddd...........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dDDDDDDDDDDd..........',
-        '..........dddddddddddd..........'
+        '................................',
+        '................................',
+        '................................',
+        '.............ddddddddd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dDDDDDDDDd..........',
+        '............dddddddddd..........'
       ]},
       mouthFocus: { y: 16, rows: [
         '...............mm...............',
@@ -192,8 +167,8 @@
       ]},
       eyesDown: { y: 11, rows: [
         '..........ssss....ssss..........',
-        '..........seee....eees..........',
-        '..........sews....sews..........'
+        '..........sees....sees..........',
+        '..........sees....sees..........'
       ]},
       eyesHappy: { y: 11, rows: [
         '..........ssss....ssss..........',
@@ -366,17 +341,17 @@
         '.........oTTTTTTTTTTTTo.........'
       ]},
       arms: { y: 21, rows: [
-        '........ou..............to......',
-        '.......outt............ttto.....',
-        '......outttT..........TtttTo....',
-        '......oTTTTo..........oTTTTo....',
-        '.......osSo............oSso.....',
-        '.......osSo............oSso.....',
-        '.......osSo............oSso.....',
-        '.......osSo............oSso.....',
-        '.......osso............osso.....',
-        '.......osso............osso.....',
-        '........oo..............oo......'
+        '........ou............to........',
+        '.......outt..........ttto.......',
+        '......outttT........Ttttto......',
+        '......oTTTTo........oTTTTo......',
+        '.......osSo..........oSso.......',
+        '.......osSo..........oSso.......',
+        '.......osSo..........oSso.......',
+        '.......osSo..........oSso.......',
+        '.......osso..........osso.......',
+        '.......osso..........osso.......',
+        '........oo............oo........'
       ]},
       head: { y: 0, rows: [
         '................................',
@@ -443,15 +418,15 @@
         [360, 'shadow hairBack legs torso head eyesHappy armsUp']
       ]},
       typing: { loop: false, still: 4, frames: [
-        [320, 'shadow hairBack legs torso head eyesDown mouthFocus armsTablet tablet0 penA'],
-        [220, 'shadow hairBack legs torso head eyesDown mouthFocus armsTablet tablet1 penC'],
-        [220, 'shadow hairBack@0,1 legs torso@0,1 head@0,1 eyesDown@0,1 mouthFocus@0,1 armsTablet@0,1 tablet1@0,1 penB@0,1'],
-        [220, 'shadow hairBack legs torso head eyesDown mouthFocus armsTablet tablet2 penA'],
-        [220, 'shadow hairBack legs torso head eyesDown mouthFocus armsTablet tablet2 penD'],
-        [220, 'shadow hairBack@0,1 legs torso@0,1 head@0,1 eyesDown@0,1 mouthFocus@0,1 armsTablet@0,1 tablet3@0,1 penB@0,1'],
-        [220, 'shadow hairBack legs torso head eyesDown mouthFocus armsTablet tablet3 penC'],
-        [300, 'shadow hairBack legs torso head eyesDown armsTablet tablet4 penD'],
-        [700, 'shadow hairBack legs torso head eyesHappy mouthOpen armsTablet tablet4 penD']
+        [320, 'shadow hairBack legs torso head eyesDown mouthFocus tablet0 armsTablet pen@-1,0'],
+        [220, 'shadow hairBack legs torso head eyesDown mouthFocus tablet1 armsTablet pen'],
+        [220, 'shadow hairBack@0,1 legs torso@0,1 head@0,1 eyesDown@0,1 mouthFocus@0,1 tablet1 armsTablet@0,1 pen@1,0'],
+        [220, 'shadow hairBack legs torso head eyesDown mouthFocus tablet2 armsTablet pen@1,1'],
+        [220, 'shadow hairBack legs torso head eyesDown mouthFocus tablet2 armsTablet pen@0,1'],
+        [220, 'shadow hairBack@0,1 legs torso@0,1 head@0,1 eyesDown@0,1 mouthFocus@0,1 tablet3 armsTablet@0,1 pen@2,0'],
+        [220, 'shadow hairBack legs torso head eyesDown mouthFocus tablet3 armsTablet pen@2,1'],
+        [300, 'shadow hairBack legs torso head eyesDown tablet4 armsTablet pen@1,2'],
+        [700, 'shadow hairBack legs torso head eyesHappy mouthOpen tablet4 armsTablet pen@1,2']
       ]}
     }
   };
@@ -463,17 +438,117 @@
     width: 32,
     height: 24,
     palette: {
-      o: '#2B2150'
+      o: '#2B2150', // contour indigo
+      k: '#2C2637', // pelage noir
+      K: '#4A4358', // noir, reflet
+      n: '#7A5236', // brun
+      N: '#57392A', // brun foncé (rayures)
+      g: '#8F8A9C', // gris
+      G: '#6B6679', // gris, rayures
+      r: '#E8893C', // roux
+      R: '#C2632A', // roux, rayures
+      y: '#F5B66E', // roux clair (museau, pattes)
+      e: '#7DD35A', // yeux verts
+      E: '#4E9E3A', // yeux verts, ombre
+      p: '#1A1430', // pupille
+      w: '#FFFFFF', // reflet des yeux
+      P: '#F49AB2', // truffe rose
+      q: '#E9A0B4', // intérieur des oreilles
+      '%': '#2B215030' // ombre portée
     },
     parts: {
-      dot: { y: 10, rows: ['...............o................'] }
+      tailC: { y: 9, rows: [
+        '...........................oo...',
+        '..........................orro..',
+        '..........................orro..',
+        '.........................okkro..',
+        '.........................okko...',
+        '........................oggko...',
+        '.......................ogggo....',
+        '......................orrgo.....',
+        '......................orro......',
+        '.....................okkro......',
+        '...................ookkko.......',
+        '..................orrrko........',
+        '..................orrro.........',
+        '...................ooo..........',
+        '................................'
+      ]},
+      tailB: { y: 9, rows: [
+        '........................oo......',
+        '.......................orro.....',
+        '.......................orrro....',
+        '........................okko....',
+        '........................okko....',
+        '........................oggo....',
+        '.......................ogggo....',
+        '......................orrgo.....',
+        '......................orro......',
+        '.....................okkro......',
+        '...................ookkko.......',
+        '..................orrrko........',
+        '..................orrro.........',
+        '...................ooo..........',
+        '................................'
+      ]},
+      tailA: { y: 10, rows: [
+        '......................ooo.......',
+        '.....................orrro......',
+        '.....................orrkko.....',
+        '......................ookko.....',
+        '.......................oggo.....',
+        '.......................oggo.....',
+        '......................orrgo.....',
+        '......................orro......',
+        '.....................okkro......',
+        '...................ookkko.......',
+        '..................orrrko........',
+        '..................orrro.........',
+        '...................ooo..........',
+        '................................'
+      ]},
+      body: { y: 13, rows: [
+        '........kggyygrr................',
+        '.....okkkgGggGrrRro.............',
+        '....oknkrrRGGggGrRro............',
+        '....onkorRroogGgorRo............',
+        '...okknoRrrooGggorrRo...........',
+        '...onkkorRroogGgoRrro...........',
+        '...okknorrRoogGGorRro...........',
+        '...oknkoyyyooggggorRro..........',
+        '...okkkoyoyoogogorrro...........',
+        '....oooooooooooooooo............'
+      ]},
+      head: { y: 1, rows: [
+        '....o..............o............',
+        '....oo............oo............',
+        '....oko..........oro............',
+        '....oqko........orqo............',
+        '....oqkkoooooooorrqo............',
+        '...okkkknknkrRrRrrrro...........',
+        '...oknnnnkknRrrrRrryo...........',
+        '...oknepenknrrepeRrro...........',
+        '...oknEpEnknrREpERrro...........',
+        '...okknnnkyPPyrrRrrro...........',
+        '...oknkkkyyooyyrrRrro...........',
+        '....okkkkyyyyyyrrrro............',
+        '.....ooo........ooo.............'
+      ]},
+      shadow: { y: 23, rows: [
+        '...%%%%%%%%%%%%%%%%%%...........'
+      ]},
     },
     animations: {
-      idle: { loop: true, still: 0, frames: [[600, 'dot']] },
-      sleep: { loop: true, still: 0, frames: [[600, 'dot']] },
-      lick: { loop: false, still: 0, frames: [[600, 'dot']] },
-      hungry: { loop: false, still: 0, frames: [[600, 'dot']] },
-      meow: { loop: false, still: 0, frames: [[600, 'dot']] }
+      idle: { loop: true, still: 0, frames: [
+        [420, 'shadow tailA body head'],
+        [420, 'shadow tailB body head'],
+        [420, 'shadow tailC body head'],
+        [420, 'shadow tailB body head']
+      ]},
+      sleep: { loop: true, still: 0, frames: [[600, 'shadow tailA body head']] },
+      lick: { loop: false, still: 0, frames: [[600, 'shadow tailA body head']] },
+      hungry: { loop: false, still: 0, frames: [[600, 'shadow tailA body head']] },
+      meow: { loop: false, still: 0, frames: [[600, 'shadow tailA body head']] }
     }
   };
 
