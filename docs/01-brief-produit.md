@@ -20,7 +20,7 @@
 
 | | Contenu |
 |---|---|
-| **Must** | `.exe` Windows 10/11 **portable** (sans installation ni droits administrateur), données dans `donnees/` à côté de l'exe, **100 % hors ligne** · écriture atomique + **sauvegardes automatiques** + restauration · **verrou d'ouverture** (un seul PC à la fois) · 4 onglets : **Dashboard, Suivi des tâches, Planning, Récap** · tâches complètes (catégories personnalisables, client/projet, % manuel, checklist, dates, **priorité**, **étiquettes**) · Kanban 4 colonnes + vue liste · **chrono** + saisie manuelle des heures · heures par catégorie vs objectif 35 h · **humeur** 5 niveaux + courbe · scène Lamia & Memeow + phrases (`LamiaVoice`) · **export CSV** · **mode sombre** (clair / sombre / système) · accessibilité AA, clavier, `prefers-reduced-motion` |
+| **Must** | `.exe` Windows 10/11 **portable** (sans installation ni droits administrateur), données dans `Donnees-Lamia/` à côté de l'exe, **100 % hors ligne** · écriture atomique + **sauvegardes automatiques** + restauration · **verrou d'ouverture** (un seul PC à la fois) · 4 onglets : **Dashboard, Suivi des tâches, Planning, Récap** · tâches complètes (catégories personnalisables, client/projet, % manuel, checklist, dates, **priorité**, **étiquettes**) · Kanban 4 colonnes + vue liste · **chrono** + saisie manuelle des heures · heures par catégorie vs objectif 35 h · **humeur** 5 niveaux + courbe · scène Lamia & Memeow + phrases (`LamiaVoice`) · **export CSV** · **mode sombre** (clair / sombre / système) · accessibilité AA, clavier, `prefers-reduced-motion` |
 | **Should** | **Export PDF** du récap · **rappels d'échéance** (à l'ouverture + notification Windows si l'app est ouverte) · graphiques (tendances, répartition, taux de complétion) · export / import manuel d'une sauvegarde (`.json`) |
 | **Could** | Icône dans la zone de notification et lancement au démarrage de Windows · glisser les barres du Planning pour changer les dates · tâches récurrentes / modèles · masquer une phrase ou écrire les siennes · recherche globale (Ctrl+K) |
 | **Won't (V1)** | **Synchronisation multi-appareils et version mobile (V2)** · multi-utilisateur, partage · devis / facturation · intégrations (Outlook, Google Agenda, Figma) · chiffrement applicatif (voir risques) · calcul automatique de l'avancement · macOS / Linux · autre langue que le français |
@@ -70,7 +70,7 @@
 
 ### Transverse (TR)
 - **TR-1** Double-clic sur l'exe : l'app s'ouvre en < 3 s, sans installation, sans droits admin, **réseau coupé**.
-- **TR-2** Copier le dossier (exe + `donnees/`) sur un autre PC : toutes les données sont là.
+- **TR-2** Copier le dossier (exe + `Donnees-Lamia/`) sur un autre PC : toutes les données sont là.
 - **TR-3** Écriture atomique (fichier temporaire puis renommage) ; sauvegarde automatique à l'ouverture de chaque journée et avant toute migration de format ; 30 sauvegardes conservées ; restauration depuis les Paramètres. Fichier illisible : message clair + proposition de restaurer la dernière sauvegarde valide, **jamais d'écrasement silencieux**.
 - **TR-4** Verrou : si l'app est déjà ouverte sur un autre PC (fichier de verrou rafraîchi chaque minute, périmé après 5 min), ouverture en **lecture seule** avec le nom du PC concerné.
 - **TR-5** Thème clair / sombre / système, mémorisé. **TR-6** Contraste AA, tout utilisable au clavier, focus visible.
