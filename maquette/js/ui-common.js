@@ -140,6 +140,7 @@
       (o.text ? '<div class="toast__text">' + esc(o.text) + '</div>' : '') +
       (actions ? '<div class="toast__actions">' + actions + '</div>' : '') + '</div>' +
       '<button type="button" class="btn btn--ghost btn--icon btn--sm" data-toast-close aria-label="Fermer la notification">' + icon('close') + '</button>';
+    typo(el);
     var timer = null;
     function close() {
       clearTimeout(timer);
@@ -260,6 +261,7 @@
     });
     $$('[data-dlg-cancel]', ov).forEach(function (b) { b.addEventListener('click', function () { closeLayer(ov, 'cancel'); }); });
     if (o.onMount) o.onMount(form);
+    typo(ov);
     openLayer(ov, { initialFocus: o.initialFocus || 'input, select, [type="submit"]', returnTo: o.returnTo });
   }
 
@@ -368,8 +370,27 @@
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 400);
   }
 
+  // Typographie française sur les nœuds texte rendus : espaces insécables
+  // avant « : ; ! ? » et à l'intérieur des guillemets.
+  function typoString(s) {
+    return s.replace(/ ([:;!?»])/g, NB + '$1').replace(/« /g, '«' + NB).replace(/'/g, '’');
+  }
+  function typo(root) {
+    if (!root) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        var p = n.parentNode;
+        if (!p || p.nodeName === 'SCRIPT' || p.nodeName === 'STYLE' || p.nodeName === 'TEXTAREA') return NodeFilter.FILTER_REJECT;
+        return /[ ][:;!?»]|« |'/.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+      }
+    });
+    var list = [];
+    while (w.nextNode()) list.push(w.currentNode);
+    list.forEach(function (n) { n.nodeValue = typoString(n.nodeValue); });
+  }
+
   L.ui = {
-    esc: esc, icon: icon, $: $, $$: $$, plural: plural, NB: NB,
+    esc: esc, icon: icon, $: $, $$: $$, plural: plural, NB: NB, typo: typo, typoString: typoString,
     PALETTE: PALETTE, hue: hue, catChip: catChip, catDot: catDot, statusChip: statusChip, prio: prio, tags: tags,
     progress: progress, due: due, dueBadge: dueBadge,
     pixelURL: pixelURL, pixelImg: pixelImg, MOODS: MOODS, moodLabel: moodLabel,
