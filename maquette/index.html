@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plateforme de suivi - Lamia</title>
+  <meta name="description" content="Maquette cliquable haute fidélité : tâches, heures, échéances et humeur de Lamia (phase 1, à valider).">
+  <link rel="stylesheet" href="../design/fonts/fonts.css">
+  <link rel="stylesheet" href="../design/tokens.css">
+  <link rel="stylesheet" href="../design/components.css">
+  <link rel="stylesheet" href="../design/sprites/pixel-bubble.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="js/theme-boot.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Aller au contenu</a>
+
+  <div class="app" data-inert-root>
+    <!-- Barre latérale (ordinateur) -->
+    <aside class="glass sidebar" aria-label="Barre latérale">
+      <a class="brand" href="#dashboard" aria-label="Plateforme de suivi - Lamia, retour au dashboard">
+        <span class="brand__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
+        <span class="brand__text"><span class="brand__name">Plateforme de suivi</span><span class="brand__sub">Lamia</span></span>
+      </a>
+
+      <button type="button" class="btn btn--primary btn--block" data-action="new-task"><span data-icon="plus"></span>Nouvelle tâche</button>
+
+      <nav class="sidebar__nav" aria-label="Navigation principale">
+        <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
+        <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
+        <a class="nav-item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
+        <a class="nav-item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
+        <span class="sidebar__sep" role="presentation"></span>
+        <a class="nav-item" href="#reglages" data-nav="settings"><span data-icon="settings"></span><span class="nav-item__label">Réglages</span></a>
+      </nav>
+
+      <div class="sidebar__foot">
+        <section class="glass glass--nested chrono" data-chrono aria-label="Chrono"></section>
+        <div class="segmented segmented--theme" role="group" aria-label="Thème" data-theme-switch>
+          <button type="button" class="segmented__item" data-theme-set="light" aria-pressed="false"><span data-icon="sun"></span><span class="sr-only">Thème </span>Clair</button>
+          <button type="button" class="segmented__item" data-theme-set="dark" aria-pressed="false"><span data-icon="moon"></span><span class="sr-only">Thème </span>Sombre</button>
+          <button type="button" class="segmented__item" data-theme-set="system" aria-pressed="false"><span class="sr-only">Thème du </span>Système</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Barre du haut (mobile) -->
+    <header class="glass glass--strong topbar">
+      <a class="brand brand--compact" href="#dashboard" aria-label="Plateforme de suivi - Lamia, retour au dashboard">
+        <span class="brand__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
+        <span class="brand__text"><span class="brand__name" data-topbar-title>Dashboard</span><span class="brand__sub">Plateforme de suivi - Lamia</span></span>
+      </a>
+      <button type="button" class="btn btn--ghost btn--icon" data-action="cycle-theme" aria-label="Changer de thème"><span data-icon="moon"></span></button>
+      <button type="button" class="btn btn--primary btn--icon" data-action="new-task" aria-label="Nouvelle tâche"><span data-icon="plus"></span></button>
+    </header>
+
+    <main id="main" class="main" tabindex="-1">
+      <section class="view" id="view-dashboard" data-view="dashboard" aria-labelledby="h-dashboard"></section>
+      <section class="view" id="view-tasks" data-view="tasks" aria-labelledby="h-tasks" hidden></section>
+      <section class="view" id="view-planning" data-view="planning" aria-labelledby="h-planning" hidden></section>
+      <section class="view" id="view-recap" data-view="recap" aria-labelledby="h-recap" hidden></section>
+      <section class="view" id="view-settings" data-view="settings" aria-labelledby="h-settings" hidden></section>
+    </main>
+  </div>
+
+  <!-- Dock mobile : chrono + barre d'onglets -->
+  <div class="dock" data-inert-root>
+    <section class="glass glass--strong chrono-pill" data-chrono-pill aria-label="Chrono" hidden></section>
+    <nav class="glass glass--strong tabbar" aria-label="Navigation principale">
+      <a class="tabbar__item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span>Accueil</span></a>
+      <a class="tabbar__item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span>Tâches</span></a>
+      <a class="tabbar__item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span>Planning</span></a>
+      <a class="tabbar__item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span>Récap</span></a>
+      <a class="tabbar__item" href="#reglages" data-nav="settings"><span data-icon="settings"></span><span>Réglages</span></a>
+    </nav>
+  </div>
+
+  <!-- Couches : enfants directs de <body> -->
+  <div class="overlay" id="overlay-mood" hidden></div>
+  <div class="overlay" id="overlay-new" hidden></div>
+  <div class="overlay overlay--drawer" id="overlay-task" hidden></div>
+  <div class="overlay" id="overlay-dialog" hidden></div>
+  <div class="toast-region" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+  <div class="sr-only" id="sr-live" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="../design/icons.js"></script>
+  <script src="../design/phrases.js"></script>
+  <script src="../design/sprites/pixel-cast.js"></script>
+  <script src="js/dates.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui-common.js"></script>
+  <script src="js/ui-charts.js"></script>
+  <script src="js/ui-chrono.js"></script>
+  <script src="js/ui-mood.js"></script>
+  <script src="js/ui-task-form.js"></script>
+  <script src="js/ui-drawer.js"></script>
+  <script src="js/ui-dashboard.js"></script>
+  <script src="js/ui-tasks.js"></script>
+  <script src="js/ui-planning.js"></script>
+  <script src="js/ui-recap.js"></script>
+  <script src="js/ui-settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
