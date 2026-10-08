@@ -151,3 +151,19 @@ LamiaVoice.phrases // données brutes (pour la phase 2)
 - Accessibilité : contraste **WCAG AA**, navigation clavier, focus visible, `prefers-reduced-motion` respecté.
 - Données fictives réalistes, datées autour du **jeudi 8 octobre 2026** (semaine du lundi 5 au dimanche 11 octobre 2026).
 - Aucun commit git : seul l'orchestrateur commit.
+
+## 10. Décisions de validation (fin de phase 1, 8 octobre 2026)
+
+Lamia a validé la maquette telle quelle (« c'est parfait »). Décisions pour la phase 2 :
+
+| Sujet | Décision |
+|---|---|
+| Maquette | Validée sans retouche : c'est la référence visuelle et fonctionnelle de l'app. |
+| Couleurs des catégories | Inchangées. |
+| General Sans | Téléchargée automatiquement depuis Fontshare au moment du build (CI), avec la licence ITF FFL ; repli Poppins si absente. |
+| Livraison | **Les deux** : un `.exe` portable unique **et** un ZIP « dossier » (démarrage plus rapide). Doit fonctionner sur n'importe quel PC Windows 10/11 64 bits. |
+| PC Flow Line | Test sur le PC pro par Lamia lundi 12 octobre. Un exe similaire y a déjà fonctionné. |
+| Données | **En local** : dossier `Donnees-Lamia/` à côté de l'exe (repli dans `%APPDATA%` si le dossier n'est pas accessible en écriture). Pas de cloud pour l'instant. |
+| Rappels d'échéance | **Les deux** : dans l'app quand elle est ouverte, et quand elle est fermée (icône dans la zone de notification, option de lancement au démarrage de Windows, notifications Windows). |
+| Objectif perso | **4 h minimum le samedi** pour le pôle auto-entreprise (Auto-entreprise + Carnet by-pass). Les heures Flow Line ne sont jamais additionnées aux heures perso. |
+| Export CSV | Pas de comptable pour l'instant : format générique lisible dans Excel FR (UTF-8 avec BOM, séparateur `;`, virgule décimale). |
