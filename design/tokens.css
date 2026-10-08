@@ -2,6 +2,12 @@
    Plateforme de suivi - Lamia — Design tokens
    Contrat : les NOMS de variables sont figés (cf. docs/00-cahier-des-charges.md §8).
    Le DA peut ajuster les valeurs et ajouter des tokens, sans rien renommer ni supprimer.
+
+   Contrastes vérifiés par script (WCAG 2.1 AA, 4,5:1) dans les deux thèmes :
+   --color-text, --color-text-muted, --accent, --success, --warning, --danger
+   sur --color-bg (dégradé compris), sur chaque verre posé sur le fond,
+   et sur tous les fonds *-soft. Les *-ink sont lisibles sur leur *-soft.
+   Détail : docs/02-charte-graphique.md.
    ========================================================================== */
 
 :root {
@@ -16,6 +22,7 @@
   --blue-300: #A9C3FF;
   --blue-400: #85A7F7;
   --blue-500: #5F86E8;
+  --blue-600: #4569D4;            /* ajout : bleu soutenu (dégradés, graphiques) */
 
   --violet-50: #F6F2FF;
   --violet-100: #ECE4FF;
@@ -23,47 +30,83 @@
   --violet-300: #C3AEFB;
   --violet-400: #A68BF0;
   --violet-500: #8668E0;
+  --violet-600: #6A4BD0;          /* ajout : violet soutenu (dégradés, graphiques) */
 
   /* Accent bleu-violet foncé */
   --accent: #3B2F9E;
   --accent-hover: #2F2483;
-  --accent-soft: #E8E5FB;
+  --accent-soft: #EAE7FD;
   --accent-contrast: #FFFFFF;
+  /* ajouts : volume de l'accent (bouton primaire) et halo coloré */
+  --accent-gradient: linear-gradient(135deg, #4D43C6 0%, #3B2F9E 55%, #35288F 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #4239B4 0%, #2F2483 55%, #2A1F78 100%);
+  --accent-shadow: 0 1px 2px rgba(47, 36, 131, 0.20), 0 8px 20px -6px rgba(59, 47, 158, 0.55);
+
+  /* ajout : dégradé signature bleu → violet (progression, anneaux, curseurs) */
+  --gradient-progress: linear-gradient(90deg, #6D93F2 0%, #7F78EC 50%, #8A5FE2 100%);
+  --gradient-progress-start: #6D93F2;
+  --gradient-progress-end: #8A5FE2;
 
   /* --- Surfaces & texte --------------------------------------------------- */
-  --color-bg: #F6F7FD;
+  --color-bg: #F5F6FD;
   --color-bg-gradient:
-    radial-gradient(60% 50% at 10% 0%, rgba(202, 219, 255, 0.85) 0%, rgba(202, 219, 255, 0) 70%),
-    radial-gradient(50% 45% at 95% 10%, rgba(220, 206, 255, 0.85) 0%, rgba(220, 206, 255, 0) 70%),
-    radial-gradient(55% 50% at 60% 100%, rgba(227, 236, 255, 0.9) 0%, rgba(227, 236, 255, 0) 70%),
-    linear-gradient(180deg, #F8F9FF 0%, #F4F3FD 100%);
+    radial-gradient(55% 55% at 8% 0%, rgba(193, 213, 255, 0.85) 0%, rgba(193, 213, 255, 0) 70%),
+    radial-gradient(50% 50% at 96% 6%, rgba(218, 203, 255, 0.85) 0%, rgba(218, 203, 255, 0) 70%),
+    radial-gradient(45% 45% at 72% 62%, rgba(232, 226, 255, 0.70) 0%, rgba(232, 226, 255, 0) 70%),
+    radial-gradient(60% 50% at 25% 100%, rgba(214, 228, 255, 0.85) 0%, rgba(214, 228, 255, 0) 70%),
+    linear-gradient(180deg, #F8F9FF 0%, #F3F2FD 100%);
   --color-surface: #FFFFFF;
-  --color-surface-muted: #F3F4FB;
+  --color-surface-muted: #F2F3FB;
   --color-text: #1F1B3D;
-  --color-text-muted: #5E5A80;
-  --color-text-subtle: #8A87A8;
+  --color-text-muted: #57537A;
+  --color-text-subtle: #6F6C93;   /* indices, placeholders : ≥ 4,5:1 sur le verre */
   --color-border: rgba(59, 47, 158, 0.12);
-  --color-border-strong: rgba(59, 47, 158, 0.24);
+  --color-border-strong: rgba(59, 47, 158, 0.22);
   --color-overlay: rgba(31, 27, 61, 0.28);
 
+  /* ajouts : états et pistes */
+  --color-hover: rgba(59, 47, 158, 0.06);
+  --color-pressed: rgba(59, 47, 158, 0.10);
+  --color-track: #E5E8F6;           /* piste des barres, anneaux, curseurs */
+  --color-inverse-bg: #1F1B3D;      /* infobulles */
+  --color-inverse-text: #FFFFFF;
+  --color-selection: rgba(134, 104, 224, 0.24);
+  --color-raised: #FFFFFF;          /* élément actif posé sur une piste (segmenté, nav) */
+  --control-border: #8783AB;        /* bord des cases / interrupteurs : ≥ 3:1 sur le verre */
+  --gradient-soft: linear-gradient(135deg, #E1EAFF 0%, #ECE3FF 100%);   /* avatars, illustrations */
+
+  /* ajouts : champs de saisie (légèrement creusés dans le verre) */
+  --input-bg: rgba(255, 255, 255, 0.86);
+  --input-bg-hover: rgba(255, 255, 255, 0.96);
+  --input-shadow: inset 0 1px 2px rgba(59, 47, 158, 0.07);
+
   /* --- Liquid glass OPAQUE -------------------------------------------------- */
-  --glass-bg: rgba(255, 255, 255, 0.78);
-  --glass-bg-strong: rgba(255, 255, 255, 0.9);
-  --glass-bg-tint-blue: rgba(242, 246, 255, 0.82);
-  --glass-bg-tint-violet: rgba(246, 242, 255, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.92);
+  --glass-bg: rgba(255, 255, 255, 0.76);
+  --glass-bg-strong: rgba(255, 255, 255, 0.90);
+  --glass-bg-tint-blue: rgba(234, 241, 255, 0.84);
+  --glass-bg-tint-violet: rgba(242, 236, 255, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.85);
   --glass-blur: 24px;
-  --glass-saturate: 160%;
-  --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 45%);
+  --glass-saturate: 170%;
+  --glass-highlight:
+    radial-gradient(90% 70% at 0% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 28%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0) 32%);
   --glass-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 0 rgba(59, 47, 158, 0.04),
-    0 10px 32px rgba(59, 47, 158, 0.10),
-    0 2px 8px rgba(59, 47, 158, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(59, 47, 158, 0.05),
+    0 1px 2px rgba(59, 47, 158, 0.05),
+    0 8px 24px -6px rgba(59, 47, 158, 0.12),
+    0 24px 48px -16px rgba(59, 47, 158, 0.14);
   --glass-shadow-hover:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 16px 40px rgba(59, 47, 158, 0.14),
-    0 4px 12px rgba(59, 47, 158, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(59, 47, 158, 0.05),
+    0 2px 4px rgba(59, 47, 158, 0.06),
+    0 14px 32px -8px rgba(59, 47, 158, 0.18),
+    0 32px 64px -20px rgba(59, 47, 158, 0.20);
+  /* ajouts : bord lumineux (dégradé masqué sur 1 px) et verre au survol */
+  --glass-edge: linear-gradient(140deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.55) 30%, rgba(255, 255, 255, 0.25) 60%, rgba(166, 139, 240, 0.35) 100%);
+  --glass-bg-hover: rgba(255, 255, 255, 0.84);
+  --glass-blur-overlay: 6px;
 
   /* --- Catégories ----------------------------------------------------------- */
   --cat-flowline: #7FA3FA;
@@ -73,41 +116,46 @@
   --cat-carnet-soft: #EEE6FF;
   --cat-carnet-ink: #5B3BB8;
   --cat-auto: #7CCADF;
-  --cat-auto-soft: #E0F4F9;
-  --cat-auto-ink: #1F6B80;
+  --cat-auto-soft: #DFF3F8;
+  --cat-auto-ink: #1D6679;
 
   /* --- Statuts -------------------------------------------------------------- */
   --status-todo: #A7A4C4;
   --status-todo-soft: #EFEEF7;
+  --status-todo-ink: #4C4970;       /* ajout */
   --status-doing: #6F96F6;
   --status-doing-soft: #E3ECFF;
+  --status-doing-ink: #2A4BA8;      /* ajout */
   --status-review: #A88BF0;
   --status-review-soft: #EEE6FF;
+  --status-review-ink: #5B3BB8;     /* ajout */
   --status-done: #5FC197;
   --status-done-soft: #E2F5EC;
+  --status-done-ink: #1B6B4B;       /* ajout */
 
   /* --- Sémantique ----------------------------------------------------------- */
-  --success: #2E8F68;
+  --success: #1A6A4A;
   --success-soft: #E2F5EC;
-  --warning: #B86E14;
+  --warning: #824A08;
   --warning-soft: #FDF0DD;
-  --danger: #C8435F;
+  --danger: #A42A48;
   --danger-soft: #FCE6EB;
+  --danger-contrast: #FFFFFF;       /* ajout : texte sur fond --danger */
   --info: var(--accent);
   --info-soft: var(--accent-soft);
 
   /* --- Priorités ------------------------------------------------------------ */
-  --prio-low: #8A87A8;
-  --prio-normal: #5F86E8;
-  --prio-high: #D98A2B;
+  --prio-low: #A3A0C0;
+  --prio-normal: #6F92EE;
+  --prio-high: #E0922E;
   --prio-urgent: #D9536F;
 
   /* --- Humeur (1 = au plus bas, 5 = au top) -------------------------------- */
-  --mood-1: #8E8AB8;
-  --mood-2: #A9B8E8;
-  --mood-3: #B9C8F5;
-  --mood-4: #B79BFF;
-  --mood-5: #7C5CF0;
+  --mood-1: #9F9BBF;
+  --mood-2: #7FA8F2;
+  --mood-3: #8E95F4;
+  --mood-4: #AE8CF5;
+  --mood-5: #7C55EC;
 
   /* --- Typographie ---------------------------------------------------------- */
   --font-display: "General Sans", "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -135,6 +183,7 @@
   --ls-tight: -0.02em;
   --ls-normal: 0;
   --ls-wide: 0.04em;
+  --ls-caps: 0.08em;               /* ajout : surtitres en capitales */
 
   /* --- Espacements (base 4) ------------------------------------------------- */
   --space-1: 4px;
@@ -148,6 +197,14 @@
   --space-12: 48px;
   --space-16: 64px;
 
+  /* ajouts : hauteurs de contrôles et tailles d'icônes */
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 48px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+
   /* --- Rayons --------------------------------------------------------------- */
   --radius-xs: 8px;
   --radius-sm: 12px;
@@ -158,15 +215,17 @@
 
   /* --- Ombres simples ------------------------------------------------------- */
   --shadow-sm: 0 1px 2px rgba(31, 27, 61, 0.06), 0 1px 3px rgba(59, 47, 158, 0.06);
-  --shadow-md: 0 6px 20px rgba(59, 47, 158, 0.10);
-  --shadow-lg: 0 20px 50px rgba(59, 47, 158, 0.16);
+  --shadow-md: 0 2px 4px rgba(59, 47, 158, 0.04), 0 8px 20px -4px rgba(59, 47, 158, 0.12);
+  --shadow-lg: 0 4px 8px rgba(59, 47, 158, 0.05), 0 24px 56px -12px rgba(59, 47, 158, 0.24);
 
   /* --- Focus ---------------------------------------------------------------- */
   --focus-ring: 0 0 0 3px rgba(59, 47, 158, 0.35);
+  --focus-color: #3B2F9E;           /* ajout : couleur du contour :focus-visible */
 
   /* --- Mouvement ------------------------------------------------------------ */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* ajout : petit rebond (coches, interrupteurs) */
   --dur-fast: 140ms;
   --dur-base: 220ms;
   --dur-slow: 400ms;
@@ -182,10 +241,12 @@
   --z-drawer: 40;
   --z-modal: 50;
   --z-toast: 60;
+  --z-tooltip: 70;                  /* ajout */
 }
 
 /* ==========================================================================
    Mode sombre — mêmes noms, autres valeurs
+   (les deux blocs ci-dessous doivent rester strictement identiques)
    ========================================================================== */
 
 @media (prefers-color-scheme: dark) {
@@ -196,36 +257,64 @@
     --accent-hover: #BDB3FF;
     --accent-soft: rgba(169, 156, 255, 0.16);
     --accent-contrast: #14112E;
+    --accent-gradient: linear-gradient(135deg, #BCB2FF 0%, #A99CFF 55%, #9D8DFF 100%);
+    --accent-gradient-hover: linear-gradient(135deg, #CBC3FF 0%, #BDB3FF 55%, #AFA2FF 100%);
+    --accent-shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 22px -6px rgba(140, 120, 255, 0.45);
+
+    --gradient-progress: linear-gradient(90deg, #7FA6FF 0%, #9A93FF 50%, #B394FF 100%);
+    --gradient-progress-start: #7FA6FF;
+    --gradient-progress-end: #B394FF;
 
     --color-bg: #0F0D24;
     --color-bg-gradient:
-      radial-gradient(60% 50% at 10% 0%, rgba(63, 86, 170, 0.45) 0%, rgba(63, 86, 170, 0) 70%),
-      radial-gradient(50% 45% at 95% 10%, rgba(110, 76, 190, 0.42) 0%, rgba(110, 76, 190, 0) 70%),
-      radial-gradient(55% 50% at 60% 100%, rgba(52, 60, 140, 0.4) 0%, rgba(52, 60, 140, 0) 70%),
+      radial-gradient(55% 55% at 8% 0%, rgba(63, 86, 170, 0.50) 0%, rgba(63, 86, 170, 0) 70%),
+      radial-gradient(50% 50% at 96% 6%, rgba(110, 76, 190, 0.45) 0%, rgba(110, 76, 190, 0) 70%),
+      radial-gradient(45% 45% at 72% 62%, rgba(84, 62, 168, 0.30) 0%, rgba(84, 62, 168, 0) 70%),
+      radial-gradient(60% 50% at 25% 100%, rgba(52, 66, 150, 0.42) 0%, rgba(52, 66, 150, 0) 70%),
       linear-gradient(180deg, #110F28 0%, #0D0B20 100%);
     --color-surface: #1A1738;
     --color-surface-muted: #221E45;
     --color-text: #ECEBFF;
     --color-text-muted: #B4B1D6;
-    --color-text-subtle: #8F8BB8;
+    --color-text-subtle: #9592BE;
     --color-border: rgba(236, 235, 255, 0.10);
-    --color-border-strong: rgba(236, 235, 255, 0.22);
-    --color-overlay: rgba(5, 4, 15, 0.6);
+    --color-border-strong: rgba(236, 235, 255, 0.20);
+    --color-overlay: rgba(5, 4, 15, 0.60);
+
+    --color-hover: rgba(236, 235, 255, 0.06);
+    --color-pressed: rgba(236, 235, 255, 0.10);
+    --color-track: rgba(236, 235, 255, 0.10);
+    --color-inverse-bg: #ECEBFF;
+    --color-inverse-text: #14112E;
+    --color-selection: rgba(169, 156, 255, 0.32);
+    --color-raised: rgba(236, 235, 255, 0.08);
+    --control-border: #7D79A8;
+    --gradient-soft: linear-gradient(135deg, rgba(143, 176, 255, 0.14) 0%, rgba(187, 165, 255, 0.16) 100%);
+
+    --input-bg: rgba(10, 8, 30, 0.35);
+    --input-bg-hover: rgba(10, 8, 30, 0.50);
+    --input-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
 
     --glass-bg: rgba(30, 27, 66, 0.78);
     --glass-bg-strong: rgba(34, 30, 72, 0.92);
-    --glass-bg-tint-blue: rgba(30, 38, 80, 0.8);
-    --glass-bg-tint-violet: rgba(40, 30, 82, 0.8);
+    --glass-bg-tint-blue: rgba(28, 38, 84, 0.82);
+    --glass-bg-tint-violet: rgba(40, 30, 86, 0.82);
     --glass-border: rgba(255, 255, 255, 0.10);
-    --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 45%);
+    --glass-highlight:
+      radial-gradient(90% 70% at 0% 0%, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 30%, rgba(255, 255, 255, 0) 62%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 32%);
     --glass-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 10px 32px rgba(0, 0, 0, 0.35),
-      0 2px 8px rgba(0, 0, 0, 0.25);
+      0 1px 2px rgba(0, 0, 0, 0.25),
+      0 10px 32px -6px rgba(0, 0, 0, 0.45),
+      0 24px 48px -16px rgba(0, 0, 0, 0.40);
     --glass-shadow-hover:
       inset 0 1px 0 rgba(255, 255, 255, 0.10),
-      0 16px 40px rgba(0, 0, 0, 0.45),
-      0 4px 12px rgba(0, 0, 0, 0.3);
+      0 2px 4px rgba(0, 0, 0, 0.30),
+      0 16px 40px -8px rgba(0, 0, 0, 0.55),
+      0 32px 64px -20px rgba(0, 0, 0, 0.50);
+    --glass-edge: linear-gradient(140deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.10) 30%, rgba(255, 255, 255, 0.04) 60%, rgba(169, 156, 255, 0.22) 100%);
+    --glass-bg-hover: rgba(36, 32, 76, 0.84);
 
     --cat-flowline: #8FB0FF;
     --cat-flowline-soft: rgba(143, 176, 255, 0.16);
@@ -237,10 +326,18 @@
     --cat-auto-soft: rgba(138, 214, 234, 0.14);
     --cat-auto-ink: #BDEBF6;
 
+    --status-todo: #9E9BC4;
     --status-todo-soft: rgba(167, 164, 196, 0.16);
+    --status-todo-ink: #D6D4F0;
+    --status-doing: #86A8FF;
     --status-doing-soft: rgba(111, 150, 246, 0.18);
+    --status-doing-ink: #C2D4FF;
+    --status-review: #B49CFF;
     --status-review-soft: rgba(168, 139, 240, 0.18);
+    --status-review-ink: #DACDFF;
+    --status-done: #6FD3A8;
     --status-done-soft: rgba(95, 193, 151, 0.16);
+    --status-done-ink: #ABEBCD;
 
     --success: #6FD3A8;
     --success-soft: rgba(111, 211, 168, 0.14);
@@ -248,11 +345,24 @@
     --warning-soft: rgba(242, 183, 102, 0.14);
     --danger: #F28AA0;
     --danger-soft: rgba(242, 138, 160, 0.14);
+    --danger-contrast: #2A0D16;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
-    --focus-ring: 0 0 0 3px rgba(169, 156, 255, 0.5);
+    --prio-low: #A9A5CC;
+    --prio-normal: #8FB0FF;
+    --prio-high: #F2B766;
+    --prio-urgent: #F28AA0;
+
+    --mood-1: #A9A5CC;
+    --mood-2: #8FB5FF;
+    --mood-3: #A3A8FF;
+    --mood-4: #C2A6FF;
+    --mood-5: #A07CFF;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 8px 20px -4px rgba(0, 0, 0, 0.40);
+    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.30), 0 24px 56px -12px rgba(0, 0, 0, 0.60);
+    --focus-ring: 0 0 0 3px rgba(169, 156, 255, 0.50);
+    --focus-color: #BDB3FF;
   }
 }
 
@@ -263,36 +373,64 @@
   --accent-hover: #BDB3FF;
   --accent-soft: rgba(169, 156, 255, 0.16);
   --accent-contrast: #14112E;
+  --accent-gradient: linear-gradient(135deg, #BCB2FF 0%, #A99CFF 55%, #9D8DFF 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #CBC3FF 0%, #BDB3FF 55%, #AFA2FF 100%);
+  --accent-shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 22px -6px rgba(140, 120, 255, 0.45);
+
+  --gradient-progress: linear-gradient(90deg, #7FA6FF 0%, #9A93FF 50%, #B394FF 100%);
+  --gradient-progress-start: #7FA6FF;
+  --gradient-progress-end: #B394FF;
 
   --color-bg: #0F0D24;
   --color-bg-gradient:
-    radial-gradient(60% 50% at 10% 0%, rgba(63, 86, 170, 0.45) 0%, rgba(63, 86, 170, 0) 70%),
-    radial-gradient(50% 45% at 95% 10%, rgba(110, 76, 190, 0.42) 0%, rgba(110, 76, 190, 0) 70%),
-    radial-gradient(55% 50% at 60% 100%, rgba(52, 60, 140, 0.4) 0%, rgba(52, 60, 140, 0) 70%),
+    radial-gradient(55% 55% at 8% 0%, rgba(63, 86, 170, 0.50) 0%, rgba(63, 86, 170, 0) 70%),
+    radial-gradient(50% 50% at 96% 6%, rgba(110, 76, 190, 0.45) 0%, rgba(110, 76, 190, 0) 70%),
+    radial-gradient(45% 45% at 72% 62%, rgba(84, 62, 168, 0.30) 0%, rgba(84, 62, 168, 0) 70%),
+    radial-gradient(60% 50% at 25% 100%, rgba(52, 66, 150, 0.42) 0%, rgba(52, 66, 150, 0) 70%),
     linear-gradient(180deg, #110F28 0%, #0D0B20 100%);
   --color-surface: #1A1738;
   --color-surface-muted: #221E45;
   --color-text: #ECEBFF;
   --color-text-muted: #B4B1D6;
-  --color-text-subtle: #8F8BB8;
+  --color-text-subtle: #9592BE;
   --color-border: rgba(236, 235, 255, 0.10);
-  --color-border-strong: rgba(236, 235, 255, 0.22);
-  --color-overlay: rgba(5, 4, 15, 0.6);
+  --color-border-strong: rgba(236, 235, 255, 0.20);
+  --color-overlay: rgba(5, 4, 15, 0.60);
+
+  --color-hover: rgba(236, 235, 255, 0.06);
+  --color-pressed: rgba(236, 235, 255, 0.10);
+  --color-track: rgba(236, 235, 255, 0.10);
+  --color-inverse-bg: #ECEBFF;
+  --color-inverse-text: #14112E;
+  --color-selection: rgba(169, 156, 255, 0.32);
+  --color-raised: rgba(236, 235, 255, 0.08);
+  --control-border: #7D79A8;
+  --gradient-soft: linear-gradient(135deg, rgba(143, 176, 255, 0.14) 0%, rgba(187, 165, 255, 0.16) 100%);
+
+  --input-bg: rgba(10, 8, 30, 0.35);
+  --input-bg-hover: rgba(10, 8, 30, 0.50);
+  --input-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
 
   --glass-bg: rgba(30, 27, 66, 0.78);
   --glass-bg-strong: rgba(34, 30, 72, 0.92);
-  --glass-bg-tint-blue: rgba(30, 38, 80, 0.8);
-  --glass-bg-tint-violet: rgba(40, 30, 82, 0.8);
+  --glass-bg-tint-blue: rgba(28, 38, 84, 0.82);
+  --glass-bg-tint-violet: rgba(40, 30, 86, 0.82);
   --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 45%);
+  --glass-highlight:
+    radial-gradient(90% 70% at 0% 0%, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 30%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 32%);
   --glass-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 10px 32px rgba(0, 0, 0, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.25);
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 10px 32px -6px rgba(0, 0, 0, 0.45),
+    0 24px 48px -16px rgba(0, 0, 0, 0.40);
   --glass-shadow-hover:
     inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    0 16px 40px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(0, 0, 0, 0.3);
+    0 2px 4px rgba(0, 0, 0, 0.30),
+    0 16px 40px -8px rgba(0, 0, 0, 0.55),
+    0 32px 64px -20px rgba(0, 0, 0, 0.50);
+  --glass-edge: linear-gradient(140deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.10) 30%, rgba(255, 255, 255, 0.04) 60%, rgba(169, 156, 255, 0.22) 100%);
+  --glass-bg-hover: rgba(36, 32, 76, 0.84);
 
   --cat-flowline: #8FB0FF;
   --cat-flowline-soft: rgba(143, 176, 255, 0.16);
@@ -304,10 +442,18 @@
   --cat-auto-soft: rgba(138, 214, 234, 0.14);
   --cat-auto-ink: #BDEBF6;
 
+  --status-todo: #9E9BC4;
   --status-todo-soft: rgba(167, 164, 196, 0.16);
+  --status-todo-ink: #D6D4F0;
+  --status-doing: #86A8FF;
   --status-doing-soft: rgba(111, 150, 246, 0.18);
+  --status-doing-ink: #C2D4FF;
+  --status-review: #B49CFF;
   --status-review-soft: rgba(168, 139, 240, 0.18);
+  --status-review-ink: #DACDFF;
+  --status-done: #6FD3A8;
   --status-done-soft: rgba(95, 193, 151, 0.16);
+  --status-done-ink: #ABEBCD;
 
   --success: #6FD3A8;
   --success-soft: rgba(111, 211, 168, 0.14);
@@ -315,9 +461,22 @@
   --warning-soft: rgba(242, 183, 102, 0.14);
   --danger: #F28AA0;
   --danger-soft: rgba(242, 138, 160, 0.14);
+  --danger-contrast: #2A0D16;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
-  --focus-ring: 0 0 0 3px rgba(169, 156, 255, 0.5);
+  --prio-low: #A9A5CC;
+  --prio-normal: #8FB0FF;
+  --prio-high: #F2B766;
+  --prio-urgent: #F28AA0;
+
+  --mood-1: #A9A5CC;
+  --mood-2: #8FB5FF;
+  --mood-3: #A3A8FF;
+  --mood-4: #C2A6FF;
+  --mood-5: #A07CFF;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 8px 20px -4px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.30), 0 24px 56px -12px rgba(0, 0, 0, 0.60);
+  --focus-ring: 0 0 0 3px rgba(169, 156, 255, 0.50);
+  --focus-color: #BDB3FF;
 }
