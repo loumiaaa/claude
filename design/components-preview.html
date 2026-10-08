@@ -141,7 +141,7 @@
 
     /* Pixel */
     .pv-pixel-row { display: flex; align-items: flex-end; gap: var(--space-6); }
-    .pv-bubble-slot { position: relative; z-index: 1; align-self: flex-start; padding: var(--space-2) var(--space-3); border: 2px dashed var(--color-border-strong); border-radius: var(--radius-xs); font-family: var(--font-pixel); font-size: var(--fs-md); color: var(--color-text); background: var(--glass-bg-strong); }
+    .pv-bubble-slot { position: relative; z-index: 1; align-self: flex-start; margin-bottom: 72px; padding: var(--space-2) var(--space-3); border: 2px dashed var(--color-border-strong); border-radius: var(--radius-xs); font-family: var(--font-pixel); font-size: var(--fs-md); color: var(--color-text); background: var(--glass-bg-strong); }
     .pv-do, .pv-dont { padding: var(--space-4); border-radius: var(--radius-md); font-size: var(--fs-sm); }
     .pv-do { background: var(--success-soft); color: var(--color-text); }
     .pv-dont { background: var(--danger-soft); color: var(--color-text); }
@@ -751,7 +751,7 @@
           </div>
           <p class="pv-note">Placeholders dessinés ici en ×4 et ×6 : en production, <span class="pv-code">PixelCast.mount(canvas, 'lamia', { scale: 4 })</span>.</p>
         </div>
-        <div class="pv-stack">
+        <div class="pv-stack" style="align-content: start">
           <div class="pv-do"><strong>À faire</strong><ul><li>Échelles entières : ×2, ×3, ×4, ×6.</li><li><span class="pv-code">image-rendering: pixelated</span> sur canvas et images.</li><li>Pixelify Sans uniquement dans les bulles et l'univers pixel.</li><li>La scène vit dans une carte vitrée, avec un fond doux et un sol discret.</li></ul></div>
           <div class="pv-dont"><strong>À éviter</strong><ul><li>Échelles fractionnaires (×2,5) ou redimensionnement CSS en %.</li><li>Flou, ombres portées ou dégradés sur les sprites.</li><li>Police pixel dans les boutons, menus ou données.</li></ul></div>
         </div>
