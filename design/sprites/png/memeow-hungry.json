@@ -1,0 +1,139 @@
+{
+  "frames": [
+    {
+      "filename": "memeow-hungry 0.aseprite",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 320
+    },
+    {
+      "filename": "memeow-hungry 1.aseprite",
+      "frame": {
+        "x": 32,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 380
+    },
+    {
+      "filename": "memeow-hungry 2.aseprite",
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 300
+    },
+    {
+      "filename": "memeow-hungry 3.aseprite",
+      "frame": {
+        "x": 96,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 380
+    },
+    {
+      "filename": "memeow-hungry 4.aseprite",
+      "frame": {
+        "x": 128,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 260
+    }
+  ],
+  "meta": {
+    "app": "design/sprites/export-png.mjs (PixelCast)",
+    "version": "1.0",
+    "image": "memeow-hungry.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 160,
+      "h": 24
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "hungry",
+        "from": 0,
+        "to": 4,
+        "direction": "forward",
+        "loop": false,
+        "next": "idle",
+        "repeat": 2,
+        "still": 1
+      }
+    ],
+    "layers": [],
+    "slices": []
+  }
+}

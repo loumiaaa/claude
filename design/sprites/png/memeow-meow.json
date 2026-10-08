@@ -1,0 +1,161 @@
+{
+  "frames": [
+    {
+      "filename": "memeow-meow 0.aseprite",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 200
+    },
+    {
+      "filename": "memeow-meow 1.aseprite",
+      "frame": {
+        "x": 32,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 160
+    },
+    {
+      "filename": "memeow-meow 2.aseprite",
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 520
+    },
+    {
+      "filename": "memeow-meow 3.aseprite",
+      "frame": {
+        "x": 96,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 260
+    },
+    {
+      "filename": "memeow-meow 4.aseprite",
+      "frame": {
+        "x": 128,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 200
+    },
+    {
+      "filename": "memeow-meow 5.aseprite",
+      "frame": {
+        "x": 160,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 24
+      },
+      "duration": 240
+    }
+  ],
+  "meta": {
+    "app": "design/sprites/export-png.mjs (PixelCast)",
+    "version": "1.0",
+    "image": "memeow-meow.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 192,
+      "h": 24
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "meow",
+        "from": 0,
+        "to": 5,
+        "direction": "forward",
+        "loop": false,
+        "next": "idle",
+        "repeat": 1,
+        "still": 2
+      }
+    ],
+    "layers": [],
+    "slices": []
+  }
+}

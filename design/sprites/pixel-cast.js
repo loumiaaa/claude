@@ -9,6 +9,7 @@
  *   PixelCast.size('lamia')         // { width, height } en pixels « art »
  *   PixelCast.icon('heart', 4)      // -> HTMLCanvasElement
  *   PixelCast.iconDataURL('heart', 4) // -> 'data:image/png;base64,...'
+ *   Option de mount facultative : flip: true (miroir). Liseré en mode sombre : --pixel-cast-rim.
  *
  * FORMAT DES SPRITES (détails dans design/sprites/README.md)
  * - Chaque personnage a une palette : un caractère = une couleur ('#RRGGBB' ou '#RRGGBBAA').
@@ -454,9 +455,151 @@
       w: '#FFFFFF', // reflet des yeux
       P: '#F49AB2', // truffe rose
       q: '#E9A0B4', // intérieur des oreilles
+      M: '#5A2342', // bouche ouverte
+      t: '#F27F9C', // langue
+      b: '#8C7BE8', // gamelle violette
+      B: '#6553C4', // gamelle, ombre
+      v: '#C4B8FF', // gamelle, reflet
+      c: '#B8763A', // croquette
+      C: '#875125', // croquette, ombre
+      h: '#C9CDE2', // clavier, interstices
+      H: '#F7F8FD', // touches du clavier
+      j: '#A3A8C6', // clavier, tranche
+      z: '#8B79F2', // « z » du sommeil
       '%': '#2B215030' // ombre portée
     },
     parts: {
+      zC: { y: 0, rows: [
+        '.....................zzzzz......',
+        '........................z.......',
+        '.......................z........',
+        '......................z.........',
+        '.....................zzzzz......'
+      ]},
+      zB: { y: 0, rows: [
+        '...................zzzzz........',
+        '......................z.........',
+        '..............zzzz...z..........',
+        '................z...z...........',
+        '...............z...zzzzz........',
+        '..............zzzz..............'
+      ]},
+      zA: { y: 4, rows: [
+        '............zzzz................',
+        '..............z.................',
+        '.............z..................',
+        '............zzzz................'
+      ]},
+      sleepTail: { y: 14, rows: [
+        '...........................oo...',
+        '................ooooooooooorro..',
+        '...............orrggggkkkkrrro..',
+        '...............orrggggkkkkrro...',
+        '................oooooooooooo....'
+      ]},
+      sleepHead: { y: 8, rows: [
+        '....o.......o...................',
+        '....oko....oro..................',
+        '...oqkkooooorqo.................',
+        '...okknkkrRrrrro................',
+        '..okknkkkrrRrrrro...............',
+        '..oknoonkrroorrro...............',
+        '..okkkkyyPyyrrrro...............',
+        '...okkyyoyyyrrro................',
+        '...ooyyyyyyyygoo................',
+        '..oyyyoyyyggogggo...............',
+        '..ooooooooooooooo...............'
+      ]},
+      sleepBodyIn: { y: 6, rows: [
+        '...............oooooo...........',
+        '............oooRrrRrrooo........',
+        '...........onkknrrRrrRrro.......',
+        '..........oknkknkrRrrRrrRo......',
+        '.........okknkknkkRrrRrgGgo.....',
+        '........oRkknkknkrRrrRggGggo....',
+        '.......onNnknkknrrRrrRggGggRo...',
+        '.......onNnrRkrRrrRrrRggGggRo...',
+        '.......onNnrRrrRrrRrrRrgGgrRo...',
+        '.......onNnrRrrRrrRrrRrrRrrRo...',
+        '.......onNnrRrrRrrRrrRrrRrrRo...'
+      ]},
+      sleepBody: { y: 7, rows: [
+        '..............oooooooo..........',
+        '............ooknrrRrrRoo........',
+        '..........oonkknkrRrrRrroo......',
+        '.........okknkknkkRrrRrgGgo.....',
+        '........oRkknkknkrRrrRggGggo....',
+        '........oNnknkknrrRrrRggGggo....',
+        '.......onNnrRkrRrrRrrRggGggRo...',
+        '.......onNnrRrrRrrRrrRrgGgrRo...',
+        '.......onNnrRrrRrrRrrRrrRrrRo...',
+        '.......onNnrRrrRrrRrrRrrRrrRo...'
+      ]},
+      keyboard: { y: 16, rows: [
+        '..oooooooooooooooooooooooooooo..',
+        '.ohHHhHHhHHhHHhHHhHHhHHhHHhHHho.',
+        '.ohhHHhHHhHHhHHhHHhHHhHHhHHhhho.',
+        '.ohHHhhhHHHHHHHHHHHHHhhhHHhHHho.',
+        '.ojjjjjjjjjjjjjjjjjjjjjjjjjjjjo.',
+        '..oooooooooooooooooooooooooooo..',
+        '..%%%%%%%%%%%%%%%%%%%%%%%%%%%%..'
+      ]},
+      bowl: { y: 17, rows: [
+        '.....................ooooooooo..',
+        '....................ovBBBBBBBvo.',
+        '....................ovvvvvvvvvo.',
+        '.....................obbvbvbbo..',
+        '.....................obbbvbbbo..',
+        '......................oBBBBBo...',
+        '.....................%%ooooo%%..'
+      ]},
+      pawUp: { y: 9, rows: [
+        '.........ooo....................',
+        '........oyyyo...................',
+        '........oyoyo...................',
+        '........orrRo...................',
+        '........oRrro...................',
+        '........orRRo...................',
+        '........oRrro...................'
+      ]},
+      bodyPaw: { y: 13, rows: [
+        '.....okkkggyygrrrro.............',
+        '.....okkkgGggGrrRro.............',
+        '....oknkkkNNGggGrRro............',
+        '....onknkNNNNGGGorRo............',
+        '...okknkkNNNNGggorrRo...........',
+        '...onkknkkNNNGggoRrro...........',
+        '...okknkkNNNNGGGorRro...........',
+        '...oknknkNNNoggggorRro..........',
+        '...okkkkkkkoogogorrro...........',
+        '....oooooooooooooooo............'
+      ]},
+      tongue: { y: 12, rows: [
+        '............t...................',
+        '............o...................'
+      ]},
+      mouthMeow: { y: 11, rows: [
+        '..........oMMo..................',
+        '..........ytty..................',
+        '...........oo...................'
+      ]},
+      earTwitch: { y: 1, rows: [
+        '..................._............',
+        '..................ooo...........',
+        '...................ro...........'
+      ]},
+      eyesUp: { y: 8, rows: [
+        '.......ppw....ppw...............',
+        '.......eeE....eeE...............'
+      ]},
+      eyesSquint: { y: 8, rows: [
+        '.......non....ror...............',
+        '.......ono....oro...............'
+      ]},
+      blink: { y: 8, rows: [
+        '.......nnn....rrr...............',
+        '.......ooo....ooo...............'
+      ]},
       tailC: { y: 9, rows: [
         '...........................oo...',
         '..........................orro..',
@@ -471,8 +614,7 @@
         '...................ookkko.......',
         '..................orrrko........',
         '..................orrro.........',
-        '...................ooo..........',
-        '................................'
+        '...................ooo..........'
       ]},
       tailB: { y: 9, rows: [
         '........................oo......',
@@ -488,8 +630,7 @@
         '...................ookkko.......',
         '..................orrrko........',
         '..................orrro.........',
-        '...................ooo..........',
-        '................................'
+        '...................ooo..........'
       ]},
       tailA: { y: 10, rows: [
         '......................ooo.......',
@@ -504,17 +645,16 @@
         '...................ookkko.......',
         '..................orrrko........',
         '..................orrro.........',
-        '...................ooo..........',
-        '................................'
+        '...................ooo..........'
       ]},
       body: { y: 13, rows: [
-        '........kggyygrr................',
+        '.....okkkggyygrrrro.............',
         '.....okkkgGggGrrRro.............',
         '....oknkrrRGGggGrRro............',
-        '....onkorRroogGgorRo............',
-        '...okknoRrrooGggorrRo...........',
-        '...onkkorRroogGgoRrro...........',
-        '...okknorrRoogGGorRro...........',
+        '....onkoRRRNNGGGorRo............',
+        '...okknorrRNNGggorrRo...........',
+        '...onkkorrRNNGggoRrro...........',
+        '...okknoRRRNNGGGorRro...........',
         '...oknkoyyyooggggorRro..........',
         '...okkkoyoyoogogorrro...........',
         '....oooooooooooooooo............'
@@ -524,31 +664,68 @@
         '....oo............oo............',
         '....oko..........oro............',
         '....oqko........orqo............',
-        '....oqkkoooooooorrqo............',
-        '...okkkknknkrRrRrrrro...........',
-        '...oknnnnkknRrrrRrryo...........',
-        '...oknepenknrrepeRrro...........',
-        '...oknEpEnknrREpERrro...........',
-        '...okknnnkyPPyrrRrrro...........',
-        '...oknkkkyyooyyrrRrro...........',
-        '....okkkkyyyyyyrrrro............',
-        '.....ooo........ooo.............'
+        '....oqkkoooooooorRqo............',
+        '...okknNnkNrRrRrrRrro...........',
+        '...oknnNnnkrrRrrRrryo...........',
+        '...oknnwpenkrrwpeRrro...........',
+        '...oknnEpEnkrREpERrro...........',
+        '..okknNnnnyPPyrrRrrRro..........',
+        '..oknkkknyyooyyrrRrrro..........',
+        '...okkkkkyyyyyyrrrRro...........',
+        '....oooo........oooo............'
       ]},
       shadow: { y: 23, rows: [
         '...%%%%%%%%%%%%%%%%%%...........'
       ]},
     },
     animations: {
-      idle: { loop: true, still: 0, frames: [
+      idle: { loop: true, still: 0, blink: 4, frames: [
         [420, 'shadow tailA body head'],
         [420, 'shadow tailB body head'],
         [420, 'shadow tailC body head'],
+        [420, 'shadow tailB body head'],
+        [140, 'shadow tailA body head blink'],
+        [420, 'shadow tailA body head'],
+        [420, 'shadow tailB body head'],
+        [160, 'shadow tailC body head earTwitch'],
+        [420, 'shadow tailC body head'],
         [420, 'shadow tailB body head']
       ]},
-      sleep: { loop: true, still: 0, frames: [[600, 'shadow tailA body head']] },
-      lick: { loop: false, still: 0, frames: [[600, 'shadow tailA body head']] },
-      hungry: { loop: false, still: 0, frames: [[600, 'shadow tailA body head']] },
-      meow: { loop: false, still: 0, frames: [[600, 'shadow tailA body head']] }
+      // En boule sur le clavier : respiration (le dos se soulève) et petits « z ».
+      sleep: { loop: true, still: 0, frames: [
+        [700, 'keyboard sleepBody sleepTail sleepHead zA'],
+        [700, 'keyboard sleepBodyIn sleepTail sleepHead zB'],
+        [700, 'keyboard sleepBodyIn sleepTail sleepHead zC'],
+        [700, 'keyboard sleepBody sleepTail sleepHead']
+      ]},
+      lick: { loop: false, still: 3, frames: [
+        [220, 'shadow tailA body head'],
+        [180, 'shadow tailA bodyPaw head@0,1 blink@0,1 pawUp@0,3'],
+        [200, 'shadow tailA bodyPaw head@0,1 blink@0,1 pawUp@0,1'],
+        [220, 'shadow tailB bodyPaw head@0,1 blink@0,1 pawUp tongue'],
+        [200, 'shadow tailB bodyPaw head@0,1 blink@0,1 pawUp@0,1'],
+        [220, 'shadow tailC bodyPaw head@0,1 blink@0,1 pawUp tongue'],
+        [200, 'shadow tailC bodyPaw head@0,1 blink@0,1 pawUp@0,1'],
+        [220, 'shadow tailB bodyPaw head@0,1 blink@0,1 pawUp tongue'],
+        [200, 'shadow tailB bodyPaw head@0,1 blink@0,1 pawUp@0,3'],
+        [300, 'shadow tailA body head blink']
+      ]},
+      // Assise à côté de sa gamelle (vide !), elle réclame ses croquettes.
+      hungry: { loop: false, still: 1, repeat: 2, frames: [
+        [320, 'shadow@-3,0 tailA@-3,0 bowl body@-3,0 head@-3,0 eyesUp@-3,0'],
+        [380, 'shadow@-3,0 tailB@-3,0 bowl body@-3,0 head@-3,-1 eyesUp@-3,-1 mouthMeow@-3,-1'],
+        [300, 'shadow@-3,0 tailC@-3,0 bowl body@-3,0 head@-3,0 eyesUp@-3,0'],
+        [380, 'shadow@-3,0 tailB@-3,0 bowl body@-3,0 head@-3,-1 eyesSquint@-3,-1 mouthMeow@-3,-1'],
+        [260, 'shadow@-3,0 tailA@-3,0 bowl body@-3,0 head@-3,0 blink@-3,0']
+      ]},
+      meow: { loop: false, still: 2, frames: [
+        [200, 'shadow tailA body head'],
+        [160, 'shadow tailB body head@0,-1 eyesUp@0,-1'],
+        [520, 'shadow tailC body head@0,-1 eyesSquint@0,-1 mouthMeow@0,-1'],
+        [260, 'shadow tailC body head@0,-1 eyesSquint@0,-1 mouthMeow@0,-1 earTwitch@0,-1'],
+        [200, 'shadow tailB body head@0,-1 eyesUp@0,-1'],
+        [240, 'shadow tailA body head']
+      ]}
     }
   };
 
@@ -558,27 +735,229 @@
 
   var ICONS = {
     size: 16,
+    // Palette commune ; une icône peut ajouter/surcharger des couleurs (ex. les humeurs).
+    // « token » : dans une page, la teinte f (et ses dérivées F, h) suit la variable CSS indiquée
+    // (mode clair / sombre compris). Les valeurs écrites ici servent de repli (export PNG).
     palette: {
-      o: '#2B2150'
+      o: '#2B2150', // contour indigo
+      w: '#FFFFFF', // reflet
+      r: '#F4A3B4', // joues
+      m: '#5A2342', // bouche
+      k: '#F2709A', // cœur rose / langue
+      K: '#C9487A', // cœur, ombre
+      d: '#A9DBFF', // goutte
+      D: '#6FB8EE', // goutte, ombre
+      a: '#86C8F2', // poisson
+      A: '#4F8FC9', // poisson, ombre
+      h: '#D6EEFF', // reflet clair
+      z: '#8B79F2', // « z »
+      Z: '#4B3AA8', // « z », ombre
+      c: '#C07E3F', // croquette
+      C: '#86501F', // croquette, ombre
+      y: '#FFD24D', // étoile
+      Y: '#FFF4C7', // étoile, reflet
+      Q: '#E0A12A', // étoile, ombre
+      n: '#8B79F2', // note de musique
+      N: '#5A47C2'  // note, ombre
     },
     sprites: {
-      heart: { rows: [
+      'mood-1': { token: '--mood-1', palette: { f: '#9F9BBF', F: '#8580A7', h: '#CAC8DC' }, rows: [ // humeur 1/5 : f = teinte du token, F = ombre, h = reflet
         '................',
         '................',
+        '.....oooooo.....',
+        '....offffffo.d..',
+        '...ohhhhffffdd..',
+        '..ofhhhhffffDd..',
+        '..ofhhhhfffffo..',
+        '.offhhhhffffFFo.',
+        '.offoooffoooFFo.',
+        '.offfFffffFfFFo.',
+        '..offffffffFFo..',
+        '..offffoofFFFo..',
+        '...offfmoFFFo...',
+        '....ofFFFFFo....',
+        '.....oooooo.....',
+        '................'
+      ]},
+      'mood-2': { token: '--mood-2', palette: { f: '#7FA8F2', F: '#6D8ACE', h: '#B9CFF8' }, rows: [ // humeur 2/5 : f = teinte du token, F = ombre, h = reflet
         '................',
         '................',
+        '.....oooooo.....',
+        '....offffffo....',
+        '...ohhhhffffo...',
+        '..ofFFhhffFFfo..',
+        '..ofhhhhfffffo..',
+        '.offhohhffofFFo.',
+        '.offfoffffofFFo.',
+        '.offffffffffFFo.',
+        '..offffffffFFo..',
+        '..offffoofFFFo..',
+        '...offoFFoFFo...',
+        '....ofFFFFFo....',
+        '.....oooooo.....',
+        '................'
+      ]},
+      'mood-3': { token: '--mood-3', palette: { f: '#8E95F4', F: '#787BD0', h: '#C1C5F9' }, rows: [ // humeur 3/5 : f = teinte du token, F = ombre, h = reflet
         '................',
         '................',
+        '.....oooooo.....',
+        '....offffffo....',
+        '...ohhhhffffo...',
+        '..ofhhhhfffffo..',
+        '..ofhhhhfffffo..',
+        '.offhohhffofFFo.',
+        '.offfoffffofFFo.',
+        '.offffffffffFFo.',
+        '..offffffffFFo..',
+        '..offfooooFFFo..',
+        '...offfFFFFFo...',
+        '....ofFFFFFo....',
+        '.....oooooo.....',
+        '................'
+      ]},
+      'mood-4': { token: '--mood-4', palette: { f: '#AE8CF5', F: '#9174D1', h: '#D2C0FA' }, rows: [ // humeur 4/5 : f = teinte du token, F = ombre, h = reflet
         '................',
+        '................',
+        '.....oooooo.....',
+        '....offffffo....',
+        '...ohhhhffffo...',
+        '..ofhhhhfffffo..',
+        '..ofhhhhfffffo..',
+        '.offhohhffofFFo.',
+        '.offfoffffofFFo.',
+        '.offffffffffFFo.',
+        '..orfoffffoFro..',
+        '..offfooooFFFo..',
+        '...offfFFFFFo...',
+        '....ofFFFFFo....',
+        '.....oooooo.....',
+        '................'
+      ]},
+      'mood-5': { token: '--mood-5', palette: { f: '#7C55EC', F: '#6A4ACA', h: '#B7A2F5' }, rows: [ // humeur 5/5 : f = teinte du token, F = ombre, h = reflet
+        '..............y.',
+        '.............yYy',
+        '.....oooooo...y.',
+        '....offffffo....',
+        '...ohhhhffffo...',
+        '..ofhhhhfffffo..',
+        '..ofhhhhfffffo..',
+        '.offhohhffofFFo.',
+        '.offofoffofoFFo.',
+        '.offffffffffFFo.',
+        '..orfooooooFro..',
+        '..offomkkmoFFo..',
+        '...offooooFFo...',
+        '....ofFFFFFo....',
+        '.....oooooo.....',
+        '................'
+      ]},
+      'heart': { rows: [
+        '................',
+        '................',
+        '..oooo....oooo..',
+        '.okkkko..okkkko.',
+        'okwwkkkookkkkkko',
+        'okwkkkkkkkkkkKko',
+        'okkkkkkkkkkkkKko',
+        'okkkkkkkkkkkKKko',
+        '.okkkkkkkkkkKko.',
+        '..okkkkkkkkKko..',
+        '...okkkkkkKko...',
+        '....okkkkKko....',
+        '.....okkKko.....',
+        '......okko......',
         '.......oo.......',
-        '.......oo.......',
+        '................'
+      ]},
+      'fish': { rows: [
         '................',
         '................',
         '................',
         '................',
+        '.....oooooo.....',
+        '...ooaaaaaaoo.oo',
+        '..oahaaaaaaaaoAo',
+        '.oaawoaaaaaaaoAo',
+        '.oaaaaaaaaaaaAAo',
+        '.oAaaaaaaaaaaoAo',
+        '..oaaaAAAAaaaoAo',
+        '...ooaaaaaaoo.oo',
+        '.....oooooo.....',
         '................',
         '................',
         '................'
+      ]},
+      'zzz': { rows: [
+        '.........ooooooo',
+        '.........oZzzzzo',
+        '.........oooozoo',
+        '..........oozoo.',
+        '.........oozoooo',
+        '...ooooooozzzzzo',
+        '...oZzzzzooooooo',
+        '...oooozoo......',
+        '....oozoo.......',
+        '...oozoooo......',
+        '...ozzzzzo......',
+        'oooooooooo......',
+        'Zzzzo...........',
+        'oozoo...........',
+        'ozooo...........',
+        'zzzzo...........'
+      ]},
+      'kibble': { rows: [
+        '................',
+        '................',
+        '................',
+        '................',
+        '......ooo.......',
+        '.....ohcco......',
+        '.....ocCCo......',
+        '.....oCCCo......',
+        '...ooooooooo....',
+        '..ohcco.ohcco...',
+        '..ocCCo.ocCCo...',
+        '..oCCCo.oCCCo...',
+        '...ooo...ooo....',
+        '................',
+        '................',
+        '................'
+      ]},
+      'star': { rows: [
+        '................',
+        '.......oo.......',
+        '......oyyo......',
+        '......oYyo......',
+        '.....oyYyyo.....',
+        'oooooyyyyyyooooo',
+        'oyyYyyyyyyyyyyQo',
+        '.oyyyyyyyyyyyQo.',
+        '..oyyyyyyyyyQo..',
+        '...oyyyyyyyQo...',
+        '...oyyyyyyyQo...',
+        '..oyyyyooyyyQo..',
+        '..oyyyo..oyyQo..',
+        '.oyyo......oQQo.',
+        '.ooo........ooo.',
+        '................'
+      ]},
+      'note': { rows: [
+        '................',
+        '.......oo.......',
+        '.......ono......',
+        '.......onno.....',
+        '.......onnno....',
+        '.......ono.no...',
+        '.......ono..no..',
+        '.......ono...o..',
+        '.......ono......',
+        '.......ono......',
+        '...ooooono......',
+        '..onnnnnno......',
+        '.onwnnnnno......',
+        '.onnnnnNNo......',
+        '..onnnNNo.......',
+        '...ooooo........'
       ]}
     }
   };
@@ -730,6 +1109,71 @@
     return ch.canvases[key];
   }
 
+  /* ---------- Liseré (mode sombre) ----------
+     Si la variable CSS --pixel-cast-rim vaut une couleur sur le canvas (ou un parent),
+     un contour d'un pixel « art » de cette couleur entoure la silhouette : les cheveux
+     noirs de Lamia et le pelage noir de Memeow restent lisibles sur un fond sombre.
+     pixel-bubble.css l'active en mode sombre ; transparent = pas de liseré. */
+  var cssColors = {};
+  function cssColor(str) {
+    if (cssColors[str]) return cssColors[str];
+    var cv = document.createElement('canvas');
+    cv.width = cv.height = 1;
+    var c = cv.getContext('2d');
+    c.fillStyle = 'rgba(0, 0, 0, 0)';
+    c.fillStyle = str;
+    c.fillRect(0, 0, 1, 1);
+    var d = c.getImageData(0, 0, 1, 1).data;
+    cssColors[str] = [d[0], d[1], d[2], d[3]];
+    return cssColors[str];
+  }
+  function readRim(el) {
+    if (!root.getComputedStyle) return null;
+    var v = root.getComputedStyle(el).getPropertyValue('--pixel-cast-rim').trim();
+    if (!v || v === 'transparent' || v === 'none') return null;
+    var c = cssColor(v);
+    return c[3] ? c : null;
+  }
+  function rimCanvas(ch, anim, index, rgba) {
+    var key = anim + '#' + index + '#rim' + rgba.join(',');
+    if (ch.canvases[key]) return ch.canvases[key];
+    var w = ch.width, h = ch.height, src = ch.animations[anim].frames[index].data;
+    var out = new Uint8ClampedArray(src.length);
+    var solid = function (x, y) { return x >= 0 && y >= 0 && x < w && y < h && src[(y * w + x) * 4 + 3] >= 160; };
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var i = (y * w + x) * 4;
+      if (src[i + 3] < 160 && (solid(x - 1, y) || solid(x + 1, y) || solid(x, y - 1) || solid(x, y + 1))) {
+        out[i] = rgba[0]; out[i + 1] = rgba[1]; out[i + 2] = rgba[2]; out[i + 3] = rgba[3];
+      }
+      var sa = src[i + 3] / 255;
+      if (sa > 0) {
+        var da = out[i + 3] / 255, oa = sa + da * (1 - sa);
+        for (var k = 0; k < 3; k++) out[i + k] = Math.round((src[i + k] * sa + out[i + k] * da * (1 - sa)) / oa);
+        out[i + 3] = Math.round(oa * 255);
+      }
+    }
+    ch.canvases[key] = bufferToCanvas(w, h, out);
+    return ch.canvases[key];
+  }
+
+  // Redessine toutes les instances quand le thème change (data-theme ou thème système).
+  var live = [];
+  var themeWatch = null;
+  function watchTheme(redraw) {
+    live.push(redraw);
+    if (themeWatch) return;
+    var all = function () { live.slice().forEach(function (fn) { fn(); }); };
+    var mo = typeof MutationObserver === 'function' ? new MutationObserver(all) : null;
+    if (mo) mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+    var off = listen(mediaQuery('(prefers-color-scheme: dark)'), all);
+    themeWatch = function () { if (mo) mo.disconnect(); off(); };
+  }
+  function unwatchTheme(redraw) {
+    var i = live.indexOf(redraw);
+    if (i >= 0) live.splice(i, 1);
+    if (!live.length && themeWatch) { themeWatch(); themeWatch = null; }
+  }
+
   function toScale(v, def) {
     var n = Math.round(+v);
     return isFinite(n) && n >= 1 ? Math.min(n, 64) : def;
@@ -804,7 +1248,9 @@
     function draw() {
       if (state.destroyed) return;
       var a = ch.animations[state.anim];
-      var src = frameCanvas(ch, state.anim, Math.min(state.index, a.frames.length - 1));
+      var index = Math.min(state.index, a.frames.length - 1);
+      var rim = readRim(canvas);
+      var src = rim ? rimCanvas(ch, state.anim, index, rim) : frameCanvas(ch, state.anim, index);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -898,6 +1344,7 @@
         state.playing = false;
         clearTimer();
         offReduce(); offDpr();
+        unwatchTheme(draw);
         state.destroyed = true;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -907,6 +1354,7 @@
 
     offReduce = listen(reduceMQ, function () { if (!state.destroyed && state.playing) run(); });
     if (mounted) mounted.set(canvas, ctrl);
+    watchTheme(draw);
     resize();
     state.playing = true;
     run();

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PixelCast · Lamia &amp; Memeow</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="pixel-bubble.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { background: var(--color-bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--color-bg-gradient);
+      background-attachment: fixed;
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: var(--fs-md);
+      line-height: var(--lh-normal);
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-16); }
+    header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+    h1 { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); margin: 0 0 var(--space-1); }
+    h2 { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: var(--fw-semibold); margin: 0 0 var(--space-4); }
+    p.lead { margin: 0; color: var(--color-text-muted); max-width: 60ch; }
+    .tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+    .tools label { font-size: var(--fs-sm); color: var(--color-text-muted); display: flex; align-items: center; gap: var(--space-2); }
+    select, button {
+      font: inherit; font-size: var(--fs-sm); color: var(--color-text);
+      background: var(--glass-bg-strong); border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-pill); padding: var(--space-2) var(--space-4); cursor: pointer;
+    }
+    button:hover, select:hover { border-color: var(--accent); }
+    button:focus-visible, select:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    button[aria-pressed="true"] { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+    .card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
+      box-shadow: var(--glass-shadow); padding: var(--space-6); margin-bottom: var(--space-6);
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    }
+    /* Scène */
+    .scene {
+      display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: var(--space-6) var(--space-12);
+      padding: var(--space-6) var(--space-4) 0; border-radius: var(--radius-md);
+      background: linear-gradient(180deg, var(--accent-soft) 0%, transparent 70%), var(--color-surface-muted);
+      border-bottom: 6px solid var(--color-border-strong);
+      overflow: hidden;
+    }
+    .actor { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+    .actor canvas { display: block; }
+    .actor .pixel-bubble { max-width: 300px; }
+    .lamia .pixel-bubble { margin-left: calc(var(--actor-w, 128px) * 0.15); }
+    .memeow .pixel-bubble { --pixel-bubble-tail-offset: 18px; margin-left: calc(var(--actor-w, 128px) * 0.1); }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); margin-top: var(--space-5); }
+    .controls fieldset { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4) var(--space-4); margin: 0; }
+    .controls legend { font-weight: var(--fw-semibold); padding: 0 var(--space-2); }
+    .btns { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .note { font-size: var(--fs-xs); color: var(--color-text-subtle); margin: var(--space-2) 0 0; }
+    code { font-size: 0.92em; background: var(--accent-soft); border-radius: var(--radius-xs); padding: 0 var(--space-1); }
+    /* Icônes */
+    .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--space-3); }
+    .icon { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); }
+    .icon .pair { display: flex; align-items: flex-end; gap: var(--space-3); }
+    .icon span { font-size: var(--fs-xs); color: var(--color-text-muted); text-align: center; }
+    /* Bulles */
+    .bubbles { display: flex; flex-wrap: wrap; gap: var(--space-6) var(--space-8); align-items: flex-start; }
+    .bubbles .big { font-size: var(--fs-xl); --pixel-bubble-px: 4px; }
+    /* Planches */
+    .sheet { margin: 0 0 var(--space-5); }
+    .sheet figcaption { font-size: var(--fs-sm); color: var(--color-text-muted); margin-bottom: var(--space-2); }
+    .sheet .scroll { overflow-x: auto; padding-bottom: var(--space-2); }
+    .sheet img { display: block; image-rendering: pixelated; height: auto; background:
+      repeating-conic-gradient(var(--color-surface-muted) 0 25%, var(--color-surface) 0 50%) 0 0 / 16px 16px; border-radius: var(--radius-xs); }
+    @media (max-width: 600px) {
+      .wrap { padding: var(--space-6) var(--gutter-mobile) var(--space-12); }
+      .card { padding: var(--space-4); }
+      .scene { gap: var(--space-4); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Lamia &amp; Memeow</h1>
+        <p class="lead">Planche des sprites pixel art du tableau de bord : scène, animations, icônes et bulles. Tout fonctionne hors ligne, en double-cliquant sur ce fichier.</p>
+      </div>
+      <div class="tools">
+        <label>Échelle
+          <select id="scale">
+            <option value="3">× 3</option>
+            <option value="4" selected>× 4</option>
+            <option value="6">× 6</option>
+            <option value="8">× 8</option>
+          </select>
+        </label>
+        <button id="theme" type="button" aria-pressed="false">Mode sombre</button>
+        <button id="pause" type="button" aria-pressed="false">Pause</button>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="t-scene">
+      <h2 id="t-scene">La scène</h2>
+      <div class="scene">
+        <div class="actor lamia">
+          <p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" id="bubble-lamia">Bonjour Lamia ! Prête à faire briller tes calques ?</p>
+          <canvas id="cv-lamia"></canvas>
+        </div>
+        <div class="actor memeow">
+          <p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" id="bubble-memeow"><span>Meew meeew !</span><img class="pixel-bubble__icon" id="bubble-icon" alt="(cœur)"></p>
+          <canvas id="cv-memeow"></canvas>
+        </div>
+      </div>
+      <div class="controls">
+        <fieldset>
+          <legend>Lamia</legend>
+          <div class="btns" data-char="lamia"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Memeow</legend>
+          <div class="btns" data-char="memeow"></div>
+        </fieldset>
+      </div>
+      <p class="note">Les animations ponctuelles reviennent à <code>idle</code> ; <code>sleep</code> tourne en boucle. Avec « Réduire les animations » activé dans le système, chaque animation devient une image fixe.</p>
+    </section>
+
+    <section class="card" aria-labelledby="t-icons">
+      <h2 id="t-icons">Les icônes (16 × 16)</h2>
+      <div class="icons" id="icons"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-bubbles">
+      <h2 id="t-bubbles">Les bulles</h2>
+      <div class="bubbles">
+        <p class="pixel-bubble pixel-bubble--tail-left">Queue à gauche : le personnage parle depuis la gauche.</p>
+        <p class="pixel-bubble pixel-bubble--tail-right">Queue à droite.</p>
+        <p class="pixel-bubble pixel-bubble--tail-bottom">Queue en bas, pour une bulle posée au-dessus d’un personnage.</p>
+        <p class="pixel-bubble">Sans queue.</p>
+        <p class="pixel-bubble pixel-bubble--tail-bottom big">Mrrreeew ?<img class="pixel-bubble__icon" data-icon="kibble" alt="(croquette)"></p>
+        <p class="pixel-bubble pixel-bubble--tail-left">Trois échéances cette semaine : on y va une à la fois, et Memeow surveille le planning.</p>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="t-sheets">
+      <h2 id="t-sheets">Planches exportées (PNG × 4)</h2>
+      <p class="note" style="margin-bottom: var(--space-4)">Générées par <code>node design/sprites/export-png.mjs</code> dans <code>design/sprites/png/</code> : ce sont les fichiers à retoucher dans Aseprite ou Photoshop.</p>
+      <div id="sheets"></div>
+    </section>
+  </div>
+
+  <script src="pixel-cast.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var PC = window.PixelCast;
+      var LABELS = {
+        idle: 'Repos', wave: 'Coucou', cheer: 'Bravo', typing: 'Dessine',
+        sleep: 'Dodo (clavier)', lick: 'Toilette', hungry: 'Croquettes !', meow: 'Miaou'
+      };
+      var ICON_LABELS = {
+        'mood-1': 'Humeur 1 · épuisée', 'mood-2': 'Humeur 2 · bof', 'mood-3': 'Humeur 3 · ça va',
+        'mood-4': 'Humeur 4 · bien', 'mood-5': 'Humeur 5 · au top', heart: 'heart', fish: 'fish',
+        zzz: 'zzz', kibble: 'kibble', star: 'star', note: 'note'
+      };
+      var ICON_NAMES = Object.keys(ICON_LABELS);
+      var scaleSel = document.getElementById('scale');
+      var themeBtn = document.getElementById('theme');
+      var pauseBtn = document.getElementById('pause');
+      var ctrls = {};
+      var current = { lamia: 'wave', memeow: 'idle' };
+
+      function mountAll() {
+        var scale = +scaleSel.value;
+        ['lamia', 'memeow'].forEach(function (id) {
+          if (ctrls[id]) ctrls[id].destroy();
+          var cv = document.getElementById('cv-' + id);
+          ctrls[id] = PC.mount(cv, id, { scale: scale, animation: current[id] });
+          cv.parentNode.style.setProperty('--actor-w', (PC.size(id).width * scale) + 'px');
+        });
+        if (pauseBtn.getAttribute('aria-pressed') === 'true') { ctrls.lamia.stop(); ctrls.memeow.stop(); }
+      }
+
+      function buildButtons() {
+        Array.prototype.forEach.call(document.querySelectorAll('.btns'), function (box) {
+          var id = box.getAttribute('data-char');
+          PC.animations[id].forEach(function (name) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = (LABELS[name] || name) + ' · ' + name;
+            b.addEventListener('click', function () {
+              current[id] = name;
+              pauseBtn.setAttribute('aria-pressed', 'false'); pauseBtn.textContent = 'Pause';
+              ctrls[id].play(name);
+              if (id === 'lamia') pop('bubble-lamia');
+              if (id === 'memeow') pop('bubble-memeow');
+            });
+            box.appendChild(b);
+          });
+        });
+      }
+
+      function pop(elId) {
+        var el = document.getElementById(elId);
+        el.classList.remove('pixel-bubble--pop');
+        void el.offsetWidth; // relance l'animation
+        el.classList.add('pixel-bubble--pop');
+      }
+
+      function renderIcons() {
+        var box = document.getElementById('icons');
+        box.textContent = '';
+        ICON_NAMES.forEach(function (name) {
+          var cell = document.createElement('div');
+          cell.className = 'icon';
+          var pair = document.createElement('div');
+          pair.className = 'pair';
+          pair.appendChild(PC.icon(name, 2));
+          pair.appendChild(PC.icon(name, 4));
+          var label = document.createElement('span');
+          label.textContent = ICON_LABELS[name];
+          cell.appendChild(pair); cell.appendChild(label);
+          box.appendChild(cell);
+        });
+        document.getElementById('bubble-icon').src = PC.iconDataURL('heart', 4);
+        Array.prototype.forEach.call(document.querySelectorAll('img[data-icon]'), function (img) {
+          img.src = PC.iconDataURL(img.getAttribute('data-icon'), 4);
+        });
+      }
+
+      function renderSheets() {
+        var box = document.getElementById('sheets');
+        ['lamia', 'memeow'].forEach(function (id) {
+          PC.animations[id].forEach(function (name) {
+            var fig = document.createElement('figure');
+            fig.className = 'sheet';
+            var cap = document.createElement('figcaption');
+            cap.textContent = id + '-' + name + '@4x.png';
+            var scroll = document.createElement('div');
+            scroll.className = 'scroll';
+            var img = document.createElement('img');
+            img.alt = 'Planche ' + id + ' ' + name;
+            img.loading = 'lazy';
+            img.src = 'png/' + id + '-' + name + '@4x.png';
+            img.onerror = function () { cap.textContent += ' (absente : lancez l’export)'; img.remove(); };
+            scroll.appendChild(img);
+            fig.appendChild(cap); fig.appendChild(scroll);
+            box.appendChild(fig);
+          });
+        });
+      }
+
+      function isDark() {
+        var t = document.documentElement.dataset.theme;
+        if (t) return t === 'dark';
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      function syncThemeButton() {
+        var dark = isDark();
+        themeBtn.setAttribute('aria-pressed', String(dark));
+        themeBtn.textContent = dark ? 'Mode clair' : 'Mode sombre';
+      }
+      themeBtn.addEventListener('click', function () {
+        document.documentElement.dataset.theme = isDark() ? 'light' : 'dark';
+        syncThemeButton();
+        renderIcons(); // les humeurs suivent les tokens --mood-* du thème
+      });
+      pauseBtn.addEventListener('click', function () {
+        var paused = pauseBtn.getAttribute('aria-pressed') === 'true';
+        if (paused) { ctrls.lamia.play(); ctrls.memeow.play(); }
+        else { ctrls.lamia.stop(); ctrls.memeow.stop(); }
+        pauseBtn.setAttribute('aria-pressed', String(!paused));
+        pauseBtn.textContent = paused ? 'Pause' : 'Lecture';
+      });
+      scaleSel.addEventListener('change', mountAll);
+
+      buildButtons();
+      renderIcons();
+      renderSheets();
+      syncThemeButton();
+      mountAll();
+    })();
+  </script>
+</body>
+</html>

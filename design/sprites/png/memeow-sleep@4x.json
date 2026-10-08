@@ -1,0 +1,117 @@
+{
+  "frames": [
+    {
+      "filename": "memeow-sleep 0.aseprite",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 96
+      },
+      "duration": 700
+    },
+    {
+      "filename": "memeow-sleep 1.aseprite",
+      "frame": {
+        "x": 128,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 96
+      },
+      "duration": 700
+    },
+    {
+      "filename": "memeow-sleep 2.aseprite",
+      "frame": {
+        "x": 256,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 96
+      },
+      "duration": 700
+    },
+    {
+      "filename": "memeow-sleep 3.aseprite",
+      "frame": {
+        "x": 384,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 96
+      },
+      "duration": 700
+    }
+  ],
+  "meta": {
+    "app": "design/sprites/export-png.mjs (PixelCast)",
+    "version": "1.0",
+    "image": "memeow-sleep@4x.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 512,
+      "h": 96
+    },
+    "scale": "4",
+    "frameTags": [
+      {
+        "name": "sleep",
+        "from": 0,
+        "to": 3,
+        "direction": "forward",
+        "loop": true,
+        "next": null,
+        "repeat": 1,
+        "still": 0
+      }
+    ],
+    "layers": [],
+    "slices": []
+  }
+}

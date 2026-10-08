@@ -1,0 +1,183 @@
+/* ==========================================================================
+   pixel-bubble.css · Plateforme de suivi - Lamia
+   Bulles de dialogue pixel art (contour en escalier + petite queue pixel).
+   Contrat (docs/00-cahier-des-charges.md §8) :
+     .pixel-bubble
+     .pixel-bubble--tail-left  .pixel-bubble--tail-right  .pixel-bubble--tail-bottom
+   Bonus : .pixel-bubble--pop (apparition), .pixel-bubble__icon (icône PixelCast en ligne).
+   N'utilise que les tokens de design/tokens.css : suit donc le mode sombre.
+
+   Technique : la forme est peinte avec des dégradés unis (aucune image).
+   Le contour fait toujours exactement --pixel-bubble-px pixels CSS : il reste net
+   quelle que soit la taille du texte. La queue est dessinée pixel par pixel
+   (box-shadow) et l'ombre portée suit la silhouette (drop-shadow sans flou).
+   ========================================================================== */
+
+.pixel-bubble {
+  /* Réglages (surchargeables sur l'élément ou un parent) */
+  --pixel-bubble-px: 3px;                         /* taille d'un « pixel » du contour */
+  --pixel-bubble-line: var(--accent);             /* contour */
+  --pixel-bubble-fill: var(--color-surface);      /* fond opaque */
+  --pixel-bubble-shade: var(--color-surface-muted); /* ombre interne (bas) */
+  --pixel-bubble-drop: var(--color-border-strong);  /* ombre portée */
+  --pixel-bubble-tail-offset: calc(var(--pixel-bubble-px) * 5); /* position de la queue le long du bord */
+
+  --_p: var(--pixel-bubble-px);
+  --_l: linear-gradient(var(--pixel-bubble-line), var(--pixel-bubble-line));
+  --_f: linear-gradient(var(--pixel-bubble-fill), var(--pixel-bubble-fill));
+  --_s: linear-gradient(var(--pixel-bubble-shade), var(--pixel-bubble-shade));
+
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: calc(var(--_p) * 14);
+  min-height: calc(var(--_p) * 12);
+  padding: calc(var(--_p) * 3 + var(--space-2)) calc(var(--_p) * 3 + var(--space-4));
+  font-family: var(--font-pixel);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-normal);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+
+  /* De haut en bas : ombre interne, fond (2 rectangles), contour (3 rectangles). */
+  background:
+    var(--_s) left calc(var(--_p) * 2) bottom var(--_p) / calc(100% - var(--_p) * 4) var(--_p) no-repeat,
+    var(--_f) calc(var(--_p) * 2) var(--_p) / calc(100% - var(--_p) * 4) calc(100% - var(--_p) * 2) no-repeat,
+    var(--_f) var(--_p) calc(var(--_p) * 2) / calc(100% - var(--_p) * 2) calc(100% - var(--_p) * 4) no-repeat,
+    var(--_l) calc(var(--_p) * 2) 0 / calc(100% - var(--_p) * 4) 100% no-repeat,
+    var(--_l) var(--_p) var(--_p) / calc(100% - var(--_p) * 2) calc(100% - var(--_p) * 2) no-repeat,
+    var(--_l) 0 calc(var(--_p) * 2) / 100% calc(100% - var(--_p) * 4) no-repeat;
+  filter: drop-shadow(0 var(--_p) 0 var(--pixel-bubble-drop));
+}
+
+.pixel-bubble > :first-child { margin-top: 0; }
+.pixel-bubble > :last-child { margin-bottom: 0; }
+
+/* ---------- Queues pixel ---------------------------------------------------
+   Le pseudo-élément fait 1 « pixel » ; chaque box-shadow en dessine un autre.
+   La première rangée recouvre le contour de la bulle pour l'ouvrir. */
+
+.pixel-bubble--tail-bottom::after,
+.pixel-bubble--tail-left::after,
+.pixel-bubble--tail-right::after {
+  content: "";
+  position: absolute;
+  width: var(--_p);
+  height: var(--_p);
+  background: var(--pixel-bubble-line);
+  pointer-events: none;
+}
+
+/* Vers le bas (bord inférieur, côté gauche) : marches qui descendent vers la gauche. */
+.pixel-bubble--tail-bottom {
+  margin-bottom: calc(var(--_p) * 5);
+}
+.pixel-bubble--tail-bottom::after {
+  left: var(--pixel-bubble-tail-offset);
+  top: calc(100% - var(--_p));
+  box-shadow:
+    calc(var(--_p) * 1) 0 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 2) 0 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 3) 0 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 4) 0 0 0 var(--pixel-bubble-line),
+    0 calc(var(--_p) * 1) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 1) calc(var(--_p) * 1) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 2) calc(var(--_p) * 1) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 3) calc(var(--_p) * 1) 0 0 var(--pixel-bubble-line),
+    0 calc(var(--_p) * 2) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 1) calc(var(--_p) * 2) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 2) calc(var(--_p) * 2) 0 0 var(--pixel-bubble-line),
+    0 calc(var(--_p) * 3) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 1) calc(var(--_p) * 3) 0 0 var(--pixel-bubble-line),
+    0 calc(var(--_p) * 4) 0 0 var(--pixel-bubble-line);
+}
+
+/* Vers la gauche (bord gauche, en bas) : le personnage est à gauche de la bulle. */
+.pixel-bubble--tail-left {
+  margin-left: calc(var(--_p) * 5);
+}
+.pixel-bubble--tail-left::after {
+  left: 0;
+  bottom: calc(var(--pixel-bubble-tail-offset) - var(--_p) * 2);
+  box-shadow:
+    0 calc(var(--_p) * -1) 0 0 var(--pixel-bubble-fill),
+    0 calc(var(--_p) * -2) 0 0 var(--pixel-bubble-fill),
+    0 calc(var(--_p) * -3) 0 0 var(--pixel-bubble-fill),
+    0 calc(var(--_p) * -4) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -1) 0 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -1) calc(var(--_p) * -1) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * -1) calc(var(--_p) * -2) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * -1) calc(var(--_p) * -3) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -2) 0 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -2) calc(var(--_p) * -1) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * -2) calc(var(--_p) * -2) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -3) 0 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -3) calc(var(--_p) * -1) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * -4) 0 0 0 var(--pixel-bubble-line);
+}
+
+/* Vers la droite (bord droit, en bas) : le personnage est à droite de la bulle. */
+.pixel-bubble--tail-right {
+  margin-right: calc(var(--_p) * 5);
+}
+.pixel-bubble--tail-right::after {
+  left: calc(100% - var(--_p));
+  bottom: calc(var(--pixel-bubble-tail-offset) - var(--_p) * 2);
+  box-shadow:
+    0 calc(var(--_p) * -1) 0 0 var(--pixel-bubble-fill),
+    0 calc(var(--_p) * -2) 0 0 var(--pixel-bubble-fill),
+    0 calc(var(--_p) * -3) 0 0 var(--pixel-bubble-fill),
+    0 calc(var(--_p) * -4) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 1) 0 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 1) calc(var(--_p) * -1) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 1) calc(var(--_p) * -2) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 1) calc(var(--_p) * -3) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 2) 0 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 2) calc(var(--_p) * -1) 0 0 var(--pixel-bubble-fill),
+    calc(var(--_p) * 2) calc(var(--_p) * -2) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 3) 0 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 3) calc(var(--_p) * -1) 0 0 var(--pixel-bubble-line),
+    calc(var(--_p) * 4) 0 0 0 var(--pixel-bubble-line);
+}
+
+/* ---------- Liseré des sprites PixelCast en mode sombre -------------------
+   Lu par pixel-cast.js sur chaque canvas : un contour d'1 pixel « art » autour de
+   la silhouette, pour que le noir des cheveux / du pelage reste lisible sur fond
+   sombre. Surchargeable par conteneur ; transparent = aucun liseré. */
+:root { --pixel-cast-rim: transparent; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --pixel-cast-rim: var(--color-border-strong); }
+}
+:root[data-theme="dark"] { --pixel-cast-rim: var(--color-border-strong); }
+
+/* ---------- Icône PixelCast dans la bulle (ex. le cœur de Memeow) ---------- */
+.pixel-bubble__icon {
+  display: inline-block;
+  width: calc(1em + var(--space-1));
+  height: calc(1em + var(--space-1));
+  margin-inline-start: var(--space-1);
+  vertical-align: -0.2em;
+  image-rendering: pixelated;
+}
+
+/* ---------- Apparition « pop » (en marches, façon pixel) ------------------- */
+.pixel-bubble--pop {
+  transform-origin: 15% 100%;
+  animation: pixel-bubble-pop var(--dur-slow) steps(5, end) both;
+}
+.pixel-bubble--pop.pixel-bubble--tail-left { transform-origin: 0 85%; }
+.pixel-bubble--pop.pixel-bubble--tail-right { transform-origin: 100% 85%; }
+
+@keyframes pixel-bubble-pop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  55%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-bubble--pop { animation: none; }
+}
