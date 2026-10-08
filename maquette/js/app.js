@@ -83,14 +83,19 @@
       if (!t.reminder || !t.endDate || Q.isDone(t)) return false;
       return D.addDays(t.endDate, -t.reminder.daysBefore) <= today && t.endDate >= today;
     }).sort(function (a, b) { return a.endDate < b.endDate ? -1 : 1; });
-    due.slice(0, 2).forEach(function (t, i) {
-      setTimeout(function () {
-        U.toast({ icon: 'bell', title: 'Rappel : « ' + t.title + ' »',
-          text: 'Échéance ' + (D.diff(D.today(), t.endDate) <= 1 ? D.relative(t.endDate).toLowerCase() + ', ' : 'le ') + D.dayMonthLong(t.endDate) + '. Tu as le temps de t’organiser.', duration: 8000,
+    if (!due.length) return;
+    function when(t) { var n = D.diff(today, t.endDate); return n === 0 ? 'aujourd’hui' : n === 1 ? 'demain' : 'le ' + D.dayMonthLong(t.endDate); }
+    setTimeout(function () {
+      if (due.length === 1) {
+        var t = due[0];
+        U.toast({ icon: 'bell', title: 'Rappel : « ' + t.title + ' »', text: 'Échéance ' + when(t) + '. Tu as le temps de t’organiser.', duration: 8000,
           actions: [{ label: 'Ouvrir', fn: function () { L.drawer.open(t.id); } }] });
-      }, 300 + i * 450);
-    });
-    if (due.length > 2) setTimeout(function () { U.toast({ icon: 'bell', title: 'Et ' + U.plural(due.length - 2, 'autre rappel'), text: 'Tout est dans « Échéances », sur le Dashboard.', duration: 6000 }); }, 1300);
+        return;
+      }
+      U.toast({ icon: 'bell', title: U.plural(due.length, 'rappel') + ' d’échéance',
+        text: due.slice(0, 3).map(function (t) { return '« ' + t.title + ' », ' + when(t); }).join(' ; ') + (due.length > 3 ? '…' : '.') + ' Tu as le temps de t’organiser.',
+        duration: 9000, actions: [{ label: 'Voir les échéances', fn: function () { location.hash = 'dashboard'; setTimeout(function () { var c = document.getElementById('dh-due'); if (c) c.scrollIntoView({ block: 'center' }); }, 120); } }] });
+    }, 300);
   }
 
   function morning(force) {

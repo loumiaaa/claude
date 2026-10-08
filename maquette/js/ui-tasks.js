@@ -60,19 +60,21 @@
     var label = t.title + ', ' + c.name + ', priorité ' + Q.prioLabel(t.priority).toLowerCase() + (d ? ', ' + d.long : '') + ', avancement ' + t.progress + ' %';
     return '<article class="glass glass--nested glass--interactive task-card' + (t.status === 'done' ? ' task-card--done' : '') + (timing ? ' is-timing' : '') + '" ' +
       'role="listitem" tabindex="0" draggable="true" data-id="' + t.id + '" data-focus-key="card-' + t.id + '" aria-label="' + esc(label) + '" aria-describedby="kanban-help">' +
-      '<div class="task-card__top">' + U.catChip(c) + U.prio(t.priority) +
-        '<span class="task-card__grip" data-grip aria-hidden="true" title="Glisser pour déplacer">' + icon('grip') + '</span>' +
+      '<span class="task-card__grip" data-grip aria-hidden="true" title="Glisser pour déplacer">' + icon('grip') + '</span>' +
+      '<div class="task-card__top">' + U.catChip(c) + (t.priority !== 'normal' ? U.prio(t.priority) : '') +
         '<button type="button" class="btn btn--ghost btn--icon btn--sm task-card__menu" data-card-menu data-focus-key="menu-' + t.id + '" aria-haspopup="menu" aria-expanded="false" aria-label="Actions pour « ' + esc(t.title) + ' » : ouvrir, déplacer vers…">' + icon('more') + '</button>' +
       '</div>' +
       '<h3 class="task-card__title">' + esc(t.title) + '</h3>' +
       (t.client ? '<p class="task-card__client">' + icon('briefcase') + '<span>' + esc(t.client) + '</span></p>' : '') +
       (t.tags.length ? '<div class="task-card__tags">' + U.tags(t.tags, 3) + '</div>' : '') +
-      (t.status !== 'todo' || t.progress > 0 ? '<div class="task-card__progress"><span class="task-card__pct num">' + t.progress + NB + '%</span>' + U.progress(t.progress, t.status === 'done' ? 'progress--sm progress--success' : 'progress--sm') + '</div>' : '') +
+      (t.status !== 'done' && (t.status !== 'todo' || t.progress > 0) ? '<div class="task-card__progress"><span class="task-card__pct num">' + t.progress + NB + '%</span>' + U.progress(t.progress, 'progress--sm') + '</div>' : '') +
       '<div class="task-card__foot">' +
         (t.checklist.length ? '<span class="task-card__meta" title="Checklist">' + icon('checklist') + '<span class="num">' + done + '/' + t.checklist.length + '</span><span class="sr-only"> sous-tâches faites</span></span>' : '') +
         (mins || timing ? '<span class="task-card__meta" title="Heures passées">' + icon('clock') + '<span class="num">' + D.duration(mins, { compact: true }) + '</span><span class="sr-only"> passées</span></span>' : '') +
         (timing ? '<span class="task-card__live"><span class="chrono__live' + (tm.pausedAt ? ' is-paused' : '') + '" aria-hidden="true"></span><span class="num" data-timer-elapsed>' + D.clock(L.chrono.elapsed()) + '</span></span>' : '') +
-        '<span class="task-card__due">' + U.dueBadge(t) + '</span>' +
+        (t.status === 'done'
+          ? '<span class="task-card__due task-card__done">' + icon('check') + (t.completedAt ? 'Terminée le ' + esc(D.dayMonth(t.completedAt)) : 'Terminée') + '</span>'
+          : '<span class="task-card__due">' + U.dueBadge(t) + '</span>') +
       '</div></article>';
   }
 
@@ -102,7 +104,8 @@
           (list.length ? list.map(cardHTML).join('') : columnEmpty(s.id, anyFilter)) + '</div>' +
       '</section>';
     }).join('') + '</div>' +
-    '<p class="kbd-help" id="kanban-help">Astuce : glisse une carte d’une colonne à l’autre, ou au clavier : <span class="kbd">Entrée</span> ouvre le détail, <span class="kbd">Alt</span> + <span class="kbd">←</span> <span class="kbd">→</span> change de colonne, <span class="kbd">Alt</span> + <span class="kbd">↑</span> <span class="kbd">↓</span> change l’ordre. Le menu ⋯ propose aussi « Déplacer vers… ».</p>';
+    '<p class="kbd-help kbd-help--touch">Astuce : maintiens la poignée en haut d’une carte pour la glisser, ou touche ⋯ puis « Déplacer vers… ».</p>' +
+    '<p class="kbd-help kbd-help--desk" id="kanban-help">Astuce : glisse une carte d’une colonne à l’autre, ou au clavier : <span class="kbd">Entrée</span> ouvre le détail, <span class="kbd">Alt</span> + <span class="kbd">←</span> <span class="kbd">→</span> change de colonne, <span class="kbd">Alt</span> + <span class="kbd">↑</span> <span class="kbd">↓</span> change l’ordre. Le menu ⋯ propose aussi « Déplacer vers… ».</p>';
   }
 
   /* --- Vue liste ----------------------------------------------------------- */
@@ -122,6 +125,8 @@
       hours: function (t) { return Q.taskMinutes(t, null, null, true); }
     }[s.key] || function (t) { return t.title; };
     return list.slice().sort(function (a, b) {
+      // Par échéance, les tâches terminées passent après celles qui restent à faire
+      if (s.key === 'endDate' && (a.status === 'done') !== (b.status === 'done')) return a.status === 'done' ? 1 : -1;
       var x = val(a), y = val(b);
       if (typeof x === 'string') { var c = x.localeCompare(y, 'fr'); if (c) return c * dir; }
       else if (x !== y) return (x < y ? -1 : 1) * dir;

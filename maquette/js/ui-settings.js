@@ -53,8 +53,8 @@
           '<div class="field"><span class="label">Jours travaillés</span>' + dayToggles('flowline', f.days) + '</div></div>' +
         '<p class="hint">Soit ' + perDay + ' par jour travaillé. Au-delà, l’affichage reste neutre : « + 2 h », jamais d’alerte.</p></div>' +
       '<div class="goal-block"><div class="goal-block__head">' + U.catDot({ color: 'auto' }) + '<h3 class="goal-block__title">Auto-entreprise</h3><span class="text-sm text-muted">Carnet by-pass inclus</span></div>' +
-        '<div class="goal-grid"><div class="field"><span class="label">Jours perso</span>' + dayToggles('auto-entreprise', a.days) + '</div>' +
-          '<div class="field"><label class="switch"><input class="switch__input" type="checkbox" role="switch" data-goal-auto-on data-focus-key="g-aon"' + (a.weeklyHours ? ' checked' : '') + '>' +
+        '<div class="goal-grid goal-grid--stack"><div class="field"><span class="label">Jours perso</span>' + dayToggles('auto-entreprise', a.days) + '</div>' +
+          '<div class="goal-inline"><label class="switch"><input class="switch__input" type="checkbox" role="switch" data-goal-auto-on data-focus-key="g-aon"' + (a.weeklyHours ? ' checked' : '') + '>' +
             '<span class="switch__track" aria-hidden="true"></span><span class="switch__label">Objectif indicatif</span></label>' +
             '<div class="input-suffix"><label class="sr-only" for="g-aw">Heures par semaine (auto-entreprise)</label><input class="input" type="number" min="1" max="40" step="0.5" id="g-aw" data-goal="auto-entreprise" data-focus-key="g-aw" value="' + (a.weeklyHours || 6) + '"' + (a.weeklyHours ? '' : ' disabled') + '><span>h / sem.</span></div></div></div>' +
         '<p class="hint">Par défaut, pas d’objectif : le samedi reste un plaisir. (Point à arbitrer avec Lamia.)</p></div>' +
@@ -84,7 +84,10 @@
       '<div class="btn-row">' +
         '<button type="button" class="btn btn--secondary btn--sm" data-demo="open-folder">' + icon('folder') + 'Ouvrir le dossier</button>' +
         '<button type="button" class="btn btn--secondary btn--sm" data-demo="export-json">' + icon('download') + 'Exporter une sauvegarde</button>' +
-        '<button type="button" class="btn btn--ghost btn--sm" data-demo="restore">' + icon('refresh') + 'Restaurer…</button></div></section>';
+        '<button type="button" class="btn btn--secondary btn--sm" data-demo="import">' + icon('upload') + 'Importer une sauvegarde</button>' +
+        '<input type="file" accept=".json,application/json" data-import-file hidden>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-demo="restore">' + icon('refresh') + 'Restaurer…</button></div>' +
+      '<p class="hint">Exporter puis importer un .json : pratique pour passer d’un PC à l’autre en attendant la V2.</p></section>';
   }
 
   function remindersCard() {
@@ -101,7 +104,7 @@
       '<p class="card__subtitle">Date de démo figée au ' + esc(D.long(D.today())) + '.</p></div></div>' +
       '<div class="btn-row">' +
         '<button type="button" class="btn btn--secondary btn--sm" data-demo="replay">' + icon('mood') + 'Rejouer la question d’humeur du matin</button>' +
-        '<button type="button" class="btn btn--danger btn--sm" data-demo="reset">' + icon('refresh') + 'Réinitialiser la démo</button></div>' +
+        '<button type="button" class="btn btn--secondary btn--danger-text btn--sm" data-demo="reset">' + icon('refresh') + 'Réinitialiser la démo</button></div>' +
       '<p class="hint">La réinitialisation remet les données fictives d’origine. Rien d’autre n’est touché.</p></section>';
   }
 
@@ -143,6 +146,28 @@
     });
     el.addEventListener('change', function (e) {
       var t = e.target;
+      if (t.hasAttribute('data-import-file')) {
+        var file = t.files && t.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          var data = null;
+          try { data = JSON.parse(reader.result); } catch (err) { data = null; }
+          t.value = '';
+          if (!data || data.version !== 1 || !Array.isArray(data.tasks)) {
+            U.toast({ kind: 'warning', icon: 'alert', title: 'Fichier non reconnu', text: 'Ce n’est pas une sauvegarde de la plateforme. Rien n’a été modifié.' });
+            return;
+          }
+          U.dialog({
+            title: 'Importer cette sauvegarde ?', returnTo: el.querySelector('[data-demo="import"]'),
+            text: U.plural(data.tasks.length, 'tâche') + ' et ' + U.plural((data.moods || []).length, 'humeur') + ' vont remplacer les données actuelles. Dans l’application, une copie de sécurité sera faite avant.',
+            confirmLabel: 'Importer',
+            onConfirm: function () { S.replace(data); L.app.applyTheme(); U.toast({ kind: 'success', icon: 'check', title: 'Sauvegarde importée', text: file.name }); }
+          });
+        };
+        reader.readAsText(file);
+        return;
+      }
       if (t.hasAttribute('data-cat-group')) S.updateCategory(t.closest('[data-cat]').getAttribute('data-cat'), { group: t.value });
       else if (t.getAttribute('data-goal') === 'flowline') { var v = parseFloat(t.value); if (v > 0) S.setSchedule('flowline', { weeklyHours: v }); }
       else if (t.getAttribute('data-goal') === 'auto-entreprise') { var w = parseFloat(t.value); if (w > 0) S.setSchedule('auto-entreprise', { weeklyHours: w }); }
@@ -177,6 +202,8 @@
         } else if (a === 'export-json') {
           U.download('sauvegarde-lamia-' + D.today() + '.json', JSON.stringify(S.get(), null, 2), 'application/json');
           U.toast({ kind: 'success', icon: 'download', title: 'Sauvegarde exportée', text: 'Un fichier .json complet, à garder où tu veux.' });
+        } else if (a === 'import') {
+          el.querySelector('[data-import-file]').click();
         } else if (a === 'open-folder') U.toast({ icon: 'folder', title: 'Dans l’application', text: 'Ce bouton ouvrira Donnees-Lamia dans l’Explorateur Windows.' });
         else if (a === 'restore') U.toast({ icon: 'refresh', title: 'Dans l’application', text: 'Tu choisiras parmi les 30 sauvegardes quotidiennes. Une copie de l’état actuel est faite avant.' });
       }

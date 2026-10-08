@@ -127,14 +127,15 @@
   function render(task) {
     var st = S.get();
     var c = S.category(task.categoryId);
-    return '<aside class="drawer task-drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">' +
+    return '<aside class="drawer task-drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" tabindex="-1">' +
       '<div class="drawer__header">' +
         '<div class="drawer__heading"><div class="drawer__chips" data-dr-chips>' + U.catChip(c) + U.statusChip(task.status) + '</div>' +
-        '<h2 class="drawer__title" id="dr-title">' + esc(task.title) + '</h2></div>' +
+        '<h2 class="sr-only" id="dr-title">' + esc(task.title) + '</h2>' +
+        '<label class="sr-only" for="dr-t">Titre de la tâche</label>' +
+        '<textarea class="title-input" id="dr-t" data-f="title" rows="1" spellcheck="true" autocomplete="off">' + esc(task.title) + '</textarea></div>' +
         '<button type="button" class="btn btn--ghost btn--icon" data-dr-close aria-label="Fermer le détail">' + icon('close') + '</button>' +
       '</div>' +
       '<div class="drawer__body">' +
-        '<div class="field"><label class="label" for="dr-t">Titre</label><input class="input" id="dr-t" data-f="title" value="' + esc(task.title) + '" autocomplete="off"></div>' +
         '<div class="field"><label class="label" for="dr-desc">Description <span class="label__optional">facultatif</span></label>' +
           '<textarea class="textarea" id="dr-desc" data-f="description" rows="3" placeholder="Le brief, les contraintes, un lien vers les fichiers…">' + esc(task.description) + '</textarea></div>' +
         '<div class="form-grid">' +
@@ -168,6 +169,14 @@
         '<button type="button" class="btn btn--secondary" data-dr-close>Fermer</button>' +
       '</div>' +
     '</aside>';
+  }
+
+  // Le titre éditable grandit avec son texte (pas de barre de défilement)
+  function fitTitle() {
+    var ta = root && root.querySelector('#dr-t');
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
   }
 
   function refresh(part) {
@@ -220,6 +229,7 @@
       if (!f || !task) return;
       if (f === 'title') {
         var v = e.target.value;
+        fitTitle();
         root.querySelector('#dr-title').textContent = v.trim() || 'Sans titre';
         if (v.trim()) S.updateTask(task.id, { title: v.trim() });
       } else if (f === 'description' || f === 'client') {
@@ -321,6 +331,7 @@
         S.moveCheck(current, e.target.closest('[data-cid]').getAttribute('data-cid'), e.key === 'ArrowUp' ? -1 : 1);
       }
       if (e.key === 'Escape' && editingEntry) { e.stopPropagation(); editingEntry = null; refresh('hours'); }
+      if (e.key === 'Enter' && e.target.id === 'dr-t') { e.preventDefault(); var d = root.querySelector('#dr-desc'); if (d) d.focus(); }
     }, true);
 
     root.addEventListener('click', function (e) {
@@ -396,7 +407,8 @@
     root = ov.querySelector('.task-drawer');
     bind();
     U.typo(root);
-    if (!reopening) U.openLayer(ov, { initialFocus: '#dr-t', returnTo: opts.returnTo, onClose: function () { current = null; root = null; } });
+    if (!reopening) U.openLayer(ov, { initialFocus: root, returnTo: opts.returnTo, onClose: function () { current = null; root = null; } });
+    requestAnimationFrame(fitTitle);
     if (opts.section === 'hours') {
       setTimeout(function () {
         var h = root && root.querySelector('[data-dr-hours]');

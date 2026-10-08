@@ -105,6 +105,7 @@
     var top = Math.ceil(maxV / step) * step;
     var y = function (v) { return pad.t + ih - (v / top) * ih; };
     var band = iw / o.data.length;
+    var maxVal = Math.max.apply(null, o.data.map(function (d) { return d.value; }));
     var bw = Math.min(24, Math.max(8, band * 0.5));
 
     var s = '<svg xmlns="' + NS + '" class="chart chart--bars ' + (o.hue || '') + '" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="' + esc(o.ariaLabel || '') + '">';
@@ -123,8 +124,10 @@
       if (d.goal) {
         s += '<line class="chart__goal" x1="' + (x - 5) + '" x2="' + (x + bw + 5) + '" y1="' + y(d.goal) + '" y2="' + y(d.goal) + '"/>';
       }
-      if (d.value > 0 && o.labels !== false) s += text(cx, Math.min(y(d.value), d.goal ? y(d.goal) : 9999) - 7, D.duration(d.value, { compact: true }), 'chart__value', 'middle');
-      s += text(cx, H - pad.b + 17, d.label, 'chart__tick chart__tick--x' + (d.current ? ' is-current' : ''), 'middle');
+      // Étiquettes sélectives : toutes si la place le permet, sinon le jour courant et le maximum
+      var roomy = band >= 50;
+      if (d.value > 0 && o.labels !== false && (roomy || d.current || d.value === maxVal)) s += text(cx, Math.min(y(d.value), d.goal ? y(d.goal) : 9999) - 7, D.duration(d.value, { compact: true }), 'chart__value', 'middle');
+      s += text(cx, H - pad.b + 17, band < 40 && d.short ? d.short : d.label, 'chart__tick chart__tick--x' + (d.current ? ' is-current' : ''), 'middle');
       if (d.sub) s += text(cx, H - pad.b + 32, d.sub, 'chart__tick chart__tick--sub', 'middle');
       s += '</g>';
     });
@@ -222,8 +225,12 @@
       }
     });
     // Ticks X : 1 sur 7 (lundis) + aujourd'hui
+    var lastMon = -1;
+    o.days.forEach(function (d, i) { if (D.dow(d.date) === 1) lastMon = i; });
     o.days.forEach(function (d, i) {
-      if (D.dow(d.date) === 1 || i === n - 1) s += text(x(i), H - 8, D.dayMonth(d.date), 'chart__tick', i === n - 1 ? 'end' : 'middle');
+      var isLast = i === n - 1;
+      if (isLast && lastMon >= 0 && x(i) - x(lastMon) < 64) return;   // évite le chevauchement
+      if (D.dow(d.date) === 1 || isLast) s += text(x(i), H - 8, D.dayMonth(d.date), 'chart__tick', isLast ? 'end' : 'middle');
     });
     s += '<line class="chart__cross" x1="0" x2="0" y1="' + pad.t + '" y2="' + (pad.t + ih) + '" hidden/>';
     o.days.forEach(function (d, i) {

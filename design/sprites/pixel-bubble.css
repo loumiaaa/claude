@@ -35,6 +35,8 @@
   min-height: calc(var(--_p) * 12);
   padding: calc(var(--_p) * 3 + var(--space-2)) calc(var(--_p) * 3 + var(--space-4));
   font-family: var(--font-pixel);
+  /* La ligature « fi » de Pixelify Sans se lit « A » : on la coupe. */
+  font-variant-ligatures: none;
   font-size: var(--fs-md);
   font-weight: var(--fw-regular);
   line-height: var(--lh-snug);

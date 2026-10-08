@@ -32,10 +32,12 @@
       '<div class="scene__say scene__say--lamia"><p class="pixel-bubble ' + (narrow ? 'pixel-bubble--tail-bottom' : 'pixel-bubble--tail-left') + ' pixel-bubble--pop" data-bubble="lamia" aria-live="polite">' +
         '<span class="sr-only">Lamia dit : </span><span data-say>' + esc(voice.lamia) + '</span></p></div>' +
       '<canvas class="scene__sprite scene__sprite--lamia" data-sprite="lamia" aria-label="Lamia, en pixel art"></canvas>' +
-      '<div class="scene__say scene__say--memeow"><p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" data-bubble="memeow" aria-live="polite">' +
-        '<span class="sr-only">Memeow répond : </span><span data-say>' + memeowSays(voice.memeow.text, voice.memeow.icon) + '</span></p></div>' +
-      '<button type="button" class="scene__cat" data-memeow aria-label="Memeow, la chatte de Lamia. Clique pour qu’elle réagisse">' +
-        '<canvas class="scene__sprite scene__sprite--memeow" data-sprite="memeow" aria-hidden="true"></canvas></button>' +
+      '<div class="scene__memeow">' +
+        '<div class="scene__say scene__say--memeow"><p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" data-bubble="memeow" aria-live="polite">' +
+          '<span class="sr-only">Memeow répond : </span><span data-say>' + memeowSays(voice.memeow.text, voice.memeow.icon) + '</span></p></div>' +
+        '<button type="button" class="scene__cat" data-memeow aria-label="Memeow, la chatte de Lamia. Clique pour qu’elle réagisse">' +
+          '<canvas class="scene__sprite scene__sprite--memeow" data-sprite="memeow" aria-hidden="true"></canvas></button>' +
+      '</div>' +
     '</div>';
   }
 
@@ -107,6 +109,7 @@
     var w0 = D.startOfWeek(D.today()), w1 = D.endOfWeek(D.today());
     var mins = Q.minutesByCategory(w0, w1, true);
     var tm = st.timer;
+    var hasFree = false;
     var rows = st.categories.map(function (c) {
       var m = mins[c.id] || 0;
       var goal = Q.goalFor(c);
@@ -116,10 +119,15 @@
         var left = goal.weekly - m;
         value = '<strong class="num">' + D.duration(m) + '</strong><span class="hours-row__goal"> / ' + D.duration(goal.weekly) + '</span>';
         bar = '<span class="progress progress--lg ' + progressCls(c) + '" style="--value:' + Math.min(100, Math.round(m / goal.weekly * 100)) + '" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal.weekly + '" aria-valuenow="' + m + '" aria-label="' + esc(c.name) + ' : ' + D.duration(m) + ' sur ' + D.duration(goal.weekly) + '"></span>';
-        note = left > 0 ? 'Encore ' + D.duration(left) + ' d’ici vendredi, soit ' + D.duration(goal.daily) + ' par jour en moyenne.' : (left === 0 ? 'Objectif atteint, pile poil.' : 'Objectif atteint : +' + NB + D.duration(-left) + ', tout en douceur.');
+        note = left > 0 ? 'Encore ' + D.duration(left) + ' d’ici vendredi (objectif : ' + D.duration(goal.daily) + ' par jour).' : (left === 0 ? 'Objectif atteint, pile poil.' : 'Objectif atteint : +' + NB + D.duration(-left) + ', tout en douceur.');
       } else {
         value = '<strong class="num">' + D.duration(m) + '</strong>';
-        note = c.group === 'auto-entreprise' ? 'Le samedi, c’est ton jour perso : pas d’objectif, juste le plaisir.' : 'Pas d’objectif pour cette catégorie.';
+        var daily = Q.dailyMinutes(c.id, w0, w1, true);
+        var days = Object.keys(daily).filter(function (d) { return daily[d] > 0; });
+        note = days.length
+          ? days.map(function (d) { return D.cap(D.DAYS[D.dow(d)]) + ' : ' + D.duration(daily[d]); }).join(' · ')
+          : 'Pas encore d’heures cette semaine. Samedi, c’est ton jour.';
+        hasFree = true;
       }
       if (running) note += ' Chrono en cours inclus.';
       return '<div class="hours-row">' +
@@ -130,7 +138,8 @@
       '<div class="card__header"><div><h2 class="card__title" id="dh-hours">Heures de la semaine</h2>' +
       '<p class="card__subtitle">Chaque catégorie a son compteur, jamais mélangé.</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#recap">Détail' + icon('chevron-right') + '</a></div></div>' +
-      '<div class="hours-rows">' + rows + '</div></section>';
+      '<div class="hours-rows">' + rows + '</div>' +
+      (hasFree ? '<p class="hours-card__foot">' + icon('heart') + 'Pas d’objectif pour le perso : le samedi reste un plaisir.</p>' : '') + '</section>';
   }
 
   function progressCls(c) {
@@ -159,7 +168,8 @@
     }
     return '<section class="glass glass--tint-violet card mood-card" aria-labelledby="dh-mood">' +
       '<div class="card__header"><div><h2 class="card__title" id="dh-mood">Humeur du jour</h2><p class="card__subtitle">Pour toi, et pour la courbe du récap.</p></div></div>' +
-      body + '<ol class="mood-week" aria-label="Tes 7 derniers jours">' + week + '</ol></section>';
+      body + '<div class="mood-week-wrap"><p class="mood-week__caption" id="dh-week">Tes 7 derniers jours</p>' +
+      '<ol class="mood-week" aria-labelledby="dh-week">' + week + '</ol></div></section>';
   }
 
   function taskRow(t) {
@@ -174,7 +184,7 @@
     return '<li class="task-row' + (mine ? ' is-timing' : '') + '">' + play +
       '<button type="button" class="task-row__main" data-open-task="' + t.id + '">' +
         '<span class="task-row__title">' + esc(t.title) + '</span>' +
-        '<span class="task-row__meta">' + U.catDot(c) + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + '</span></button>' +
+        '<span class="task-row__meta">' + U.catDot(c) + '<span class="task-row__meta-text">' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + '</span></span></button>' +
       (mine ? '<span class="task-row__clock num" data-timer-elapsed role="timer" aria-label="Temps écoulé">' + D.clock(L.chrono.elapsed()) + '</span>'
             : '<span class="task-row__progress"><span class="task-row__pct num">' + t.progress + NB + '%</span>' + U.progress(t.progress, 'progress--sm') + '</span>') +
       '<span class="task-row__due">' + U.dueBadge(t) + '</span></li>';
@@ -182,11 +192,14 @@
 
   function doingCard() {
     var doing = S.column('doing');
+    var review = S.column('review');
     return '<section class="glass card doing-card" aria-labelledby="dh-doing">' +
       '<div class="card__header"><div><h2 class="card__title" id="dh-doing">Tes tâches en cours</h2>' +
-      '<p class="card__subtitle">▶ pour lancer le chrono : deux clics, pas de formulaire.</p></div>' +
+      '<p class="card__subtitle">▶ lance le chrono : deux clics, pas de formulaire.</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#taches">Kanban' + icon('chevron-right') + '</a></div></div>' +
-      (doing.length ? '<ul class="task-rows" role="list">' + doing.map(taskRow).join('') + '</ul>'
+      (doing.length ? '<ul class="task-rows" role="list">' + doing.map(taskRow).join('') + '</ul>' +
+        (review.length ? '<h3 class="subsection-title">' + icon('eye') + 'En validation, chez le client <span class="badge badge--neutral">' + review.length + '</span></h3>' +
+          '<ul class="task-rows" role="list">' + review.map(taskRow).join('') + '</ul>' : '')
         : '<div class="empty-state"><div class="empty-state__art">' + icon('coffee') + '</div><p class="empty-state__title">Rien en cours</p>' +
           '<p class="empty-state__text">Choisis une tâche dans « Pas commencé » ou crée-en une nouvelle.</p>' +
           '<div class="empty-state__actions"><button type="button" class="btn btn--primary btn--sm" data-action="new-task">' + icon('plus') + 'Nouvelle tâche</button></div></div>') +
@@ -219,7 +232,7 @@
         '<span class="date-tile' + (n <= 1 ? ' date-tile--soon' : '') + '"><span class="date-tile__dow">' + D.DAYS_SHORT[d.getDay()].replace('.', '') + '</span><span class="date-tile__day num">' + d.getDate() + '</span></span>' +
         '<span class="due-row__text"><span class="due-row__title">' + esc(t.title) + '</span>' +
         '<span class="due-row__meta">' + U.catDot(c) + esc(c.name) + ' · ' + esc(D.relative(t.endDate)) + '</span></span>' +
-        '<span class="prio prio--' + t.priority + ' prio--dot-only" title="Priorité ' + esc(Q.prioLabel(t.priority).toLowerCase()) + '"><span class="sr-only">Priorité ' + esc(Q.prioLabel(t.priority).toLowerCase()) + '</span></span>' +
+        (t.priority === 'high' || t.priority === 'urgent' ? U.prio(t.priority) : '<span></span>') +
         '</button></li>';
     }).join('') + '</ul>' : '<p class="empty-line">Aucune échéance dans les 7 prochains jours. Le calme avant… le calme.</p>';
     return '<section class="glass card due-card" aria-labelledby="dh-due">' +
@@ -228,30 +241,37 @@
       lateHTML + soonHTML + '</section>';
   }
 
+  function shortLabel(p) {
+    if (p.kind === 'day') return D.cap(D.dayMonthLong(p.start));
+    if (p.kind === 'month') return D.cap(D.monthYear(p.start));
+    var a = D.parse(p.start), b = D.parse(p.end);
+    return 'Du ' + a.getDate() + (a.getMonth() !== b.getMonth() ? NB + D.MONTHS[a.getMonth()] : '') + ' au ' + b.getDate() + NB + D.MONTHS[b.getMonth()];
+  }
+
   function recapCard() {
     var kind = S.get().settings.ui.dashPeriod || 'week';
     var p = D.period(kind, D.today());
     var s = Q.summary(p);
     var periodWord = { day: 'aujourd’hui', week: 'cette semaine', month: 'ce mois-ci' }[kind];
     function tile(ic, label, value, sub, cls) {
-      return '<article class="glass glass--nested stat ' + (cls || '') + '"><div class="stat__head"><span class="stat__icon">' + icon(ic) + '</span><span class="stat__label">' + esc(label) + '</span></div>' +
-        '<div class="stat__value">' + value + '</div><p class="stat__sub">' + esc(sub) + '</p></article>';
+      return '<li class="mini-stat ' + (cls || '') + '"><span class="stat__icon">' + icon(ic) + '</span>' +
+        '<span class="mini-stat__text"><span class="mini-stat__label">' + esc(label) + '</span><span class="mini-stat__sub">' + esc(sub) + '</span></span>' +
+        '<span class="mini-stat__value num">' + value + '</span></li>';
     }
     var review = s.ongoing.filter(function (t) { return t.status === 'review'; }).length;
     return '<section class="glass card recap-card" aria-labelledby="dh-recap">' +
-      '<div class="card__header"><div><h2 class="card__title" id="dh-recap">Récap express</h2><p class="card__subtitle">' + esc(p.label) + '</p></div>' +
-      '<div class="card__actions">' +
-        '<div class="segmented" role="group" aria-label="Période du récap express">' +
+      '<div class="card__header"><div><h2 class="card__title" id="dh-recap">Récap express</h2><p class="card__subtitle">' + esc(shortLabel(p)) + '</p></div>' +
+      '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#recap">Récap' + icon('chevron-right') + '</a></div></div>' +
+        '<div class="segmented segmented--block" role="group" aria-label="Période du récap express">' +
           [['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois']].map(function (o) {
             return '<button type="button" class="segmented__item" data-dash-period="' + o[0] + '" data-focus-key="dp-' + o[0] + '" aria-pressed="' + (kind === o[0]) + '">' + o[1] + '</button>';
           }).join('') + '</div>' +
-        '<a class="btn btn--ghost btn--sm recap-card__more" href="#recap">Récap complet' + icon('chevron-right') + '</a></div></div>' +
-      '<div class="stat-row">' +
+      '<ul class="mini-stats" role="list">' +
         tile('tasks', 'En cours', '<span>' + s.ongoing.length + '</span>', review ? 'dont ' + review + ' en validation' : 'Une à la fois, c’est parfait') +
         tile('check', 'Terminées', '<span>' + s.done.length + '</span>', s.done.length ? 'Bravo, ' + periodWord : 'Ça viendra, ' + periodWord, 'stat--done') +
         tile('calendar', 'À venir', '<span>' + s.upcoming.length + '</span>', kind === 'day' ? 'Échéance aujourd’hui' : 'Échéance ' + periodWord) +
         tile('refresh', 'À replanifier', '<span>' + s.allReplan.length + '</span>', s.allReplan.length ? 'Une nouvelle date, et on repart' : 'Tout est à jour', 'stat--replan') +
-      '</div></section>';
+      '</ul></section>';
   }
 
   /* --- Rendu -------------------------------------------------------------- */
@@ -262,28 +282,27 @@
     if (!voice) pickVoice();
     var hadScene = !!el.querySelector('.scene');
     var html =
-      '<header class="page-head page-head--hello">' +
-        '<div class="page-head__text"><p class="eyebrow">' + esc(D.cap(D.long(today))) + ' · semaine ' + D.isoWeek(today) + '</p>' +
-        '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour Lamia</h1>' +
-        '<p class="page-head__lead">' + esc(leadText(ctx)) + '</p></div>' +
-      '</header>' +
       '<div class="dash-grid">' +
-        '<section class="glass card scene-card" aria-labelledby="dh-scene">' +
-          '<div class="card__header"><div><h2 class="card__title" id="dh-scene">Lamia &amp; Memeow</h2><p class="card__subtitle">Le petit mot du jour</p></div>' +
-          '<div class="card__actions"><button type="button" class="btn btn--ghost btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button></div></div>' +
-          '<div data-scene-slot></div>' +
+        '<section class="glass card hero" aria-labelledby="h-dashboard">' +
+          '<div class="hero__text"><p class="eyebrow">' + esc(D.cap(D.long(today))) + ' · semaine ' + D.isoWeek(today) + '</p>' +
+            '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour Lamia</h1>' +
+            '<p class="hero__lead" data-lead>' + esc(leadText(ctx)) + '</p>' +
+            '<div class="hero__actions"><button type="button" class="btn btn--secondary btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button>' +
+            '<span class="hero__hint">Clique sur Memeow, elle adore ça.</span></div></div>' +
+          '<div class="hero__stage" data-scene-slot></div>' +
         '</section>' +
-        '<div class="dash-side" data-dash-side>' + hoursCard() + moodCard() + '</div>' +
+        '<div data-dash-hours class="dash-hours">' + hoursCard() + '</div>' +
+        '<div data-dash-mood class="dash-mood">' + moodCard() + '</div>' +
+        '<div data-dash-recap class="dash-recap">' + recapCard() + '</div>' +
         '<div data-dash-doing class="dash-doing">' + doingCard() + '</div>' +
         '<div data-dash-due class="dash-due">' + dueCard() + '</div>' +
-        '<div data-dash-recap class="dash-recap">' + recapCard() + '</div>' +
       '</div>';
     var scene = hadScene ? el.querySelector('.scene') : null;
     U.keepFocus(el, function () {
       el.innerHTML = html;
       var slot = el.querySelector('[data-scene-slot]');
-      if (scene) slot.parentNode.replaceChild(scene, slot);
-      else { slot.outerHTML = sceneHTML(); mountCast(); }
+      if (scene) slot.appendChild(scene);
+      else { slot.innerHTML = sceneHTML(); mountCast(); }
     });
     U.typo(el);
   }
@@ -291,13 +310,14 @@
   // Re-rendu ciblé (la scène pixel n'est jamais reconstruite inutilement)
   function update(part) {
     if (!el || !el.querySelector('.dash-grid')) return render();
-    var map = { side: ['[data-dash-side]', function () { return hoursCard() + moodCard(); }], doing: ['[data-dash-doing]', doingCard], due: ['[data-dash-due]', dueCard], recap: ['[data-dash-recap]', recapCard] };
+    if (part === 'side') part = null;
+    var map = { hours: ['[data-dash-hours]', hoursCard], mood: ['[data-dash-mood]', moodCard], doing: ['[data-dash-doing]', doingCard], due: ['[data-dash-due]', dueCard], recap: ['[data-dash-recap]', recapCard] };
     (part ? [part] : Object.keys(map)).forEach(function (k) {
       var box = el.querySelector(map[k][0]);
       U.keepFocus(box, function () { box.innerHTML = map[k][1](); });
       U.typo(box);
     });
-    var lead = el.querySelector('.page-head__lead');
+    var lead = el.querySelector('[data-lead]');
     if (lead) { lead.textContent = leadText(Q.voiceContext()); U.typo(lead); }
   }
 
@@ -332,7 +352,13 @@
   function mount(node) {
     el = node;
     narrowMQ = window.matchMedia('(max-width: 640px)');
-    var onNarrow = function () { if (el.querySelector('.scene')) { var s = el.querySelector('.scene'); s.outerHTML = sceneHTML(); mountCast(); } };
+    var wasNarrow = narrowMQ.matches;
+    var onNarrow = function () {
+      if (narrowMQ.matches === wasNarrow) return;
+      wasNarrow = narrowMQ.matches;
+      var s = el.querySelector('.scene');
+      if (s) { s.outerHTML = sceneHTML(); mountCast(); }
+    };
     if (narrowMQ.addEventListener) narrowMQ.addEventListener('change', onNarrow);
 
     el.addEventListener('click', function (e) {
@@ -352,9 +378,9 @@
     S.subscribe(function (type, d) {
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'reset') { voice = null; el.innerHTML = ''; render(); return; }
-      if (type === 'mood') { update('side'); if (d.level) { anotherPhrase(); } return; }
+      if (type === 'mood') { update('mood'); if (d.level) { anotherPhrase(); } return; }
       if (type === 'ui') { if (d.dashPeriod) update('recap'); return; }
-      if (type === 'timer') { update('side'); update('doing'); return; }
+      if (type === 'timer') { update('hours'); update('doing'); return; }
       if (type === 'settings' || type === 'category') { update(); return; }
       if (type.indexOf('task') === 0) {
         if (d.part === 'checklist') return;
@@ -362,7 +388,7 @@
       }
     });
     // Les heures (chrono en cours inclus) se rafraîchissent chaque minute
-    setInterval(function () { if (L.app.view() === 'dashboard' && S.get().timer && !document.querySelector('.has-layer')) update('side'); }, 60000);
+    setInterval(function () { if (L.app.view() === 'dashboard' && S.get().timer && !document.querySelector('.has-layer')) update('hours'); }, 60000);
   }
 
   function show() {

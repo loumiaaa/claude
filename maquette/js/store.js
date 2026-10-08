@@ -28,9 +28,19 @@
   function save() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
+      saveTimer = null;
       try { if (window.localStorage) window.localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* stockage indisponible : la démo reste en mémoire */ }
     }, 150);
   }
+
+  // Écriture immédiate à la fermeture de la page (le délai de 150 ms ne doit rien perdre)
+  function flush() {
+    if (!saveTimer || !state) return;
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    try { if (window.localStorage) window.localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* rien */ }
+  }
+  window.addEventListener('pagehide', flush);
 
   function clearSaved() {
     try { if (window.localStorage) window.localStorage.removeItem(KEY); } catch (e) { /* rien */ }
@@ -97,6 +107,16 @@
       state = L.seed();
       state.flags.lastOpenedOn = D.today();
       emit('reset');
+    },
+
+    // Import d'une sauvegarde .json (même format que l'export)
+    replace: function (data) {
+      if (!data || data.version !== 1 || !Array.isArray(data.tasks) || !Array.isArray(data.categories)) return false;
+      state = data;
+      state.flags = state.flags || {};
+      state.settings.ui = Object.assign(L.seed().settings.ui, state.settings.ui || {});
+      emit('reset');
+      return true;
     },
 
     setFlag: function (k, v) { state.flags[k] = v; save(); },
@@ -381,7 +401,8 @@
     var upcomingFrom = p.start > today ? p.start : today;
     var upcoming = p.end >= today ? dueBetween(upcomingFrom, p.end) : [];
     var replan = tasks.filter(function (t) { return isOverdue(t) && t.endDate <= p.end && t.endDate >= p.start; });
-    var dueInPeriod = tasks.filter(function (t) { return t.endDate && D.between(t.endDate, p.start, p.end); });
+    // Taux de complétion : seulement les échéances déjà arrivées (on ne compte pas demain contre toi)
+    var dueInPeriod = tasks.filter(function (t) { return t.endDate && D.between(t.endDate, p.start, p.end) && t.endDate <= today; });
     var dueDone = dueInPeriod.filter(isDone);
     return {
       created: created, done: done, ongoing: ongoing, upcoming: upcoming, replan: replan,

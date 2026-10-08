@@ -199,7 +199,11 @@
     setInert();
     if (layer.onClose) layer.onClose(reason);
     var back = layer.returnTo;
-    if (back && document.contains(back) && visible(back)) back.focus();
+    if (!back || back === document.body || back === document.documentElement) {
+      // Ouverte au chargement (humeur du matin) : on rend le focus au titre de l'onglet
+      var h = document.querySelector('.view:not([hidden]) h1');
+      if (h) h.focus({ preventScroll: true });
+    } else if (document.contains(back) && visible(back)) back.focus();
     else if (back && back.getAttribute && back.getAttribute('data-focus-key')) {
       var again = document.querySelector('[data-focus-key="' + back.getAttribute('data-focus-key') + '"]');
       if (again) again.focus();

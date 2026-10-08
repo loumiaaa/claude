@@ -19,6 +19,16 @@
 
   function prevPeriod(p) { return D.period(p.kind, D.shift(p.kind, p.start, -1)); }
 
+  // Pour une période en cours, on compare « à date » : la période précédente tronquée
+  // au même nombre de jours écoulés (comparer un mois entamé à un mois complet découragerait).
+  function prevComparable(p) {
+    var prev = prevPeriod(p);
+    if (!isCurrent(p)) return prev;
+    var elapsed = D.diff(p.start, D.today());
+    var end = D.min(prev.end, D.addDays(prev.start, elapsed));
+    return { kind: prev.kind, start: prev.start, end: end, days: D.eachDay(prev.start, end), label: prev.label, partial: true };
+  }
+
   /* --- Heures ------------------------------------------------------------- */
   function goalDays(c) {
     var g = Q.goalFor(c);
@@ -32,7 +42,7 @@
     if (p.kind === 'week') {
       return p.days.map(function (d) {
         var gd = g && goalDays(c).indexOf(D.dow(d)) >= 0 ? g.daily : null;
-        return { key: d, label: D.cap(D.DAYS_SHORT[D.dow(d)]), sub: String(D.parse(d).getDate()), value: daily[d], goal: gd, future: d > today, current: d === today,
+        return { key: d, label: D.cap(D.DAYS_SHORT[D.dow(d)]), short: D.DAYS_LETTER[D.dow(d)], sub: String(D.parse(d).getDate()), value: daily[d], goal: gd, future: d > today, current: d === today,
           title: D.cap(D.dayMonthLong(d)) + ' : ' + D.duration(daily[d]) + (gd ? ', objectif ' + D.duration(gd) : ''), tipTitle: D.cap(D.dayMonthLong(d)) };
       });
     }
@@ -60,16 +70,23 @@
     var mins = Q.minutesByCategory(p.start, p.end, true)[c.id] || 0;
     var goalTotal = 0;
     if (g) D.eachDay(p.start, p.end).forEach(function (d) { if (g.days.indexOf(D.dow(d)) >= 0) goalTotal += g.daily; });
-    var prev = prevPeriod(p);
+    var prev = prevComparable(p);
     var prevMins = Q.minutesByCategory(prev.start, prev.end, false)[c.id] || 0;
-    var deltaTxt = prevMins || mins ? (mins - prevMins >= 0 ? '+' : '−') + NB + D.duration(Math.abs(mins - prevMins)) + ' vs ' + { day: 'la veille', week: 'la semaine précédente', month: 'le mois précédent' }[p.kind] : '';
-    var compare = g ? '<span class="hcard__goal">sur ' + D.duration(goalTotal) + '</span>' : '<span class="hcard__goal">sans objectif</span>';
+    var prevName = { day: 'la veille', week: 'S' + D.isoWeek(prev.start), month: D.MONTHS_SHORT[D.parse(prev.start).getMonth()] }[p.kind];
+    var deltaTxt = prevMins || mins ? (mins - prevMins >= 0 ? '+' : '−') + NB + D.duration(Math.abs(mins - prevMins)) + ' vs ' + prevName : '';
+    var compare = g ? '<span class="hcard__goal">sur ' + D.duration(goalTotal) + '</span>' : '';
     var goalNote = '';
     if (g) {
       var left = goalTotal - mins;
-      goalNote = left > 0 ? 'Encore ' + D.duration(left) + ' pour l’objectif de la période.' : (left === 0 ? 'Objectif atteint, pile poil.' : 'Objectif atteint : +' + NB + D.duration(-left) + ', tout en douceur.');
+      if (isCurrent(p) && p.kind !== 'day') {
+        var toDate = 0;
+        D.eachDay(p.start, D.today()).forEach(function (d) { if (g.days.indexOf(D.dow(d)) >= 0) toDate += g.daily; });
+        goalNote = 'Objectif à ce jour : ' + D.duration(toDate) + (mins >= toDate ? ', c’est dans la poche.' : '. La période n’est pas finie, rien ne presse.');
+      } else {
+        goalNote = left > 0 ? 'Encore ' + D.duration(left) + ' pour l’objectif de la période.' : (left === 0 ? 'Objectif atteint, pile poil.' : 'Objectif atteint : +' + NB + D.duration(-left) + ', tout en douceur.');
+      }
     } else {
-      goalNote = c.group === 'auto-entreprise' ? 'Le perso se fait surtout le samedi : pas d’objectif, juste un repère.' : '';
+      goalNote = c.group === 'auto-entreprise' ? 'Sans objectif : le perso se fait surtout le samedi.' : 'Sans objectif d’heures.';
     }
     var body;
     var id = 'hc-' + c.id;
@@ -79,20 +96,31 @@
       body = (g ? '<span class="progress progress--lg ' + progressCls(c) + '" style="--value:' + (goalTotal ? Math.min(100, Math.round(mins / goalTotal * 100)) : 0) + '" aria-hidden="true"></span>' : '') +
         (entries.length ? '<ul class="day-entries" role="list">' + entries.map(function (x) {
           return '<li><span class="day-entries__title">' + esc(x.t.title) + '</span><span class="day-entries__dur num">' + D.duration(x.e.minutes) + '</span></li>';
-        }).join('') + '</ul>' : '<p class="empty-line">Pas d’heures ce jour-là' + (D.isWeekend(p.start) && c.group === 'flowline' ? ' : c’était le week-end.' : '.') + '</p>');
+        }).join('') + runningRow(c, p) + '</ul>' : '<p class="empty-line">Pas d’heures ce jour-là' + (D.isWeekend(p.start) && c.group === 'flowline' ? ' : c’était le week-end.' : '.') + '</p>');
     } else {
       body = '<div class="chart-host" data-chart="bars" data-chart-id="' + id + '"></div>' +
         (g ? '<p class="chart-legend"><span class="chart-legend__goal" aria-hidden="true"></span>Objectif ' + (p.kind === 'week' ? D.duration(g.daily) + ' par jour travaillé' : D.duration(g.weekly) + ' par semaine (au prorata en début et fin de mois)') + '</p>' : '');
       charts.push({ id: id, kind: 'bars', hue: U.hue(c), name: c.name, data: hoursSeries(c, p) });
     }
-    return '<section class="glass card hcard ' + U.hue(c) + '" aria-labelledby="' + id + '-t">' +
+    return '<section class="glass card hcard ' + U.hue(c) + (g ? ' hcard--goal' : '') + '" aria-labelledby="' + id + '-t">' +
       '<div class="hcard__head"><h3 class="hcard__title" id="' + id + '-t">' + U.catChip(c) + '</h3>' +
-        (deltaTxt ? '<span class="stat__delta" title="Comparaison neutre avec la période précédente">' + esc(deltaTxt) + '</span>' : '') + '</div>' +
+        (deltaTxt ? '<span class="stat__delta" title="Comparaison avec la période précédente' + (isCurrent(p) ? ', au même stade (période en cours)' : '') + '">' + esc(deltaTxt) + '</span>' : '') + '</div>' +
       '<p class="hcard__value"><span class="hcard__num">' + D.duration(mins) + '</span>' + compare + '</p>' +
       (goalNote ? '<p class="hcard__note">' + esc(goalNote) + '</p>' : '') + body +
       (p.kind !== 'day' ? tableTwin(c, p) : '') +
     '</section>';
   }
+
+  // Le chrono en cours compte dans le total du jour : on l'affiche aussi dans la liste
+  function runningRow(c, p) {
+    var tm = S.get().timer;
+    var t = tm && S.task(tm.taskId);
+    if (!t || t.categoryId !== c.id || p.start !== D.today()) return '';
+    return '<li class="is-running"><span class="day-entries__title"><span class="chrono__live' + (tm.pausedAt ? ' is-paused' : '') + '" aria-hidden="true"></span>' + esc(t.title) + ' <span class="text-muted">(chrono en cours)</span></span>' +
+      '<span class="day-entries__dur num">' + D.duration(Math.floor(L.chrono.elapsed() / 60000)) + '</span></li>';
+  }
+
+  function isCurrent(p) { return D.between(D.today(), p.start, p.end); }
 
   function progressCls(c) {
     return { flowline: 'progress--flowline', carnet: 'progress--carnet', auto: 'progress--auto' }[c.color] || 'progress--hue ' + U.hue(c);
@@ -109,11 +137,12 @@
   /* --- KPI ------------------------------------------------------------------ */
   function kpis(p) {
     var s = Q.summary(p);
-    var ps = Q.summary(prevPeriod(p));
-    var vs = { day: 'vs la veille', week: 'vs semaine préc.', month: 'vs mois préc.' }[p.kind];
+    var pp = prevComparable(p);
+    var ps = Q.summary(pp);
+    var vs = 'vs ' + { day: 'la veille', week: 'S' + D.isoWeek(pp.start), month: D.MONTHS_SHORT[D.parse(pp.start).getMonth()] }[p.kind];
     function delta(a, b) {
       var d = a - b;
-      return '<span class="stat__delta">' + (d > 0 ? icon('arrow-up') : d < 0 ? icon('arrow-down') : '') + (d > 0 ? '+' : '') + (d === 0 ? '=' : d) + ' ' + vs + '</span>';
+      return '<span class="stat__delta" title="Comparaison avec la période précédente' + (pp.partial ? ', au même stade' : '') + '">' + (d > 0 ? icon('arrow-up') : d < 0 ? icon('arrow-down') : '') + (d > 0 ? '+' : '') + (d === 0 ? '=' : d) + ' ' + vs + '</span>';
     }
     function tile(ic, label, value, extra, cls) {
       return '<article class="glass stat ' + (cls || '') + '"><div class="stat__head"><span class="stat__icon">' + icon(ic) + '</span><span class="stat__label">' + esc(label) + '</span></div>' +
@@ -128,22 +157,28 @@
       tile('refresh', 'À replanifier', replanNow, '<span class="stat__sub">' + (replanNow ? 'Échéance passée sur la période' : 'Rien à replanifier') + '</span>', 'stat--replan') +
       '<article class="glass stat stat--ring"><div class="stat__head"><span class="stat__icon">' + icon('target') + '</span><span class="stat__label">Taux de complétion</span></div>' +
         '<div class="stat-ring">' +
-          (rate == null ? '<p class="stat__sub">Aucune échéance sur la période.</p>'
-            : '<div class="ring ring--sm" style="--value:' + rate + '" role="img" aria-label="' + rate + ' % des échéances tenues"><span class="ring__value">' + rate + '</span></div>' +
-              '<p class="stat__sub"><strong class="num">' + rate + NB + '%</strong><br>' + s.dueDone.length + ' échéance' + (s.dueDone.length > 1 ? 's' : '') + ' tenue' + (s.dueDone.length > 1 ? 's' : '') + ' sur ' + s.due.length + '</p>') +
+          (rate == null ? '<p class="stat__sub">Aucune échéance passée sur la période.</p>'
+            : '<div class="ring" style="--value:' + rate + ';--ring-size:72px;--ring-thickness:8px" role="img" aria-label="' + rate + ' % des échéances tenues"><span class="ring__value">' + rate + '<small>%</small></span></div>' +
+              '<p class="stat__sub">' + s.dueDone.length + ' échéance' + (s.dueDone.length > 1 ? 's' : '') + ' tenue' + (s.dueDone.length > 1 ? 's' : '') + ' sur ' + s.due.length + (isCurrent(p) ? ', jusqu’à aujourd’hui' : '') + '</p>') +
         '</div></article>' +
     '</div>';
   }
 
   /* --- Listes --------------------------------------------------------------- */
-  function taskList(list, empty) {
+  var expanded = {};
+  function taskList(list, empty, key) {
     if (!list.length) return '<p class="empty-line">' + esc(empty) + '</p>';
-    return '<ul class="recap-list" role="list">' + list.map(function (t) {
+    var MAX = 6;
+    var more = list.length - MAX;
+    var shown = more > 0 && !expanded[key] ? list.slice(0, MAX) : list;
+    return '<ul class="recap-list" role="list">' + shown.map(function (t) {
       var c = S.category(t.categoryId);
       return '<li><button type="button" class="recap-item" data-open-task="' + t.id + '">' + U.catDot(c) +
         '<span class="recap-item__text"><span class="recap-item__title">' + esc(t.title) + '</span><span class="recap-item__meta">' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + ' · ' + t.progress + NB + '%</span></span>' +
         U.dueBadge(t) + '</button></li>';
-    }).join('') + '</ul>';
+    }).join('') + '</ul>' +
+      (more > 0 ? '<button type="button" class="btn btn--ghost btn--sm recap-more" data-more="' + key + '" data-focus-key="more-' + key + '" aria-expanded="' + !!expanded[key] + '">' +
+        icon(expanded[key] ? 'chevron-up' : 'chevron-down') + (expanded[key] ? 'Afficher moins' : 'Afficher les ' + more + ' autres') + '</button>' : '');
   }
 
   /* --- Humeur ------------------------------------------------------------- */
@@ -285,9 +320,9 @@
         '<section class="glass glass--tint-violet card insight-card" aria-labelledby="rc-ins"><div class="card__header"><div><h2 class="card__title" id="rc-ins">Humeur et heures</h2>' +
           '<p class="card__subtitle">Sur les 30 derniers jours ouvrés</p></div></div>' + moodInsight(days) + '</section>' +
         '<section class="glass card" aria-labelledby="rc-todo"><div class="card__header"><div><h2 class="card__title" id="rc-todo">À terminer</h2><p class="card__subtitle">Échéances de la période, et celles à replanifier</p></div>' +
-          '<span class="badge badge--neutral">' + toFinish.length + '</span></div>' + taskList(toFinish, 'Rien à boucler sur cette période. Savoure.') + '</section>' +
+          '<span class="badge badge--neutral">' + toFinish.length + '</span></div>' + taskList(toFinish, 'Rien à boucler sur cette période. Savoure.', 'finish') + '</section>' +
         '<section class="glass card" aria-labelledby="rc-soon"><div class="card__header"><div><h2 class="card__title" id="rc-soon">Arrivent bientôt</h2><p class="card__subtitle">Les 14 jours qui suivent</p></div>' +
-          '<span class="badge badge--neutral">' + soon.length + '</span></div>' + taskList(soon, 'Rien à l’horizon pour l’instant.') + '</section>' +
+          '<span class="badge badge--neutral">' + soon.length + '</span></div>' + taskList(soon, 'Rien à l’horizon pour l’instant.', 'soon') + '</section>' +
         '<section class="glass card" aria-labelledby="rc-cat"><div class="card__header"><div><h2 class="card__title" id="rc-cat">Tâches actives par catégorie</h2><p class="card__subtitle">Travaillées, créées ou à échéance sur la période</p></div></div>' +
           '<div class="chart-host" data-chart-id="rc-cats"></div></section>' +
         '<section class="glass card" aria-labelledby="rc-tag"><div class="card__header"><div><h2 class="card__title" id="rc-tag">Par étiquette</h2><p class="card__subtitle">Les 7 étiquettes les plus présentes</p></div></div>' +
@@ -320,6 +355,7 @@
         return;
       }
       if (e.target.closest('[data-rtoday]')) { S.setUI({ recapAnchor: D.today() }); return; }
+      if ((b = e.target.closest('[data-more]'))) { var k = b.getAttribute('data-more'); expanded[k] = !expanded[k]; render(); return; }
       if ((b = e.target.closest('[data-export]'))) { if (b.getAttribute('data-export') === 'csv') exportCSV(); else exportPDF(); }
     });
     S.subscribe(function (type, d) {

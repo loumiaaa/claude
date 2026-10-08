@@ -107,12 +107,12 @@
     var weeks = {};
     var order = [];
     items.forEach(function (it) {
-      var w = D.startOfWeek(D.max(it.s[0], p.start));
+      var w = it.s[0] < p.start ? 'before' : D.startOfWeek(it.s[0]);
       if (!weeks[w]) { weeks[w] = []; order.push(w); }
       weeks[w].push(it);
     });
     return order.map(function (w) {
-      var label = w === D.startOfWeek(D.today()) ? 'Cette semaine' : 'Semaine du ' + D.dayMonth(w);
+      var label = w === 'before' ? 'Déjà en route' : w === D.startOfWeek(D.today()) ? 'Cette semaine' : 'Semaine du ' + D.dayMonth(w);
       return '<section class="plan-week"><h3 class="plan-week__title">' + esc(label) + '</h3><ul class="plan-list" role="list">' +
         weeks[w].map(function (it) {
           var t = it.t, late = Q.isOverdue(t);
