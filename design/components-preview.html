@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Planche de style — Plateforme de suivi - Lamia</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <script src="icons.js"></script>
+  <style>
+    /* Mise en page de la planche uniquement (tokens seulement, aucune couleur en dur) */
+    .pv-shell { max-width: 1240px; margin: 0 auto; padding: 0 var(--space-8) var(--space-16); }
+
+    .pv-topbar {
+      position: sticky; top: var(--space-4); z-index: var(--z-sticky);
+      display: flex; align-items: center; gap: var(--space-3);
+      max-width: 1240px; margin: var(--space-4) auto 0;
+      padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+      border-radius: var(--radius-pill);
+    }
+    .pv-topbar-wrap { padding: 0 var(--space-8); position: sticky; top: 0; z-index: var(--z-sticky); }
+    .pv-brand { display: flex; align-items: center; gap: var(--space-3); min-width: 0; flex: 1; }
+    .pv-mark {
+      display: grid; place-items: center; width: 36px; height: 36px; flex: none;
+      border-radius: var(--radius-sm); background-image: var(--accent-gradient); color: var(--accent-contrast);
+      box-shadow: var(--accent-shadow);
+    }
+    .pv-mark .icon { width: 20px; height: 20px; }
+    .pv-brand__name { font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: var(--fs-md); letter-spacing: var(--ls-tight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pv-brand__sub { font-size: var(--fs-xs); color: var(--color-text-muted); white-space: nowrap; }
+
+    .pv-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-10); align-items: center; padding: var(--space-16) 0 var(--space-12); }
+    .pv-hero__lead { margin-top: var(--space-5); max-width: 52ch; font-size: var(--fs-lg); line-height: var(--lh-normal); color: var(--color-text-muted); }
+    .pv-hero__facts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); }
+    .pv-fact { display: inline-flex; align-items: center; gap: var(--space-2); height: 32px; padding: 0 var(--space-3) 0 6px; border-radius: var(--radius-pill); background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-sm); font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--color-text-muted); }
+    .pv-fact__sw { width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+    .pv-fact code { font-family: var(--font-body); font-weight: var(--fw-semibold); color: var(--color-text); }
+
+    .pv-hero-card { padding: var(--space-6); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+    .pv-hero-card__top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+    .pv-hero-card__hello { flex: 1 1 200px; min-width: 0; }
+    .pv-hero-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-6); align-items: center; }
+    .pv-hours { display: grid; gap: var(--space-4); }
+    .pv-hours__row { display: grid; gap: 6px; }
+    .pv-hours__meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); font-size: var(--fs-sm); }
+    .pv-hours__meta strong { font-family: var(--font-display); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+    .pv-hours__meta span:last-child { color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+    .pv-mini-task { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+    .pv-mini-task__title { flex: 1; min-width: 0; font-weight: var(--fw-medium); font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .pv-toc { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-bottom: var(--space-10); }
+    .pv-toc a { text-decoration: none; }
+
+    .pv-section { scroll-margin-top: 96px; padding-top: var(--space-12); }
+    .pv-section__head { display: flex; align-items: flex-start; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .pv-num { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: var(--radius-sm); background: var(--gradient-soft); color: var(--accent); font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: var(--fs-sm); box-shadow: inset 0 1px 0 var(--glass-border), var(--shadow-sm); }
+    .pv-section__head p { margin-top: 4px; max-width: 70ch; color: var(--color-text-muted); }
+
+    .pv-grid { display: grid; gap: var(--space-6); }
+    .pv-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pv-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pv-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .pv-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+    .pv-stack { display: grid; gap: var(--space-4); }
+    .pv-caption { font-size: var(--fs-xs); font-weight: var(--fw-semibold); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--color-text-muted); }
+    .pv-note { font-size: var(--fs-sm); color: var(--color-text-muted); }
+    .pv-code { white-space: nowrap; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: var(--fs-xs); color: var(--color-text-muted); background: var(--color-track); padding: 2px 6px; border-radius: 6px; }
+
+    /* Palette */
+    .pv-swatches { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-3); }
+    .pv-swatch { display: grid; gap: var(--space-2); min-width: 0; }
+    .pv-swatch__chip { height: 64px; border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--color-border), var(--shadow-sm); }
+    .pv-swatch__name { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pv-swatch__hex { font-size: var(--fs-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+    .pv-pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+    .pv-pair { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2); padding-right: var(--space-3); border-radius: var(--radius-md); background: var(--color-hover); min-width: 0; }
+    .pv-pair__sample { display: grid; place-items: center; width: 48px; height: 40px; flex: none; border-radius: var(--radius-sm); font-family: var(--font-display); font-weight: var(--fw-semibold); font-size: var(--fs-lg); box-shadow: inset 0 0 0 1px var(--color-border); }
+    .pv-pair__txt { flex: 1; min-width: 0; font-size: var(--fs-xs); line-height: 1.35; }
+    .pv-pair__txt strong { display: block; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pv-pair__txt span { color: var(--color-text-muted); }
+    .pv-ratio { font-family: var(--font-display); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; font-size: var(--fs-sm); white-space: nowrap; }
+
+    .pv-semantic { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+    .pv-semantic--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .pv-token { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); min-width: 0; }
+    .pv-token__dot { width: 28px; height: 28px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--color-border); }
+    .pv-token__txt { min-width: 0; flex: 1; font-size: var(--fs-xs); line-height: 1.35; }
+    .pv-token__txt strong { display: block; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+
+    .pv-mood { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+    .pv-mood__item { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: var(--fs-xs); color: var(--color-text-muted); }
+    .pv-mood__sw { width: 100%; height: 44px; border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1px var(--color-border); }
+
+    /* Typo */
+    .pv-type { display: grid; gap: var(--space-5); }
+    .pv-type__row { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-5); border-bottom: 1px solid var(--color-border); }
+    .pv-type__row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .pv-type__meta { font-size: var(--fs-xs); color: var(--color-text-muted); line-height: 1.4; }
+    .pv-type__meta strong { display: block; color: var(--color-text); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+
+    /* Verre */
+    .pv-glass-stage { position: relative; padding: var(--space-8); border-radius: var(--radius-xl); overflow: hidden; background: var(--gradient-soft); box-shadow: inset 0 0 0 1px var(--color-border); }
+    .pv-blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+    .pv-blob--a { width: 260px; height: 260px; left: -40px; top: -60px; background: var(--blue-300); }
+    .pv-blob--b { width: 220px; height: 220px; right: 8%; top: 30%; background: var(--violet-300); }
+    .pv-blob--c { width: 180px; height: 180px; left: 38%; bottom: -90px; background: var(--cat-auto); opacity: .8; }
+    .pv-blob--d { width: 90px; height: 90px; left: 30%; top: 12%; background: var(--violet-500); opacity: .7; }
+    .pv-glass-grid { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-4); }
+    .pv-glass-item { min-height: 168px; padding: var(--space-5); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-3); }
+    .pv-glass-item code { font-family: var(--font-body); font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--color-text); }
+    .pv-glass-item p { font-size: var(--fs-xs); color: var(--color-text-muted); line-height: 1.4; }
+
+    .pv-recipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); counter-reset: layer; }
+    .pv-recipe li { list-style: none; padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-hover); font-size: var(--fs-xs); color: var(--color-text-muted); }
+    .pv-recipe li::before { counter-increment: layer; content: counter(layer); display: grid; place-items: center; width: 24px; height: 24px; margin-bottom: var(--space-2); border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: var(--fw-semibold); }
+    .pv-recipe strong { display: block; font-size: var(--fs-sm); color: var(--color-text); margin-bottom: 2px; }
+    .pv-recipe { padding: 0; margin: 0; }
+
+    /* Navigation mock */
+    .pv-sidebar { padding: var(--space-4); display: grid; gap: 4px; align-content: start; }
+    .pv-sidebar__brand { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-4); }
+    .pv-sidebar__foot { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-hover); }
+
+    /* Couches statiques (démonstration) */
+    .pv-static { position: relative !important; inset: auto !important; z-index: auto !important; animation: none !important; width: 100% !important; max-height: none !important; }
+    .pv-tooltip-demo { display: flex; justify-content: space-around; gap: var(--space-8); flex-wrap: wrap; align-items: center; padding: 52px 0 52px; }
+    .pv-tooltip-demo .tooltip { opacity: 1; transform: translate(-50%, 0); }
+
+    /* Icônes */
+    .pv-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: var(--space-2); }
+    .pv-icon { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-4) var(--space-2) var(--space-3); border-radius: var(--radius-md); color: var(--color-text); font-size: var(--fs-xs); text-align: center; transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out); }
+    .pv-icon:hover { background: var(--color-hover); color: var(--accent); }
+    .pv-icon .icon { width: 24px; height: 24px; }
+    .pv-icon span { color: var(--color-text-muted); word-break: break-word; }
+    .pv-icon-sizes { display: flex; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap; color: var(--accent); }
+    .pv-icon-sizes figure { display: grid; justify-items: center; gap: var(--space-2); font-size: var(--fs-xs); color: var(--color-text-muted); }
+    .pv-icon-strip { display: flex; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-hover); color: var(--color-text-muted); }
+    .pv-icon-strip .is-on { color: var(--accent); }
+
+    /* Pixel */
+    .pv-pixel-row { display: flex; align-items: flex-end; gap: var(--space-6); }
+    .pv-bubble-slot { position: relative; z-index: 1; align-self: flex-start; padding: var(--space-2) var(--space-3); border: 2px dashed var(--color-border-strong); border-radius: var(--radius-xs); font-family: var(--font-pixel); font-size: var(--fs-md); color: var(--color-text); background: var(--glass-bg-strong); }
+    .pv-do, .pv-dont { padding: var(--space-4); border-radius: var(--radius-md); font-size: var(--fs-sm); }
+    .pv-do { background: var(--success-soft); color: var(--color-text); }
+    .pv-dont { background: var(--danger-soft); color: var(--color-text); }
+    .pv-do strong { color: var(--success); } .pv-dont strong { color: var(--danger); }
+    .pv-do ul, .pv-dont ul { margin: var(--space-2) 0 0; padding-left: 18px; color: var(--color-text-muted); }
+
+    .pv-footer { margin-top: var(--space-16); text-align: center; font-size: var(--fs-sm); color: var(--color-text-muted); }
+
+    @media (max-width: 1100px) {
+      .pv-glass-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .pv-recipe { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .pv-grid--4, .pv-semantic--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pv-swatches { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px) {
+      .pv-hero { grid-template-columns: minmax(0, 1fr); padding-top: var(--space-10); }
+      .pv-grid--2, .pv-grid--3 { grid-template-columns: minmax(0, 1fr); }
+      .pv-pairs, .pv-semantic, .pv-semantic--4 { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .pv-shell { padding: 0 var(--gutter-mobile) var(--space-12); }
+      .pv-topbar-wrap { padding: 0 var(--gutter-mobile); }
+      .pv-brand__sub { display: none; }
+      .pv-hero { gap: var(--space-8); padding: var(--space-8) 0; }
+      .pv-hero__lead { font-size: var(--fs-md); }
+      .pv-hero-row { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+      .pv-hero-row .pv-hours { width: 100%; }
+      .pv-glass-stage { padding: var(--space-4); }
+      .pv-glass-grid, .pv-recipe { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pv-grid--4 { grid-template-columns: minmax(0, 1fr); }
+      .pv-swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .pv-type__row { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+      .pv-mood { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); }
+      .pv-section { padding-top: var(--space-10); }
+      .pv-theme-label { display: none; }
+      .pv-pixel-row { gap: var(--space-3); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="pv-topbar-wrap">
+    <header class="pv-topbar glass glass--strong">
+      <div class="pv-brand">
+        <span class="pv-mark" data-icon="sparkle"></span>
+        <div style="min-width:0">
+          <div class="pv-brand__name">Plateforme de suivi — Lamia</div>
+          <div class="pv-brand__sub">Planche de style · composants, palette, icônes</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn--secondary" id="theme-toggle" aria-pressed="false">
+        <span data-icon="moon"></span><span class="pv-theme-label">Mode sombre</span>
+      </button>
+    </header>
+  </div>
+
+  <main class="pv-shell">
+
+    <!-- HERO ------------------------------------------------------------- -->
+    <section class="pv-hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Charte graphique · Phase 1</p>
+        <h1 class="display" id="hero-title" style="margin-top: var(--space-3)">Doux, clair,<br>et vitré.</h1>
+        <p class="pv-hero__lead">Blancs, bleu pastel et violet pastel, un accent bleu-violet profond, et un verre <strong>laiteux et opaque</strong> qui reste toujours lisible. Tout est construit à partir des tokens.</p>
+        <div class="pv-hero__facts">
+          <span class="pv-fact"><span class="pv-fact__sw" style="background: var(--accent)"></span>Accent <code data-token="--accent"></code></span>
+          <span class="pv-fact"><span class="pv-fact__sw" style="background: var(--glass-bg); backdrop-filter: blur(4px)"></span>Verre <code>voile 76 % · flou 24 px</code></span>
+          <span class="pv-fact"><span class="pv-fact__sw" style="background: var(--gradient-progress)"></span>Dégradé signature</span>
+        </div>
+      </div>
+
+      <div class="glass pv-hero-card" aria-label="Exemple de carte du tableau de bord">
+        <div class="pv-hero-card__top">
+          <span class="avatar avatar--lg">L</span>
+          <div class="pv-hero-card__hello">
+            <div class="h3">Bonjour Lamia</div>
+            <div class="text-sm text-muted">Jeudi 8 octobre 2026 · semaine 41</div>
+          </div>
+          <div class="segmented" role="group" aria-label="Période">
+            <button type="button" class="segmented__item" aria-pressed="false">Jour</button>
+            <button type="button" class="segmented__item" aria-pressed="true">Sem.</button>
+          </div>
+        </div>
+        <div class="pv-hero-row">
+          <div class="ring ring--lg" style="--value: 72" role="img" aria-label="Taux de complétion : 72 %">
+            <span class="ring__value">72<small>%</small></span>
+            <span class="ring__label">tâches finies</span>
+          </div>
+          <div class="pv-hours">
+            <div class="pv-hours__row">
+              <div class="pv-hours__meta"><span class="chip chip--flowline">Flow Line</span><span><strong>28 h</strong> / 35 h</span></div>
+              <div class="progress progress--flowline" style="--value: 80" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" aria-label="Flow Line : 28 heures sur 35"></div>
+            </div>
+            <div class="pv-hours__row">
+              <div class="pv-hours__meta"><span class="chip chip--carnet">Carnet by-pass</span><span><strong>5 h 30</strong></span></div>
+              <div class="progress progress--carnet" style="--value: 55" role="progressbar" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100" aria-label="Carnet by-pass : 5 h 30"></div>
+            </div>
+          </div>
+        </div>
+        <div class="glass glass--nested pv-mini-task">
+          <button type="button" class="btn btn--primary btn--icon btn--sm" aria-label="Mettre le chrono en pause"><span data-icon="pause"></span></button>
+          <span class="pv-mini-task__title">Maquette page d'accueil — Carnet by-pass</span>
+          <span class="num" style="font-weight: var(--fw-semibold)">01:24:08</span>
+        </div>
+      </div>
+    </section>
+
+    <nav class="pv-toc" aria-label="Sommaire de la planche">
+      <a class="chip" href="#palette">Palette</a>
+      <a class="chip chip--flowline" href="#codes">Codes couleur</a>
+      <a class="chip chip--carnet" href="#typo">Typographie</a>
+      <a class="chip chip--auto" href="#verre">Verre</a>
+      <a class="chip chip--doing" href="#boutons">Boutons</a>
+      <a class="chip chip--review" href="#etiquettes">Étiquettes</a>
+      <a class="chip chip--done" href="#formulaires">Formulaires</a>
+      <a class="chip" href="#donnees">Données</a>
+      <a class="chip chip--flowline" href="#navigation">Navigation</a>
+      <a class="chip chip--carnet" href="#couches">Couches</a>
+      <a class="chip chip--auto" href="#etats">États</a>
+      <a class="chip chip--doing" href="#icones">Icônes</a>
+      <a class="chip chip--review" href="#pixel">Pixel art</a>
+    </nav>
+
+    <!-- 01 PALETTE ------------------------------------------------------- -->
+    <section class="pv-section" id="palette" aria-labelledby="t-palette">
+      <header class="pv-section__head">
+        <span class="pv-num">01</span>
+        <div><h2 class="h2" id="t-palette">Palette</h2>
+          <p>Deux gammes pastel (bleu, violet) sur une base blanche, un accent bleu-violet foncé. Les valeurs et contrastes sont lus en direct dans les tokens du thème actif.</p></div>
+      </header>
+      <div class="pv-stack">
+        <div class="glass card">
+          <div class="card__header"><div><div class="card__title">Gammes</div><div class="card__subtitle">--blue-50 → 600 · --violet-50 → 600 · accent</div></div></div>
+          <div class="pv-swatches" id="sw-blue"></div>
+          <div class="pv-swatches" id="sw-violet"></div>
+          <div class="pv-swatches" id="sw-core"></div>
+        </div>
+        <div class="glass card">
+          <div class="card__header">
+            <div><div class="card__title">Contrastes vérifiés (WCAG AA ≥ 4,5:1)</div><div class="card__subtitle">Calcul en direct : couleurs composées sur le fond, puis sur le verre posé sur le fond.</div></div>
+            <span class="badge badge--success" id="aa-summary">AA</span>
+          </div>
+          <div class="pv-pairs" id="pairs"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 CODES COULEUR ------------------------------------------------- -->
+    <section class="pv-section" id="codes" aria-labelledby="t-codes">
+      <header class="pv-section__head">
+        <span class="pv-num">02</span>
+        <div><h2 class="h2" id="t-codes">Codes couleur</h2>
+          <p>Catégories, statuts, priorités et humeur. Chaque couleur vient avec un fond doux <span class="pv-code">*-soft</span> et une encre lisible <span class="pv-code">*-ink</span>. La couleur ne porte jamais l'information seule.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--2">
+        <div class="glass card" style="grid-column: 1 / -1">
+          <div class="card__header"><div><div class="card__title">Catégories</div><div class="card__subtitle">--cat-flowline · --cat-carnet · --cat-auto (+ -soft, -ink). Renommables, couleur au choix.</div></div></div>
+          <div class="pv-semantic" id="sem-cat"></div>
+        </div>
+        <div class="glass card" style="grid-column: 1 / -1">
+          <div class="card__header"><div><div class="card__title">Statuts — colonnes du kanban</div><div class="card__subtitle">--status-todo · -doing · -review · -done (+ -soft, -ink)</div></div></div>
+          <div class="pv-semantic pv-semantic--4" id="sem-status"></div>
+        </div>
+        <div class="glass card">
+          <div class="card__title">Priorités</div>
+          <div class="pv-row" style="gap: var(--space-6)">
+            <span class="prio prio--low">Basse</span>
+            <span class="prio prio--normal">Normale</span>
+            <span class="prio prio--high">Haute</span>
+            <span class="prio prio--urgent">Urgente</span>
+          </div>
+          <p class="pv-note">Basse = anneau creux, urgente = double halo : la forme double la couleur. Libellés « haute » et « urgente » en --warning / --danger (AA).</p>
+          <div class="card__title" style="margin-top: var(--space-2)">Sémantique</div>
+          <div class="pv-row">
+            <span class="badge badge--success">Succès</span>
+            <span class="badge badge--warning">Attention</span>
+            <span class="badge badge--danger">En retard</span>
+            <span class="badge badge--soft">Info</span>
+            <span class="badge badge--neutral">Neutre</span>
+          </div>
+        </div>
+        <div class="glass card">
+          <div class="card__title">Humeur (1 → 5)</div>
+          <div class="pv-mood" id="mood"></div>
+          <p class="pv-note">Pour la courbe d'humeur du Récap et les pastilles. Les visages eux-mêmes sont des icônes pixel (PixelCast « mood-1 » à « mood-5 »).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 TYPO ---------------------------------------------------------- -->
+    <section class="pv-section" id="typo" aria-labelledby="t-typo">
+      <header class="pv-section__head">
+        <span class="pv-num">03</span>
+        <div><h2 class="h2" id="t-typo">Typographie</h2>
+          <p>General Sans pour les titres et les chiffres, Poppins pour le texte. Tant que General Sans n'est pas embarquée (phase 2), Poppins prend le relais automatiquement.</p></div>
+      </header>
+      <div class="glass card">
+        <div class="pv-type">
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>Display</strong>44 · 600 · -0,03em<br>General Sans</div><div class="display">Bonjour Lamia</div></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>H1</strong>36 · 600 · 1,2</div><div class="h1">Suivi des tâches</div></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>H2</strong>28 · 600 · 1,2</div><div class="h2">Heures de la semaine</div></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>H3</strong>22 · 600 · 1,35</div><div class="h3">Échéances proches</div></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>H4 · titre de carte</strong>18 · 600</div><div class="h4">Refonte identité — Atelier Mauve</div></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>Corps</strong>15 · 400 · 1,55<br>Poppins</div><p style="max-width: 62ch">Finaliser les déclinaisons du logo, préparer l'export des fichiers sources et envoyer la planche au client avant vendredi. Penser à vérifier les couleurs en CMJN.</p></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>Petit · légende</strong>13 / 12 · 400–500</div><p class="text-sm text-muted">Modifié il y a 12 min · 3 sous-tâches sur 5 <span class="text-xs">· créée le 2 octobre</span></p></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>Surtitre</strong>12 · 600 · capitales +0,08em</div><p class="eyebrow">Cette semaine</p></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>Chiffres</strong>.num · tabulaires</div><p class="num" style="font-size: var(--fs-2xl); font-weight: var(--fw-semibold)">28 h 30 <span class="text-muted" style="font-size: var(--fs-lg)">/ 35 h</span> · 01:24:08</p></div>
+          <div class="pv-type__row"><div class="pv-type__meta"><strong>Pixel</strong>Pixelify Sans<br>bulles uniquement</div><p class="pixel-text" style="font-size: var(--fs-xl)">Meew meew… Mrrreeew ?</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 VERRE --------------------------------------------------------- -->
+    <section class="pv-section" id="verre" aria-labelledby="t-verre">
+      <header class="pv-section__head">
+        <span class="pv-num">04</span>
+        <div><h2 class="h2" id="t-verre">Liquid glass opaque</h2>
+          <p>Un verre laiteux : il floute et sature ce qui passe derrière, mais reste assez blanc pour que le texte soit toujours net. Les formes colorées ci-dessous ne servent qu'à montrer le flou.</p></div>
+      </header>
+      <div class="pv-stack">
+        <div class="pv-glass-stage">
+          <span class="pv-blob pv-blob--a"></span><span class="pv-blob pv-blob--b"></span><span class="pv-blob pv-blob--c"></span><span class="pv-blob pv-blob--d"></span>
+          <div class="pv-glass-grid">
+            <div class="glass pv-glass-item"><code>.glass</code><p>Cartes, colonnes, panneaux. Blanc 76 %, flou 24 px.</p></div>
+            <div class="glass glass--strong pv-glass-item"><code>.glass--strong</code><p>Premier plan : modales, menus, barre du haut. 90 %.</p></div>
+            <div class="glass glass--tint-blue pv-glass-item"><code>.glass--tint-blue</code><p>Mise en avant douce (chrono, Flow Line).</p></div>
+            <div class="glass glass--tint-violet pv-glass-item"><code>.glass--tint-violet</code><p>Mise en avant douce (humeur, Carnet).</p></div>
+            <div class="glass glass--interactive pv-glass-item" tabindex="0"><code>.glass--interactive</code><p>Survolez-moi : la carte se soulève de 2 px.</p></div>
+          </div>
+        </div>
+        <div class="glass card">
+          <div class="card__title">Recette en 5 couches</div>
+          <ol class="pv-recipe">
+            <li><strong>Flou + saturation</strong>backdrop-filter : blur(24px) saturate(170%)</li>
+            <li><strong>Voile laiteux</strong>--glass-bg : blanc 76 % (sombre : marine 78 %)</li>
+            <li><strong>Reflet spéculaire</strong>::before, ellipse blanche en haut à gauche</li>
+            <li><strong>Bord lumineux</strong>::after, dégradé 1 px blanc → lilas</li>
+            <li><strong>Ombres</strong>liseré intérieur clair + ombre portée violette diffuse</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 BOUTONS ------------------------------------------------------- -->
+    <section class="pv-section" id="boutons" aria-labelledby="t-boutons">
+      <header class="pv-section__head">
+        <span class="pv-num">05</span>
+        <div><h2 class="h2" id="t-boutons">Boutons</h2>
+          <p>Formes en pilule. Un seul bouton primaire par zone. Les boutons icônes portent toujours un aria-label.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--2">
+        <div class="glass card">
+          <div class="pv-caption">Variantes</div>
+          <div class="pv-row">
+            <button type="button" class="btn btn--primary"><span data-icon="plus"></span>Nouvelle tâche</button>
+            <button type="button" class="btn btn--secondary"><span data-icon="export"></span>Exporter</button>
+            <button type="button" class="btn btn--soft"><span data-icon="play"></span>Démarrer</button>
+            <button type="button" class="btn btn--ghost">Annuler</button>
+            <button type="button" class="btn btn--danger"><span data-icon="trash"></span>Supprimer</button>
+          </div>
+          <div class="pv-caption">Désactivé</div>
+          <div class="pv-row">
+            <button type="button" class="btn btn--primary" disabled>Enregistrer</button>
+            <button type="button" class="btn btn--secondary" disabled>Exporter</button>
+          </div>
+        </div>
+        <div class="glass card">
+          <div class="pv-caption">Tailles</div>
+          <div class="pv-row">
+            <button type="button" class="btn btn--primary btn--sm">Petit · 32</button>
+            <button type="button" class="btn btn--primary">Moyen · 40</button>
+            <button type="button" class="btn btn--primary btn--lg">Grand · 48</button>
+          </div>
+          <div class="pv-caption">Icône seule</div>
+          <div class="pv-row">
+            <button type="button" class="btn btn--primary btn--icon btn--lg" aria-label="Démarrer le chrono"><span data-icon="play"></span></button>
+            <button type="button" class="btn btn--soft btn--icon" aria-label="Pause"><span data-icon="pause"></span></button>
+            <button type="button" class="btn btn--secondary btn--icon" aria-label="Arrêter"><span data-icon="stop"></span></button>
+            <button type="button" class="btn btn--ghost btn--icon" aria-label="Modifier"><span data-icon="edit"></span></button>
+            <button type="button" class="btn btn--ghost btn--icon btn--sm" aria-label="Plus d'actions"><span data-icon="more"></span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 ÉTIQUETTES ---------------------------------------------------- -->
+    <section class="pv-section" id="etiquettes" aria-labelledby="t-etiquettes">
+      <header class="pv-section__head">
+        <span class="pv-num">06</span>
+        <div><h2 class="h2" id="t-etiquettes">Étiquettes</h2>
+          <p>Chips pour les catégories et statuts, badges pour les compteurs, tags pour les étiquettes libres.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--3">
+        <div class="glass card">
+          <div class="pv-caption">.chip — catégories</div>
+          <div class="pv-row"><span class="chip chip--flowline">Flow Line</span><span class="chip chip--carnet">Carnet by-pass</span><span class="chip chip--auto">Auto-entreprise</span></div>
+          <div class="pv-caption">.chip — statuts</div>
+          <div class="pv-row"><span class="chip chip--todo">Pas commencé</span><span class="chip chip--doing">En cours</span><span class="chip chip--review">En validation</span><span class="chip chip--done">Terminé</span></div>
+          <div class="pv-caption">button.chip — filtre</div>
+          <div class="pv-row"><button type="button" class="chip chip--flowline" aria-pressed="true">Flow Line</button><button type="button" class="chip chip--carnet" aria-pressed="false">Carnet</button></div>
+        </div>
+        <div class="glass card">
+          <div class="pv-caption">.badge</div>
+          <div class="pv-row"><span class="badge">12</span><span class="badge badge--soft">3 nouvelles</span><span class="badge badge--neutral">0</span><span class="badge badge--success">+3 h</span><span class="badge badge--warning">J-2</span><span class="badge badge--danger">2 en retard</span></div>
+          <div class="pv-caption">.badge--dot</div>
+          <div class="pv-row"><span class="has-tooltip" style="position:relative"><button type="button" class="btn btn--ghost btn--icon" aria-label="Notifications (non lues)"><span data-icon="bell"></span></button><span class="badge badge--dot" style="position:absolute; top:9px; right:10px"></span></span></div>
+        </div>
+        <div class="glass card">
+          <div class="pv-caption">.tag</div>
+          <div class="pv-row"><span class="tag">print</span><span class="tag">web</span><span class="tag">logo</span><span class="tag">UI</span><span class="tag">illustration<button type="button" class="tag__remove" aria-label="Retirer l'étiquette illustration"><span data-icon="close"></span></button></span></div>
+          <div class="pv-caption">.prio</div>
+          <div class="pv-stack" style="gap: var(--space-3)"><span class="prio prio--urgent">Urgente</span><span class="prio prio--high">Haute</span><span class="prio prio--normal">Normale</span><span class="prio prio--low">Basse</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 FORMULAIRES --------------------------------------------------- -->
+    <section class="pv-section" id="formulaires" aria-labelledby="t-form">
+      <header class="pv-section__head">
+        <span class="pv-num">07</span>
+        <div><h2 class="h2" id="t-form">Formulaires</h2>
+          <p>Champs légèrement creusés dans le verre, focus en anneau accent. Le curseur d'avancement est le seul réglage manuel du %.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--2">
+        <div class="glass card">
+          <div class="field">
+            <label class="label" for="f-title">Titre de la tâche</label>
+            <input class="input" id="f-title" type="text" value="Affiche festival — déclinaisons">
+          </div>
+          <div class="pv-grid pv-grid--2" style="gap: var(--space-4)">
+            <div class="field">
+              <label class="label" for="f-cat">Catégorie</label>
+              <select class="select" id="f-cat"><option>Flow Line</option><option selected>Carnet by-pass</option><option>Auto-entreprise</option></select>
+            </div>
+            <div class="field">
+              <label class="label" for="f-client">Client / projet <span class="label__optional">facultatif</span></label>
+              <input class="input" id="f-client" type="text" placeholder="Ex. Atelier Mauve">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="f-desc">Description</label>
+            <textarea class="textarea" id="f-desc" placeholder="Notes, liens, idées…">Trois formats : A2, Instagram carré, bannière web.</textarea>
+            <span class="hint">Visible dans le panneau de la tâche.</span>
+          </div>
+          <div class="field field--error">
+            <label class="label" for="f-end">Date de fin</label>
+            <input class="input" id="f-end" type="text" value="2 octobre 2026" aria-describedby="f-end-hint" aria-invalid="true">
+            <span class="hint" id="f-end-hint">La date de fin doit suivre la date de début (5 octobre).</span>
+          </div>
+          <div class="field">
+            <label class="label" for="f-search">Recherche</label>
+            <div class="input-wrap"><span data-icon="search"></span><input class="input" id="f-search" type="search" placeholder="Rechercher une tâche, un client…"><kbd class="kbd">Ctrl K</kbd></div>
+          </div>
+        </div>
+
+        <div class="pv-stack" style="gap: var(--space-6)">
+          <div class="glass card">
+            <div class="range-field">
+              <div class="range-field__head"><label class="label" for="f-progress">Avancement</label><output class="range-field__value" for="f-progress" id="f-progress-out">60 %</output></div>
+              <input class="range" id="f-progress" type="range" min="0" max="100" step="5" value="60" style="--value: 60">
+              <div class="range-field__scale" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+            </div>
+          </div>
+          <div class="glass card">
+            <div class="card__header"><div><div class="card__title">Checklist</div><div class="card__subtitle">.checkbox--strike</div></div><span class="badge badge--soft" id="check-count">2 / 4</span></div>
+            <div class="pv-stack" style="gap: var(--space-3)" id="checklist">
+              <label class="checkbox checkbox--strike"><input class="checkbox__input" type="checkbox" checked><span class="checkbox__box" aria-hidden="true"></span><span class="checkbox__label">Valider la typographie avec le client</span></label>
+              <label class="checkbox checkbox--strike"><input class="checkbox__input" type="checkbox" checked><span class="checkbox__box" aria-hidden="true"></span><span class="checkbox__label">Exporter les visuels en 300 dpi</span></label>
+              <label class="checkbox checkbox--strike"><input class="checkbox__input" type="checkbox"><span class="checkbox__box" aria-hidden="true"></span><span class="checkbox__label">Décliner la bannière web</span></label>
+              <label class="checkbox checkbox--strike"><input class="checkbox__input" type="checkbox"><span class="checkbox__box" aria-hidden="true"></span><span class="checkbox__label">Envoyer le BAT à l'imprimeur</span></label>
+            </div>
+          </div>
+          <div class="glass card">
+            <div class="pv-stack" style="gap: var(--space-4)">
+              <label class="switch"><input class="switch__input" type="checkbox" role="switch" checked><span class="switch__track" aria-hidden="true"></span><span class="switch__label">Rappel 2 jours avant l'échéance</span></label>
+              <label class="switch"><input class="switch__input" type="checkbox" role="switch"><span class="switch__track" aria-hidden="true"></span><span class="switch__label">Proposer l'humeur à la connexion</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 DONNÉES ------------------------------------------------------- -->
+    <section class="pv-section" id="donnees" aria-labelledby="t-donnees">
+      <header class="pv-section__head">
+        <span class="pv-num">08</span>
+        <div><h2 class="h2" id="t-donnees">Données &amp; navigation locale</h2>
+          <p>Sélecteur de période, onglets, barres, anneaux et tuiles KPI. Les heures restent toujours séparées par catégorie.</p></div>
+      </header>
+      <div class="pv-stack" style="gap: var(--space-6)">
+        <div class="glass card">
+          <div class="card__header" style="flex-wrap: wrap; align-items: center">
+            <div class="segmented" role="group" aria-label="Période du récapitulatif" data-demo="segmented">
+              <button type="button" class="segmented__item" aria-pressed="false">Jour</button>
+              <button type="button" class="segmented__item" aria-pressed="true">Semaine</button>
+              <button type="button" class="segmented__item" aria-pressed="false">Mois</button>
+            </div>
+            <div class="tabs" role="tablist" aria-label="Vue des tâches" data-demo="tabs" style="margin-left: auto; min-width: 0; max-width: 100%">
+              <button type="button" class="tabs__item" role="tab" aria-selected="true"><span data-icon="kanban"></span>Kanban</button>
+              <button type="button" class="tabs__item" role="tab" aria-selected="false"><span data-icon="list"></span>Liste <span class="badge badge--neutral">24</span></button>
+              <button type="button" class="tabs__item" role="tab" aria-selected="false"><span data-icon="planning"></span>Planning</button>
+            </div>
+          </div>
+        </div>
+        <div class="pv-grid pv-grid--4">
+          <article class="glass stat stat--flowline">
+            <div class="stat__head"><span class="stat__icon"><span data-icon="briefcase"></span></span><span class="stat__label">Flow Line · semaine</span></div>
+            <div class="stat__value">28 h<span class="stat__unit">/ 35 h</span></div>
+            <div class="progress progress--flowline progress--sm" style="--value: 80" aria-hidden="true"></div>
+            <span class="stat__delta stat__delta--positive"><span data-icon="arrow-up"></span>+3 h vs sem. 40</span>
+          </article>
+          <article class="glass stat stat--carnet">
+            <div class="stat__head"><span class="stat__icon"><span data-icon="palette"></span></span><span class="stat__label">Carnet by-pass · samedi</span></div>
+            <div class="stat__value">5 h 30</div>
+            <div class="progress progress--carnet progress--sm" style="--value: 55" aria-hidden="true"></div>
+            <span class="stat__delta"><span data-icon="minus"></span>stable</span>
+          </article>
+          <article class="glass stat">
+            <div class="stat__head"><span class="stat__icon"><span data-icon="check"></span></span><span class="stat__label">Tâches terminées</span></div>
+            <div class="stat__value">12<span class="stat__unit">cette semaine</span></div>
+            <span class="stat__delta stat__delta--positive"><span data-icon="arrow-up"></span>+4</span>
+          </article>
+          <article class="glass stat">
+            <div class="stat__head"><span class="stat__icon" style="--stat-icon-bg: var(--danger-soft); --stat-icon-ink: var(--danger)"><span data-icon="alert"></span></span><span class="stat__label">En retard</span></div>
+            <div class="stat__value">2</div>
+            <span class="stat__delta stat__delta--negative"><span data-icon="arrow-up"></span>+1 depuis lundi</span>
+          </article>
+        </div>
+        <div class="pv-grid pv-grid--2">
+          <div class="glass card">
+            <div class="card__title">Barres — .progress</div>
+            <div class="pv-stack">
+              <div class="pv-hours__row"><div class="pv-hours__meta"><span>Dégradé signature (défaut)</span><span>72 %</span></div><div class="progress" style="--value:72"></div></div>
+              <div class="pv-hours__row"><div class="pv-hours__meta"><span>--lg · Flow Line</span><span>28 / 35 h</span></div><div class="progress progress--lg progress--flowline" style="--value:80"></div></div>
+              <div class="pv-hours__row"><div class="pv-hours__meta"><span>--auto</span><span>3 h</span></div><div class="progress progress--auto" style="--value:30"></div></div>
+              <div class="pv-hours__row"><div class="pv-hours__meta"><span>--success · --warning · --danger</span><span></span></div>
+                <div class="pv-row" style="flex-wrap: nowrap"><div class="progress progress--success" style="--value:100"></div><div class="progress progress--warning" style="--value:65"></div><div class="progress progress--danger" style="--value:30"></div></div></div>
+            </div>
+          </div>
+          <div class="glass card">
+            <div class="card__title">Anneaux — .ring</div>
+            <div class="pv-row" style="gap: var(--space-6); align-items: center">
+              <div class="ring ring--lg" style="--value: 72"><span class="ring__value">72<small>%</small></span><span class="ring__label">complétion</span></div>
+              <div class="ring ring--flowline" style="--value: 80"><span class="ring__value">28<small>h</small></span><span class="ring__label">sur 35 h</span></div>
+              <div class="ring ring--carnet" style="--value: 40"><span class="ring__value">40<small>%</small></span><span class="ring__label">Carnet</span></div>
+              <div class="ring ring--sm ring--auto" style="--value: 25"><span class="ring__value">25<small>%</small></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 09 NAVIGATION ---------------------------------------------------- -->
+    <section class="pv-section" id="navigation" aria-labelledby="t-nav">
+      <header class="pv-section__head">
+        <span class="pv-num">09</span>
+        <div><h2 class="h2" id="t-nav">Navigation &amp; identité</h2>
+          <p>Barre latérale vitrée, élément actif surélevé avec un repère en dégradé. Avatars en initiales ou pixel art.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--3">
+        <nav class="glass pv-sidebar" aria-label="Exemple de barre latérale">
+          <div class="pv-sidebar__brand"><span class="pv-mark" data-icon="sparkle"></span><div><div class="pv-brand__name" style="font-size: var(--fs-sm)">Plateforme de suivi</div><div class="text-xs text-muted">Lamia</div></div></div>
+          <a class="nav-item" href="#navigation" aria-current="page"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
+          <a class="nav-item" href="#navigation"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft">12</span></a>
+          <a class="nav-item" href="#navigation"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
+          <a class="nav-item" href="#navigation"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
+          <a class="nav-item" href="#navigation"><span data-icon="settings"></span><span class="nav-item__label">Réglages</span></a>
+          <div class="pv-sidebar__foot"><span class="avatar">L</span><div style="flex:1; min-width:0"><div class="text-sm" style="font-weight: var(--fw-semibold)">Lamia</div><div class="text-xs text-muted">Graphiste · web designer</div></div></div>
+        </nav>
+        <div class="glass card">
+          <div class="card__title">Avatars</div>
+          <div class="pv-row" style="gap: var(--space-4); align-items: flex-end">
+            <span class="avatar avatar--sm">L</span><span class="avatar">L</span><span class="avatar avatar--lg">LM</span><span class="avatar avatar--xl"><canvas id="px-avatar" width="16" height="16" aria-label="Avatar pixel" role="img"></canvas></span>
+          </div>
+          <p class="pv-note">--sm 28 · défaut 36 · --lg 48 · --xl 64. Un &lt;canvas&gt; pixel art est rendu net (pixelated).</p>
+          <div class="divider divider--label">Raccourcis</div>
+          <div class="pv-row"><span class="kbd">Ctrl</span><span class="kbd">K</span><span class="pv-note">rechercher</span></div>
+          <div class="pv-row"><span class="kbd">N</span><span class="pv-note">nouvelle tâche</span><span class="kbd">Espace</span><span class="pv-note">chrono</span></div>
+        </div>
+        <div class="glass card">
+          <div class="card__title">Infobulles</div>
+          <div class="pv-tooltip-demo">
+            <span class="has-tooltip"><button type="button" class="btn btn--secondary btn--icon" aria-label="Exporter en CSV" aria-describedby="tt-1"><span data-icon="download"></span></button><span class="tooltip" role="tooltip" id="tt-1">Exporter en CSV</span></span>
+            <span class="has-tooltip"><button type="button" class="btn btn--ghost btn--icon" aria-label="Glisser pour déplacer" aria-describedby="tt-2"><span data-icon="grip"></span></button><span class="tooltip tooltip--bottom" role="tooltip" id="tt-2">Glisser pour déplacer</span></span>
+          </div>
+          <p class="pv-note">.has-tooltip &gt; .tooltip : affichée au survol et au focus clavier (affichées ici en permanence pour la planche). <span class="pv-code">.tooltip--bottom</span> la place dessous.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 COUCHES ------------------------------------------------------- -->
+    <section class="pv-section" id="couches" aria-labelledby="t-couches">
+      <header class="pv-section__head">
+        <span class="pv-num">10</span>
+        <div><h2 class="h2" id="t-couches">Couches</h2>
+          <p>Modale, panneau latéral et toasts : verre renforcé, coins larges, entrée douce. Les vrais composants s'ouvrent avec les boutons.</p></div>
+      </header>
+      <div class="glass card" style="margin-bottom: var(--space-6)">
+        <div class="pv-row">
+          <button type="button" class="btn btn--primary" data-open="modal"><span data-icon="plus"></span>Ouvrir la modale</button>
+          <button type="button" class="btn btn--secondary" data-open="drawer"><span data-icon="edit"></span>Ouvrir le panneau</button>
+          <button type="button" class="btn btn--soft" data-toast="success"><span data-icon="check"></span>Toast succès</button>
+          <button type="button" class="btn btn--ghost" data-toast="warning"><span data-icon="bell"></span>Toast rappel</button>
+        </div>
+      </div>
+      <div class="pv-grid pv-grid--2">
+        <div class="modal pv-static" role="group" aria-label="Aperçu de modale">
+          <div class="modal__header">
+            <div><h3 class="modal__title">Comment vous sentez-vous aujourd'hui ?</h3><p class="modal__desc">Première connexion du jour · modifiable plus tard</p></div>
+            <button type="button" class="btn btn--ghost btn--icon" aria-label="Fermer"><span data-icon="close"></span></button>
+          </div>
+          <div class="modal__body">
+            <div class="pv-mood" id="mood-pick"></div>
+            <div class="field"><label class="label" for="m-note">Une note <span class="label__optional">facultatif</span></label><input class="input" id="m-note" placeholder="Une phrase sur votre journée…"></div>
+          </div>
+          <div class="modal__footer"><button type="button" class="btn btn--ghost">Plus tard</button><button type="button" class="btn btn--primary">Enregistrer</button></div>
+        </div>
+        <div class="pv-stack" style="gap: var(--space-4); align-content: start">
+          <div class="toast toast--success pv-static" role="status">
+            <span class="toast__icon"><span data-icon="check"></span></span>
+            <div class="toast__body"><div class="toast__title">Tâche terminée</div><div class="toast__text">« Logo Atelier Mauve » est passée dans Terminé. Bravo !</div></div>
+            <button type="button" class="btn btn--ghost btn--icon btn--sm" aria-label="Fermer"><span data-icon="close"></span></button>
+          </div>
+          <div class="toast pv-static" role="status">
+            <span class="toast__icon"><span data-icon="timer"></span></span>
+            <div class="toast__body"><div class="toast__title">Chrono en cours</div><div class="toast__text">01:24 sur « Maquette page d'accueil ».</div></div>
+            <button type="button" class="btn btn--soft btn--sm">Pause</button>
+          </div>
+          <div class="toast toast--warning pv-static" role="status">
+            <span class="toast__icon"><span data-icon="bell"></span></span>
+            <div class="toast__body"><div class="toast__title">Échéance dans 2 jours</div><div class="toast__text">Affiche festival — samedi 10 octobre.</div></div>
+          </div>
+          <div class="toast toast--danger pv-static" role="status">
+            <span class="toast__icon"><span data-icon="alert"></span></span>
+            <div class="toast__body"><div class="toast__title">2 tâches en retard</div><div class="toast__text">On s'y remet tranquillement ?</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 ÉTATS --------------------------------------------------------- -->
+    <section class="pv-section" id="etats" aria-labelledby="t-etats">
+      <header class="pv-section__head">
+        <span class="pv-num">11</span>
+        <div><h2 class="h2" id="t-etats">États &amp; divers</h2>
+          <p>État vide encourageant, chargement en squelettes, séparateurs.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--3">
+        <div class="glass card">
+          <div class="empty-state">
+            <div class="empty-state__art"><span data-icon="coffee"></span></div>
+            <div class="empty-state__title">Aucune tâche en retard</div>
+            <p class="empty-state__text">Tout est à jour. Memeow approuve, et réclame des croquettes.</p>
+            <div class="empty-state__actions"><button type="button" class="btn btn--soft btn--sm"><span data-icon="plus"></span>Ajouter une tâche</button></div>
+          </div>
+        </div>
+        <div class="glass card" aria-busy="true" aria-label="Chargement">
+          <div class="card__title">Chargement</div>
+          <div class="pv-row" style="flex-wrap: nowrap"><span class="skeleton skeleton--circle"></span><div class="pv-stack" style="flex:1; gap: var(--space-2)"><span class="skeleton skeleton--title"></span><span class="skeleton skeleton--text" style="width: 80%"></span></div></div>
+          <span class="skeleton skeleton--block"></span>
+          <span class="skeleton skeleton--text"></span>
+          <span class="skeleton skeleton--text" style="width: 65%"></span>
+        </div>
+        <div class="glass card">
+          <div class="card__title">Séparateurs</div>
+          <p class="pv-note">.divider : filet qui s'efface aux extrémités.</p>
+          <hr class="divider">
+          <div class="divider divider--label">Aujourd'hui</div>
+          <div class="pv-row" style="flex-wrap: nowrap; align-items: stretch"><span class="pv-note">Flow Line</span><span class="divider divider--vertical"></span><span class="pv-note">Carnet</span><span class="divider divider--vertical"></span><span class="pv-note">Auto</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 ICÔNES -------------------------------------------------------- -->
+    <section class="pv-section" id="icones" aria-labelledby="t-icones">
+      <header class="pv-section__head">
+        <span class="pv-num">12</span>
+        <div><h2 class="h2" id="t-icones">Iconographie</h2>
+          <p>Contour arrondi, trait 1,75 px, grille 24, couleur du texte. <span class="pv-code">LamiaIcons.svg('timer', { size: 20 })</span> · <span id="icon-count"></span></p></div>
+      </header>
+      <div class="pv-stack">
+        <div class="glass card">
+          <div class="pv-icon-sizes" id="icon-sizes"></div>
+        </div>
+        <div class="glass card">
+          <div class="pv-icons" id="icons"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 PIXEL --------------------------------------------------------- -->
+    <section class="pv-section" id="pixel" aria-labelledby="t-pixel">
+      <header class="pv-section__head">
+        <span class="pv-num">13</span>
+        <div><h2 class="h2" id="t-pixel">Pixel art dans l'interface</h2>
+          <p>La scène pixel est posée dans une carte vitrée (.pixel-stage). Échelles entières uniquement, rendu net. Les sprites et les bulles appartiennent au DA pixel art.</p></div>
+      </header>
+      <div class="pv-grid pv-grid--2">
+        <div class="glass card">
+          <div class="card__title">.pixel-stage</div>
+          <div class="pixel-stage">
+            <div class="pv-pixel-row">
+              <canvas id="px-heart" width="9" height="8" class="pixelated" role="img" aria-label="Cœur pixel, échelle ×4"></canvas>
+              <span class="pv-bubble-slot">.pixel-bubble ici</span>
+              <canvas id="px-star" width="9" height="9" class="pixelated" role="img" aria-label="Étoile pixel, échelle ×6"></canvas>
+            </div>
+          </div>
+          <p class="pv-note">Placeholders dessinés ici en ×4 et ×6 : en production, <span class="pv-code">PixelCast.mount(canvas, 'lamia', { scale: 4 })</span>.</p>
+        </div>
+        <div class="pv-stack">
+          <div class="pv-do"><strong>À faire</strong><ul><li>Échelles entières : ×2, ×3, ×4, ×6.</li><li><span class="pv-code">image-rendering: pixelated</span> sur canvas et images.</li><li>Pixelify Sans uniquement dans les bulles et l'univers pixel.</li><li>La scène vit dans une carte vitrée, avec un fond doux et un sol discret.</li></ul></div>
+          <div class="pv-dont"><strong>À éviter</strong><ul><li>Échelles fractionnaires (×2,5) ou redimensionnement CSS en %.</li><li>Flou, ombres portées ou dégradés sur les sprites.</li><li>Police pixel dans les boutons, menus ou données.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="pv-footer">Plateforme de suivi - Lamia · Charte graphique, phase 1 · design/components.css · design/tokens.css · design/icons.js</footer>
+  </main>
+
+  <!-- Vraies couches (enfants directs de body) -->
+  <div class="overlay" id="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-desc">
+      <div class="modal__header">
+        <div><h3 class="modal__title" id="dlg-title">Nouvelle tâche</h3><p class="modal__desc" id="dlg-desc">Elle apparaîtra dans « Pas commencé ».</p></div>
+        <button type="button" class="btn btn--ghost btn--icon" data-close aria-label="Fermer"><span data-icon="close"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="field"><label class="label" for="d-title">Titre</label><input class="input" id="d-title" placeholder="Ex. Carte de visite — Studio Lune"></div>
+        <div class="field"><label class="label" for="d-cat">Catégorie</label><select class="select" id="d-cat"><option>Flow Line</option><option>Carnet by-pass</option><option>Auto-entreprise</option></select></div>
+      </div>
+      <div class="modal__footer"><button type="button" class="btn btn--ghost" data-close>Annuler</button><button type="button" class="btn btn--primary" data-close>Créer la tâche</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="drawer-overlay" hidden>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drw-title">
+      <div class="drawer__header">
+        <span class="chip chip--doing">En cours</span>
+        <h3 class="drawer__title" id="drw-title">Affiche festival</h3>
+        <button type="button" class="btn btn--ghost btn--icon" data-close aria-label="Fermer"><span data-icon="close"></span></button>
+      </div>
+      <div class="drawer__body">
+        <div class="pv-row"><span class="chip chip--carnet">Carnet by-pass</span><span class="prio prio--high">Haute</span><span class="tag">print</span></div>
+        <div class="range-field">
+          <div class="range-field__head"><label class="label" for="dr-progress">Avancement</label><output class="range-field__value" id="dr-progress-out">40 %</output></div>
+          <input class="range" id="dr-progress" type="range" min="0" max="100" step="5" value="40" style="--value: 40">
+        </div>
+        <div class="divider divider--label">Sous-tâches</div>
+        <label class="checkbox checkbox--strike"><input class="checkbox__input" type="checkbox" checked><span class="checkbox__box" aria-hidden="true"></span><span class="checkbox__label">Format A2</span></label>
+        <label class="checkbox checkbox--strike"><input class="checkbox__input" type="checkbox"><span class="checkbox__box" aria-hidden="true"></span><span class="checkbox__label">Format Instagram</span></label>
+      </div>
+      <div class="drawer__footer"><button type="button" class="btn btn--ghost" data-close>Fermer</button><button type="button" class="btn btn--primary" data-close><span data-icon="play"></span>Démarrer le chrono</button></div>
+    </aside>
+  </div>
+
+  <div class="toast-region" id="toasts" aria-live="polite"></div>
+
+  <script>
+  (function () {
+    'use strict';
+    var root = document.documentElement;
+    var I = window.LamiaIcons;
+
+    /* ---------- Icônes ---------- */
+    var grid = document.getElementById('icons');
+    grid.innerHTML = I.list.map(function (n) {
+      return '<div class="pv-icon" title="' + n + '">' + I.svg(n, { size: 24 }) + '<span>' + n + '</span></div>';
+    }).join('');
+    document.getElementById('icon-count').textContent = I.list.length + ' icônes';
+    document.getElementById('icon-sizes').innerHTML = [16, 20, 24, 32, 48].map(function (s) {
+      return '<figure style="margin:0">' + I.svg('timer', { size: s }).replace('class="icon', 'style="width:' + s + 'px;height:' + s + 'px" class="icon') + '<figcaption>' + s + ' px</figcaption></figure>';
+    }).join('') + '<figure style="margin:0; margin-left:auto"><div class="pv-icon-strip">' +
+      ['dashboard', 'tasks', 'planning', 'recap', 'settings'].map(function (n, i) { return I.svg(n, { size: 20, className: i === 0 ? 'is-on' : '' }); }).join('') +
+      '</div><figcaption>barre latérale (20 px, actif en accent)</figcaption></figure>';
+    I.hydrate(document);
+
+    /* ---------- Lecture des tokens ---------- */
+    var probe = document.createElement('span');
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+    function tok(name) {
+      probe.style.color = '';
+      probe.style.color = 'var(' + name + ')';
+      var s = getComputedStyle(probe).color;
+      var m = s.match(/rgba?\(([^)]+)\)/);
+      if (!m) return { r: 0, g: 0, b: 0, a: 1, raw: s };
+      var p = m[1].split(/[\s,\/]+/).filter(Boolean).map(Number);
+      return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+    }
+    function raw(name) { return getComputedStyle(root).getPropertyValue(name).trim(); }
+    function over(t, b) { var a = t.a; return { r: t.r * a + b.r * (1 - a), g: t.g * a + b.g * (1 - a), b: t.b * a + b.b * (1 - a), a: 1 }; }
+    function lum(c) { function f(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); } return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); }
+    function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+    function hex(c) { return '#' + [c.r, c.g, c.b].map(function (v) { return Math.round(v).toString(16).padStart(2, '0'); }).join('').toUpperCase(); }
+    function show(name) { var v = raw(name); return /^#/.test(v) ? v.toUpperCase() : v.replace(/\s+/g, ' '); }
+    function fmt(r) { return r.toFixed(1).replace('.', ',') + ':1'; }
+    function verdict(r) { return r >= 7 ? '<span class="badge badge--success">AAA</span>' : r >= 4.5 ? '<span class="badge badge--success">AA</span>' : r >= 3 ? '<span class="badge badge--warning">3:1</span>' : '<span class="badge badge--danger">échec</span>'; }
+
+    function swatch(name, label) {
+      return '<div class="pv-swatch"><div class="pv-swatch__chip" style="background: var(' + name + ')"></div><div class="pv-swatch__name">' + (label || name.replace('--', '')) + '</div><div class="pv-swatch__hex">' + show(name) + '</div></div>';
+    }
+
+    function render() {
+      document.getElementById('sw-blue').innerHTML = ['50', '100', '200', '300', '400', '500', '600'].map(function (k) { return swatch('--blue-' + k); }).join('');
+      document.getElementById('sw-violet').innerHTML = ['50', '100', '200', '300', '400', '500', '600'].map(function (k) { return swatch('--violet-' + k); }).join('');
+      document.getElementById('sw-core').innerHTML = [['--accent'], ['--accent-hover'], ['--accent-soft'], ['--color-bg'], ['--color-text'], ['--color-text-muted'], ['--color-text-subtle']].map(function (x) { return swatch(x[0]); }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-token]'), function (el) { el.textContent = show(el.getAttribute('data-token')); });
+
+      var bg = tok('--color-bg');
+      var glass = over(tok('--glass-bg'), bg);
+      var pairs = [
+        ['--color-text', '--color-bg', 'Texte sur fond', bg],
+        ['--color-text-muted', '--color-bg', 'Texte secondaire sur fond', bg],
+        ['--accent', '--color-bg', 'Accent sur fond', bg],
+        ['--color-text', '--glass-bg', 'Texte sur verre', glass],
+        ['--color-text-muted', '--glass-bg', 'Texte secondaire sur verre', glass],
+        ['--accent', '--glass-bg', 'Accent sur verre', glass],
+        ['--color-text-subtle', '--glass-bg', 'Indices / placeholders sur verre', glass],
+        ['--accent', '--accent-soft', 'Accent sur accent-soft', over(tok('--accent-soft'), glass)],
+        ['--accent-contrast', '--accent', 'Texte du bouton primaire', tok('--accent')],
+        ['--success', '--success-soft', 'Succès sur success-soft', over(tok('--success-soft'), glass)],
+        ['--warning', '--warning-soft', 'Attention sur warning-soft', over(tok('--warning-soft'), glass)],
+        ['--danger', '--danger-soft', 'Danger sur danger-soft', over(tok('--danger-soft'), glass)]
+      ];
+      var min = Infinity;
+      document.getElementById('pairs').innerHTML = pairs.map(function (p) {
+        var base = p[3];
+        var fg = over(tok(p[0]), base);
+        var r = ratio(fg, base);
+        min = Math.min(min, r);
+        var sampleBg = p[1] === '--color-bg' ? 'var(--color-bg)' : p[1] === '--glass-bg' ? hex(glass) : 'var(' + p[1] + ')';
+        return '<div class="pv-pair"><span class="pv-pair__sample" style="background:' + sampleBg + '; color: var(' + p[0] + ')">Aa</span>' +
+          '<span class="pv-pair__txt"><strong>' + p[2] + '</strong><span>' + p[0].replace('--', '') + ' · ' + hex(fg) + ' / ' + hex(base) + '</span></span>' +
+          '<span class="pv-ratio">' + fmt(r) + '</span>' + verdict(r) + '</div>';
+      }).join('');
+      var sum = document.getElementById('aa-summary');
+      sum.textContent = 'min ' + fmt(min);
+      sum.className = 'badge ' + (min >= 4.5 ? 'badge--success' : 'badge--danger');
+
+      function sem(prefix, items) {
+        return items.map(function (it) {
+          var soft = over(tok('--' + prefix + it[0] + '-soft'), glass);
+          var ink = over(tok('--' + prefix + it[0] + '-ink'), soft);
+          var r = ratio(ink, soft);
+          return '<div class="pv-token" style="background: var(--' + prefix + it[0] + '-soft); color: var(--' + prefix + it[0] + '-ink)">' +
+            '<span class="pv-token__dot" style="background: var(--' + prefix + it[0] + ')"></span>' +
+            '<span class="pv-token__txt"><strong>' + it[1] + '</strong>' + show('--' + prefix + it[0]) + ' · encre ' + fmt(r) + '</span></div>';
+        }).join('');
+      }
+      document.getElementById('sem-cat').innerHTML = sem('cat-', [['flowline', 'Flow Line'], ['carnet', 'Carnet by-pass'], ['auto', 'Auto-entreprise']]);
+      document.getElementById('sem-status').innerHTML = sem('status-', [['todo', 'Pas commencé'], ['doing', 'En cours'], ['review', 'En validation'], ['done', 'Terminé']]);
+      var moodNames = ['Au plus bas', 'Bof', 'Ça va', 'Bien', 'Au top'];
+      document.getElementById('mood').innerHTML = moodNames.map(function (n, i) {
+        return '<div class="pv-mood__item"><span class="pv-mood__sw" style="background: var(--mood-' + (i + 1) + ')"></span><strong style="color: var(--color-text)">' + (i + 1) + '</strong>' + n + '</div>';
+      }).join('');
+      document.getElementById('mood-pick').innerHTML = moodNames.map(function (n, i) {
+        return '<button type="button" class="btn btn--secondary" style="height:auto; padding: 12px 4px; flex-direction: column; gap: 6px; border-radius: var(--radius-md)" aria-pressed="' + (i === 3) + '"><span class="pv-mood__sw" style="width:28px; height:28px; border-radius: 8px; background: var(--mood-' + (i + 1) + ')"></span><span class="text-xs">' + n + '</span></button>';
+      }).join('');
+      drawPixels();
+    }
+
+    /* ---------- Pixel art de démonstration ---------- */
+    function drawBitmap(id, rows, palette) {
+      var c = document.getElementById(id);
+      if (!c) return;
+      var ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+      rows.forEach(function (row, y) {
+        for (var x = 0; x < row.length; x++) {
+          var k = row[x];
+          if (k === '.') continue;
+          var col = palette[k];
+          ctx.fillStyle = 'rgb(' + Math.round(col.r) + ',' + Math.round(col.g) + ',' + Math.round(col.b) + ')';
+          ctx.fillRect(x, y, 1, 1);
+        }
+      });
+    }
+    function drawPixels() {
+      var pal = { o: tok('--accent'), a: tok('--violet-400'), b: tok('--violet-300'), w: tok('--white'), y: tok('--blue-300'), k: tok('--color-text'), s: tok('--blue-100') };
+      drawBitmap('px-heart', [
+        '.oo...oo.',
+        'oaao.oaao',
+        'oawaoaaao',
+        'oaaaaaaao',
+        '.oaaaaao.',
+        '..oaaao..',
+        '...oao...',
+        '....o....'
+      ], pal);
+      drawBitmap('px-star', [
+        '....o....',
+        '...oyo...',
+        '...oyo...',
+        'ooooyoooo',
+        '.oyyyyyo.',
+        '..oyyyo..',
+        '.oyyoyyo.',
+        '.oyo.oyo.',
+        '.oo...oo.'
+      ], pal);
+      drawBitmap('px-avatar', [
+        '................',
+        '................',
+        '..o.........o...',
+        '..oo.......oo...',
+        '..oao.....oao...',
+        '..oaaooooooaao..',
+        '..obbbbbbbbbbo..',
+        '.obbbbbbbbbbbbo.',
+        '.obbwobbbbwobbo.',
+        '.obbwobbbbwobbo.',
+        '.obbbbbbbbbbbbo.',
+        '.obbbbbaabbbbbo.',
+        '..obbbbbbbbbbo..',
+        '...oobbbbbboo...',
+        '.....oooooo.....',
+        '................'
+      ], pal);
+      var heart = document.getElementById('px-heart');
+      heart.style.width = (9 * 4) + 'px'; heart.style.height = (8 * 4) + 'px';
+      var star = document.getElementById('px-star');
+      star.style.width = (9 * 6) + 'px'; star.style.height = (9 * 6) + 'px';
+    }
+
+    /* ---------- Thème ---------- */
+    var toggle = document.getElementById('theme-toggle');
+    function current() { return root.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+    function renderToggle() {
+      var dark = current() === 'dark';
+      toggle.innerHTML = I.svg(dark ? 'sun' : 'moon') + '<span class="pv-theme-label">' + (dark ? 'Mode clair' : 'Mode sombre') + '</span>';
+      toggle.setAttribute('aria-pressed', String(dark));
+      toggle.setAttribute('aria-label', dark ? 'Passer en mode clair' : 'Passer en mode sombre');
+    }
+    toggle.addEventListener('click', function () {
+      root.dataset.theme = current() === 'dark' ? 'light' : 'dark';
+      renderToggle();
+      render();
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { renderToggle(); render(); });
+
+    /* ---------- Interactions de démonstration ---------- */
+    function bindRange(id) {
+      var input = document.getElementById(id);
+      var out = document.getElementById(id + '-out');
+      function sync() { input.style.setProperty('--value', input.value); if (out) out.textContent = input.value + ' %'; }
+      input.addEventListener('input', sync);
+      sync();
+    }
+    bindRange('f-progress');
+    bindRange('dr-progress');
+
+    Array.prototype.forEach.call(document.querySelectorAll('.segmented'), function (group) {
+      group.addEventListener('click', function (e) {
+        var b = e.target.closest('.segmented__item'); if (!b) return;
+        Array.prototype.forEach.call(group.querySelectorAll('.segmented__item'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs'), function (group) {
+      group.addEventListener('click', function (e) {
+        var b = e.target.closest('.tabs__item'); if (!b) return;
+        Array.prototype.forEach.call(group.querySelectorAll('.tabs__item'), function (x) { x.setAttribute('aria-selected', String(x === b)); });
+      });
+    });
+    var checklist = document.getElementById('checklist');
+    checklist.addEventListener('change', function () {
+      var all = checklist.querySelectorAll('.checkbox__input');
+      var done = checklist.querySelectorAll('.checkbox__input:checked');
+      document.getElementById('check-count').textContent = done.length + ' / ' + all.length;
+    });
+
+    var lastFocus = null;
+    function open(id) {
+      var ov = document.getElementById(id);
+      lastFocus = document.activeElement;
+      ov.hidden = false;
+      var f = ov.querySelector('input, select, button:not([data-close])') || ov.querySelector('button');
+      if (f) f.focus();
+    }
+    function closeAll() {
+      Array.prototype.forEach.call(document.querySelectorAll('.overlay'), function (o) { o.hidden = true; });
+      if (lastFocus) lastFocus.focus();
+    }
+    document.addEventListener('click', function (e) {
+      var o = e.target.closest('[data-open]');
+      if (o) { open(o.getAttribute('data-open') + '-overlay'); return; }
+      if (e.target.closest('[data-close]') || e.target.classList.contains('overlay')) closeAll();
+      var t = e.target.closest('[data-toast]');
+      if (t) toast(t.getAttribute('data-toast'));
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
+
+    function toast(kind) {
+      var data = kind === 'success'
+        ? { icon: 'check', title: 'Tâche terminée', text: '« Logo Atelier Mauve » rejoint la colonne Terminé.' }
+        : { icon: 'bell', title: 'Rappel', text: 'Affiche festival : échéance samedi 10 octobre.' };
+      var el = document.createElement('div');
+      el.className = 'toast toast--' + kind;
+      el.setAttribute('role', 'status');
+      el.innerHTML = '<span class="toast__icon">' + I.svg(data.icon) + '</span><div class="toast__body"><div class="toast__title">' + data.title + '</div><div class="toast__text">' + data.text + '</div></div>' +
+        '<button type="button" class="btn btn--ghost btn--icon btn--sm" aria-label="Fermer">' + I.svg('close') + '</button>';
+      el.querySelector('button').addEventListener('click', function () { el.remove(); });
+      document.getElementById('toasts').appendChild(el);
+      setTimeout(function () { el.remove(); }, 4500);
+    }
+
+    renderToggle();
+    render();
+  })();
+  </script>
+</body>
+</html>

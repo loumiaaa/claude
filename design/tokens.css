@@ -50,16 +50,16 @@
   /* --- Surfaces & texte --------------------------------------------------- */
   --color-bg: #F5F6FD;
   --color-bg-gradient:
-    radial-gradient(55% 55% at 8% 0%, rgba(193, 213, 255, 0.85) 0%, rgba(193, 213, 255, 0) 70%),
-    radial-gradient(50% 50% at 96% 6%, rgba(218, 203, 255, 0.85) 0%, rgba(218, 203, 255, 0) 70%),
-    radial-gradient(45% 45% at 72% 62%, rgba(232, 226, 255, 0.70) 0%, rgba(232, 226, 255, 0) 70%),
-    radial-gradient(60% 50% at 25% 100%, rgba(214, 228, 255, 0.85) 0%, rgba(214, 228, 255, 0) 70%),
-    linear-gradient(180deg, #F8F9FF 0%, #F3F2FD 100%);
+    radial-gradient(55% 60% at 6% 0%, rgba(183, 205, 255, 0.90) 0%, rgba(183, 205, 255, 0) 72%),
+    radial-gradient(50% 55% at 98% 4%, rgba(212, 194, 255, 0.90) 0%, rgba(212, 194, 255, 0) 72%),
+    radial-gradient(40% 45% at 70% 60%, rgba(226, 216, 255, 0.75) 0%, rgba(226, 216, 255, 0) 70%),
+    radial-gradient(60% 55% at 20% 100%, rgba(203, 221, 255, 0.90) 0%, rgba(203, 221, 255, 0) 72%),
+    linear-gradient(180deg, #F7F8FF 0%, #F2F1FD 100%);
   --color-surface: #FFFFFF;
   --color-surface-muted: #F2F3FB;
   --color-text: #1F1B3D;
   --color-text-muted: #57537A;
-  --color-text-subtle: #6F6C93;   /* indices, placeholders : ≥ 4,5:1 sur le verre */
+  --color-text-subtle: #66638B;   /* placeholders, métadonnées : ≥ 4,5:1 sur verre standard et champs */
   --color-border: rgba(59, 47, 158, 0.12);
   --color-border-strong: rgba(59, 47, 158, 0.22);
   --color-overlay: rgba(31, 27, 61, 0.28);
@@ -134,11 +134,11 @@
   --status-done-ink: #1B6B4B;       /* ajout */
 
   /* --- Sémantique ----------------------------------------------------------- */
-  --success: #1A6A4A;
+  --success: #17603F;
   --success-soft: #E2F5EC;
   --warning: #824A08;
   --warning-soft: #FDF0DD;
-  --danger: #A42A48;
+  --danger: #9E2645;
   --danger-soft: #FCE6EB;
   --danger-contrast: #FFFFFF;       /* ajout : texte sur fond --danger */
   --info: var(--accent);
