@@ -96,15 +96,18 @@ test('zone de notification : la croix cache la fenêtre, l’app reste ouverte',
   const base = H.tmpDir('lamia-tray-');
   fixture(base, () => {});
   const { app, page } = await H.launch({ base, userData: H.tmpDir('lamia-tray-ud-'), fakeNow: DAY + 'T10:00:00' });
-  await page.evaluate(() => { location.hash = 'reglages'; });
-  await page.locator('[data-opt-tray]').check();
-  await page.locator('[data-opt-tray]:checked').waitFor();
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
-  await new Promise((r) => setTimeout(r, 500));
-  const state = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map((w) => w.isVisible()));
-  assert.deepEqual(state, [false]);
-  assert.equal(fs.existsSync(path.join(H.dataDir(base), 'verrou.json')), true, 'toujours ouverte');
-  await app.close();
+  try {
+    await page.evaluate(() => { location.hash = 'reglages'; });
+    await page.locator('label.switch:has([data-opt-tray])').click();
+    await page.locator('[data-opt-tray]:checked').waitFor();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+    await new Promise((r) => setTimeout(r, 500));
+    const state = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map((w) => w.isVisible()));
+    assert.deepEqual(state, [false]);
+    assert.equal(fs.existsSync(path.join(H.dataDir(base), 'verrou.json')), true, 'toujours ouverte');
+  } finally {
+    await app.close();
+  }
   assert.equal(fs.existsSync(path.join(H.dataDir(base), 'verrou.json')), false);
 });
 

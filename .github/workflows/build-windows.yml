@@ -1,0 +1,168 @@
+# Plateforme de suivi - Lamia : exe Windows portable + ZIP « dossier »
+#
+# - À chaque push sur claude/** et main, et à la demande (workflow_dispatch) :
+#   npm ci, General Sans (Fontshare), tests unitaires, build, smoke test
+#   Windows de l'exe portable ET du ZIP, puis artefacts téléchargeables.
+# - Release : uniquement à la demande, avec une version (ex. 0.1.0) :
+#   pré-release GitHub v<version> avec les deux fichiers.
+name: Build Windows
+
+on:
+  push:
+    branches: ['claude/**', 'main']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version à publier en pré-release GitHub (ex. 0.1.0). Laisser vide pour un simple build.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, tests et smoke test (windows-latest)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: app
+        shell: pwsh
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'      # pas de certificat de signature en V1
+      ELECTRON_CACHE: ${{ github.workspace }}\.cache\electron
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Cache des binaires Electron et electron-builder
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/electron
+            .cache/electron-builder
+          key: electron-${{ runner.os }}-${{ hashFiles('app/package-lock.json') }}
+
+      - name: Version de la pré-release
+        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:VERSION -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') { throw "Version invalide : $env:VERSION (attendu : 0.1.0)" }
+          npm pkg set "version=$env:VERSION"
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Télécharger General Sans (Fontshare, licence ITF FFL)
+        run: |
+          node scripts/fetch-general-sans.mjs
+          $ok = Test-Path renderer/fonts/general-sans/GeneralSans-Regular.woff2
+          if ($ok) { "General Sans embarquée." >> $env:GITHUB_STEP_SUMMARY } else { Write-Output "::warning::General Sans non téléchargée : l'application utilisera Poppins (repli prévu)."; "General Sans absente : repli Poppins." >> $env:GITHUB_STEP_SUMMARY }
+
+      - name: Tests unitaires
+        run: npm test
+
+      - name: Build (exe portable + ZIP)
+        run: npm run build:win
+
+      - name: Smoke test Windows (exe portable et ZIP)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dist = (Resolve-Path dist).Path
+          $portable = Get-ChildItem $dist -Filter '*-portable.exe' | Select-Object -First 1
+          $zip = Get-ChildItem $dist -Filter '*-win-x64.zip' | Select-Object -First 1
+          if (-not $portable -or -not $zip) { throw 'Exe portable ou ZIP introuvable dans dist/' }
+
+          # Dossiers « clé USB » : l'exe et Donnees-Lamia côte à côte
+          $root = Join-Path $env:RUNNER_TEMP 'smoke'
+          $pDir = New-Item -ItemType Directory -Force (Join-Path $root 'portable')
+          $zDir = New-Item -ItemType Directory -Force (Join-Path $root 'zip')
+          Copy-Item $portable.FullName $pDir
+          Expand-Archive -Path $zip.FullName -DestinationPath $zDir -Force
+          $zExe = Get-ChildItem $zDir -Recurse -Filter 'Plateforme de suivi - Lamia.exe' | Select-Object -First 1
+          if (-not $zExe) { throw 'Exe introuvable dans le ZIP' }
+
+          $rows = @()
+          function Invoke-Smoke([string]$label, [string]$exe, [string]$folder) {
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            $p = Start-Process -FilePath $exe -ArgumentList '--smoke-test' -WorkingDirectory $folder -PassThru
+            $null = $p.Handle                                   # nécessaire pour lire ExitCode ensuite
+            if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "$label : délai dépassé (3 min)" }
+            $sw.Stop()
+            $data = Join-Path $folder 'Donnees-Lamia'
+            $resultFile = Join-Path $data 'smoke-test-result.json'
+            if (-not (Test-Path $resultFile)) { throw "$label : aucun résultat écrit dans Donnees-Lamia (code $($p.ExitCode))" }
+            $r = Get-Content $resultFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $r.checks | ForEach-Object { Write-Host ("  [{0}] {1} {2}" -f ($(if ($_.ok) { 'ok' } else { 'ÉCHEC' })), $_.name, $_.detail) }
+            if ($p.ExitCode -ne 0 -or -not $r.ok) { throw "$label : échec du smoke test (code $($p.ExitCode))" }
+            if (-not (Test-Path (Join-Path $data 'data.json'))) { throw "$label : data.json absent à côté de l'exe" }
+            if (Test-Path (Join-Path $data 'verrou.json')) { throw "$label : verrou non libéré" }
+            return [pscustomobject]@{ Variante = $label; Total = $sw.ElapsedMilliseconds; Interface = $r.timings.processToUiReadyMs; Dossier = $r.dataDir }
+          }
+
+          foreach ($i in 1, 2) {   # 1er lancement (création des données), puis relance (données existantes)
+            $rows += Invoke-Smoke "Exe portable ($i)" (Join-Path $pDir $portable.Name) $pDir
+            $rows += Invoke-Smoke "ZIP dossier ($i)" $zExe.FullName $zExe.DirectoryName
+          }
+
+          "## Smoke test Windows" >> $env:GITHUB_STEP_SUMMARY
+          "| Variante | Lancement complet (ms) | Process → interface prête (ms) | Données |" >> $env:GITHUB_STEP_SUMMARY
+          "|---|---|---|---|" >> $env:GITHUB_STEP_SUMMARY
+          $rows | ForEach-Object { "| $($_.Variante) | $($_.Total) | $($_.Interface) | ``$($_.Dossier)`` |" >> $env:GITHUB_STEP_SUMMARY }
+          $sizes = Get-ChildItem $dist -File | Where-Object { $_.Name -match '(portable\.exe|win-x64\.zip)$' } | ForEach-Object { "| $($_.Name) | $([math]::Round($_.Length / 1MB, 1)) Mo |" }
+          "`n| Fichier | Taille |`n|---|---|" >> $env:GITHUB_STEP_SUMMARY
+          $sizes >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Artefacts (exe portable + ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: plateforme-suivi-lamia-windows
+          path: |
+            app/dist/*-portable.exe
+            app/dist/*-win-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Pré-release GitHub v${{ inputs.version }}
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: plateforme-suivi-lamia-windows
+          path: dist
+
+      - name: Publier la pré-release
+        uses: softprops/action-gh-release@v2.2.2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Plateforme de suivi - Lamia ${{ inputs.version }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/*-portable.exe
+            dist/*-win-x64.zip
+          body: |
+            Version ${{ inputs.version }} de la Plateforme de suivi - Lamia (Windows 10/11, 64 bits, hors ligne).
+
+            - **…-portable.exe** : un seul fichier, à poser où tu veux. Il se décompresse à chaque ouverture (quelques secondes).
+            - **…-win-x64.zip** : un dossier à extraire une fois ; démarrage plus rapide.
+
+            Pour mettre à jour : remplace l'exe (ou le dossier) en gardant `Donnees-Lamia` à côté. Mode d'emploi : `docs/06-guide-utilisatrice.md`.

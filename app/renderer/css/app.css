@@ -896,7 +896,7 @@ h1[tabindex="-1"]:focus { outline: none; }
 }
 .gantt__scroll { overflow-x: auto; overscroll-behavior-x: contain; }
 .gantt__inner { position: relative; }
-.gantt--month .gantt__inner { min-width: calc(var(--label-w) + var(--days) * 24px); }   /* QA-01 : 31 jours tiennent à 1440 px (et dans la fenêtre de l’app) */
+.gantt--month .gantt__inner { min-width: calc(var(--label-w) + var(--days) * 24px); }   /* QA-04 : 31 jours tiennent à 1440 px (et dans la fenêtre de l’app) */
 .gantt--week .gantt__inner { min-width: calc(var(--label-w) + 7 * 76px); }
 .gantt__rows { margin: 0; padding: 0; list-style: none; }
 .gantt__row { display: grid; grid-template-columns: var(--label-w) minmax(0, 1fr); min-height: var(--row-h); }
@@ -910,7 +910,7 @@ h1[tabindex="-1"]:focus { outline: none; }
   min-width: 0;
   padding: 6px var(--space-4) 6px var(--space-6);
   border-right: 1px solid var(--color-border);
-  background-color: var(--glass-bg-strong);
+  background-color: var(--color-surface);   /* QA-18 : opaque, les barres ne transparaissent plus */
 }
 .gantt__label--head { font-size: var(--fs-xs); font-weight: var(--fw-semibold); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--color-text-muted); }
 .gantt__label--group { display: flex; align-items: center; gap: var(--space-2); padding-top: var(--space-4); }
@@ -931,7 +931,7 @@ h1[tabindex="-1"]:focus { outline: none; }
 .gantt__row--head .gantt__label { align-content: end; padding-bottom: var(--space-3); }
 .gantt__days { display: grid; grid-template-columns: repeat(var(--days), minmax(0, 1fr)); background: none; border-bottom: 0; }
 .gantt__day { display: grid; justify-items: center; gap: 2px; padding: var(--space-2) 0; font-size: var(--fs-xs); color: var(--color-text-muted); }
-.gantt__day.is-weekend { background-color: var(--gantt-weekend); color: var(--color-text-subtle); }
+.gantt__day.is-weekend { background-color: var(--gantt-weekend); color: var(--color-text-muted); }   /* QA-14 */
 .gantt__num { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--color-text); }
 .gantt__day.is-today .gantt__num { background-image: var(--accent-gradient); color: var(--accent-contrast); box-shadow: var(--accent-shadow); }
 .gantt__day.is-today .gantt__dow { color: var(--accent); font-weight: var(--fw-semibold); }
@@ -1439,7 +1439,14 @@ h1[tabindex="-1"]:focus { outline: none; }
 .chip--pole .icon { width: 13px; height: 13px; }
 .progress--pole { --progress-fill: linear-gradient(90deg, var(--cat-carnet), var(--cat-auto)); }
 .hours-row--pole { padding-top: var(--space-4); border-top: 1px dashed var(--color-border); }
-.hcard--pole .hcard__days { display: grid; gap: var(--space-3); margin-top: var(--space-2); }
+/* Carte du pôle au Récap : pleine largeur, sous les catégories (résumé à gauche, samedis à droite) */
+.hours-grid > .hcard--pole { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); column-gap: var(--space-8); align-items: start; }
+.hcard--pole > :not(.hcard__days) { grid-column: 1; }
+.hcard--pole > .hcard__days { grid-column: 2; grid-row: 1 / span 4; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4) var(--space-6); align-self: center; }
+@media (max-width: 860px) {
+  .hours-grid > .hcard--pole { grid-template-columns: minmax(0, 1fr); }
+  .hcard--pole > .hcard__days { grid-column: 1; grid-row: auto; }
+}
 .perso-day { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px var(--space-3); align-items: center; }
 .perso-day__label { font-size: var(--fs-sm); color: var(--color-text-muted); }
 .perso-day__value { font-size: var(--fs-sm); font-weight: var(--fw-semibold); white-space: nowrap; }
@@ -1464,6 +1471,30 @@ h1[tabindex="-1"]:focus { outline: none; }
 .folder__path { overflow-wrap: anywhere; }
 .st-subtitle { margin: var(--space-6) 0 var(--space-3); }
 .boot-error { max-width: 640px; margin: 15vh auto; padding: var(--space-8); font-family: var(--font-body); }
+
+/* Recette de la maquette (docs/05) ---------------------------------------- */
+/* QA-09 : un mot très long (nom de fichier) se coupe au lieu de faire déborder la page */
+.row-title, .row-sub, .plan-item__title, .task-card__title, .gantt__title, .due-row__title, .task-row__title, .replan-row__title { overflow-wrap: anywhere; }
+.task-card__client { min-width: 0; }
+.task-card__client span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.recap-item__meta { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.task-table .col-title { min-width: 0; }
+
+/* QA-14 : compteur de la barre latérale lisible en sombre (4,5:1) */
+:root[data-theme="dark"] .sidebar .badge--soft { color: var(--color-text); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sidebar .badge--soft { color: var(--color-text); }
+}
+
+/* QA-08 : cibles tactiles d'au moins 44 px sur mobile */
+@media (max-width: 860px) {
+  .btn--sm, .btn--icon, .segmented__item, .select--sm, .day-toggle, .tag__remove, .data-twin > summary, .menu__item { min-height: 44px; }
+  .btn--icon, .day-toggle, .tag__remove { min-width: 44px; }
+  .data-twin > summary { display: flex; align-items: center; }
+  .palette { gap: 18px; }
+  .palette__swatch { position: relative; }
+  .palette__swatch::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }
+}
 
 /* ==========================================================================
   11. IMPRESSION — « Export PDF » du récap (A4)

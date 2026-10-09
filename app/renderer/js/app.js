@@ -227,9 +227,38 @@
     document.body.innerHTML = '<main class="boot-error"><h1>Plateforme de suivi - Lamia</h1><p>Le démarrage n’a pas abouti : ' + U.esc(String(e && e.message || e)) + '</p></main>';
   }
 
+  // Filet de sécurité (QA-02) : si l'interface ne démarre pas avec ces données,
+  // on propose de restaurer la dernière sauvegarde valide (une copie de l'état actuel est faite avant).
+  function recovery(e) {
+    var box = document.createElement('main');
+    box.className = 'glass card boot-error';
+    box.innerHTML = '<h1 class="h2">Oups, tes données n’ont pas pu s’afficher</h1>' +
+      '<p class="text-muted">Rien n’a été effacé. Tu peux revenir à la dernière sauvegarde valide : une copie de l’état actuel est gardée dans Donnees-Lamia/sauvegardes.</p>' +
+      '<p class="text-subtle text-sm">Détail : ' + U.esc(String(e && e.message || e)) + '</p>' +
+      '<div class="btn-row"><button type="button" class="btn btn--primary" data-recover>Restaurer la dernière sauvegarde</button>' +
+      '<button type="button" class="btn btn--secondary" data-open-folder>Ouvrir le dossier de données</button></div><p class="hint" data-recover-msg></p>';
+    document.body.innerHTML = '';
+    document.body.appendChild(box);
+    box.querySelector('[data-open-folder]').addEventListener('click', function () { api.app.openDataFolder(); });
+    box.querySelector('[data-recover]').addEventListener('click', function () {
+      var msg = box.querySelector('[data-recover-msg]');
+      api.backup.list().then(function (list) {
+        var b = (list || []).filter(function (x) { return x.readable; })[0];
+        if (!b) { msg.textContent = 'Aucune sauvegarde lisible pour l’instant.'; return null; }
+        msg.textContent = 'Restauration de ' + b.id + '…';
+        return api.backup.restore(b.id);
+      }).then(function (r) {
+        if (r && r.ok) location.reload();
+        else if (r) msg.textContent = r.error || 'La restauration n’a pas abouti.';
+      });
+    });
+  }
+
   function init() {
     if (!api) { bootError(new Error('cette page doit être ouverte dans l’application.')); return; }
-    api.app.boot().then(function (res) { start(res.doc, res.info); }, bootError);
+    api.app.boot().then(function (res) {
+      try { start(res.doc, res.info); } catch (e) { recovery(e); }
+    }, bootError);
   }
 
   function start(doc, info) {

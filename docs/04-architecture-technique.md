@@ -1,500 +1,333 @@
 # Architecture technique — Plateforme de suivi - Lamia
 
-> Auteur : Développeur lead · Phase 1 (conception) · 8 octobre 2026
-> Références : `docs/00-cahier-des-charges.md` (source de vérité), `docs/01-brief-produit.md` (stories DB-x, ST-x, RC-x, TR-x).
-> Ce document fixe la stack, prouve qu'on sait produire l'exe et décrit comment la phase 2 sera construite et testée.
+> Auteur : Développeur lead · Phase 1 (conception, 8 octobre 2026) puis **phase 2 (développement, 9 octobre 2026)**.
+> Références : `docs/00-cahier-des-charges.md` (source de vérité, §10 « Décisions de validation »), `docs/01-brief-produit.md` (stories DB-x, ST-x, RC-x, TR-x), `docs/05-rapport-tests-maquette.md` (recette de la maquette).
+> Code : `app/` (mode d'emploi développeur : `app/README.md`). Guide pour Lamia : `docs/06-guide-utilisatrice.md`.
 
 ## 0. En bref
 
-- **Stack retenue** : **Electron 44 + electron-builder 26** (cible `portable`), interface en **Svelte 5 + TypeScript + Vite** (via electron-vite), qui importe **tels quels** `design/tokens.css`, `design/components.css`, les polices et les scripts `PixelCast`, `LamiaIcons` et `LamiaVoice`.
-- **Spike réussi** : un **exe Windows portable de 91,4 Mo** a été produit **depuis Linux, sans Wine**, en 3 min 25 s, **avec l'icône et les métadonnées** (vérifiées dans le binaire). Playwright pilote l'app Electron, en dev comme en build packagé.
-- **Données** dans `Donnees-Lamia/` à côté de l'exe, un seul `data.json` versionné, écritures atomiques, 30 sauvegardes quotidiennes, verrou multi-PC et contrôle de révision contre les conflits OneDrive.
-- **Risque n° 1** : l'exe portable **se décompresse à chaque lancement** (environ 320 Mo dans `%TEMP%`), ce qui menace l'objectif TR-1 (ouverture en moins de 3 s). Parade : un écran d'attente Memeow, plus une **variante ZIP « dossier »** au démarrage quasi immédiat. Le choix revient à Lamia.
-- **Risque n° 2** : exe **non signé**, donc alerte SmartScreen, et la DSI de Flow Line peut bloquer l'app. On teste un exe « coquille » sur le PC pro dès la 1re semaine de la phase 2.
+- **Stack** : **Electron 44.7.0 + electron-builder 26.15.3**. L'interface est **le code vanilla de la maquette validée** (scripts classiques, sans bundler), branché sur de vraies données. La recommandation Svelte de la phase 1 est abandonnée (décision de l'orchestrateur, §1.3).
+- **Livrables** (cibles Windows x64, construits **depuis Linux** et en CI Windows) : `Plateforme-de-suivi-Lamia-0.1.0-portable.exe` (**145,5 Mo**) et `Plateforme-de-suivi-Lamia-0.1.0-win-x64.zip` (**141,5 Mo**, 321 Mo extrait). Build complet : **≈ 2 min 20 s** depuis Linux (4 vCPU, caches chauds).
+- **Données** : `Donnees-Lamia/data.json` à côté de l'exe (repli `%APPDATA%` si non inscriptible), `schemaVersion` 2 + migrations, écriture atomique (`.tmp` → `fsync` → renommage), 30 sauvegardes quotidiennes, verrou entre PC avec battement de cœur, contrôle de révision anti-écrasement (OneDrive), export / import `.json`.
+- **Système** : instance unique, chrono qui survit à la fermeture, rappels d'échéance (dans l'app + notification Windows + zone de notification + lancement au démarrage), exports CSV et PDF enregistrés par boîte de dialogue, smoke test `--smoke-test`.
+- **Qualité** : **69 tests unitaires** (`node --test`) et **22 tests end-to-end** (Playwright `_electron` sur le build Linux), 0 erreur console, 0 requête réseau. Les 18 défauts de la recette de la maquette sont traités (§8.3).
+- **Non vérifiable ici** (pas de Windows) : démarrage réel de l'exe portable, SmartScreen, toasts Windows, raccourci du menu Démarrer, lancement au démarrage. La CI exécute un smoke test sur `windows-latest` à chaque push ; le reste est à recetter sur les PC de Lamia (§9).
 
 ---
 
 ## 1. Choix de la stack
 
-### 1.1 Comparatif Electron et Tauri
+### 1.1 Electron plutôt que Tauri (phase 1, confirmé)
 
 | Critère | **Electron 44 + electron-builder 26** | **Tauri 2** |
 |---|---|---|
-| Taille de l'exe | **91,4 Mo** (mesuré, LZMA), 321 Mo une fois décompressé | ~3 à 10 Mo (binaire Rust + interface embarquée) |
-| Démarrage | Cible `portable` : **décompression à chaque lancement** (à mesurer sous Windows, estimé à plusieurs secondes), puis environ 0,4 s jusqu'à l'interface prête (mesuré sous Linux). Variante ZIP « dossier » : pas de décompression | < 1 s, aucune extraction |
-| Moteur web | **Chromium embarqué** : rendu identique sur tous les PC (flou `backdrop-filter`, polices, PDF) | **WebView2 du système** (Edge) : présent sur Windows 11 et la plupart des Windows 10, mais sa version varie et il peut être retiré ou bloqué par la DSI. Le runtime « fixe » ajoute environ 180 Mo |
-| Build Windows depuis Linux | ✅ **Prouvé** (spike), icône et métadonnées comprises, sans Wine | Documenté comme *expérimental* (`cargo-xwin` + SDK MSVC + NSIS) ; pas de cible « portable » officielle (on livrerait l'exe brut). Non testé : Electron n'a pas bloqué |
-| Build en CI `windows-latest` | ✅ standard | ✅ standard (`tauri-action`) |
-| Tests e2e | ✅ **Playwright `_electron`** (prouvé, dev et packagé) | WebDriver via `tauri-driver` + `msedgedriver`, plus lourd ; Playwright n'est pas pris en charge nativement |
-| Export PDF | ✅ `webContents.printToPDF` (prouvé, A4) | Pas d'API intégrée : code Rust spécifique à WebView2, ou boîte d'impression manuelle |
-| Notifications | `Notification` (AppUserModelID à régler, cf. §4.2) | Plugin `notification` |
-| Données portables | `PORTABLE_EXECUTABLE_DIR` fourni par le lanceur NSIS (vérifié dans le script généré) | `current_exe()` donne directement le bon dossier |
-| Langage côté système | **TypeScript**, le même que l'interface | Rust (nouvelle compétence pour l'équipe) |
-| Maturité | Très mature (VS Code, Slack, Figma desktop) ; sécurité à configurer soi-même (cf. §5) | Tauri 2 stable depuis fin 2024, sécurité stricte par défaut |
+| Taille | 145 Mo (exe portable zlib) ou 92 Mo (LZMA), 321 Mo décompressé | ~3 à 10 Mo |
+| Moteur web | **Chromium embarqué** : rendu identique partout (flou `backdrop-filter`, polices, PDF) | WebView2 du système, version variable, parfois bloqué par la DSI |
+| Build Windows depuis Linux | ✅ prouvé (spike puis phase 2), icône et métadonnées comprises, sans Wine | expérimental |
+| Tests e2e | ✅ Playwright `_electron` | WebDriver, plus lourd |
+| Export PDF | ✅ `webContents.printToPDF` | à coder |
+| Données portables | `PORTABLE_EXECUTABLE_DIR` posé par le lanceur NSIS | `current_exe()` |
 
-### 1.2 Recommandation : Electron
+Le coût (taille, décompression de l'exe portable) est connu et compensé par la **variante ZIP « dossier »** demandée par Lamia (§10 du cahier des charges : « les deux »).
 
-1. **Tout est prouvé dans notre environnement** : exe portable, icône, données à côté de l'exe, Playwright, PDF.
-2. **Un rendu identique partout** : le « liquid glass » (flou, transparences) et l'export PDF ne dépendent pas du WebView2 présent (ou non) sur le PC de Flow Line.
-3. **Un seul langage** (TypeScript) pour l'interface, la logique et le système, donc une équipe plus efficace et des tests unitaires partagés.
-4. Le coût est connu : **~90 Mo** (sans gêne sur une clé ou dans OneDrive) et un **démarrage plus lent en exe unique** (cf. §9.4).
+### 1.2 Pourquoi l'interface reste en vanilla (décision de phase 2)
 
-**Plan B** : si Lamia exige un exe unique **et** une ouverture en moins de 3 s, et si la mesure sous Windows est mauvaise, on bascule vers Tauri 2, avec un build en CI Windows uniquement et des tests e2e WebDriver. L'interface Svelte se réutilise telle quelle, seul le « main » est à réécrire en Rust.
+La note de phase 1 proposait Svelte 5 + TypeScript + Vite. **L'orchestrateur a tranché pour reprendre le code de la maquette validée** :
+1. Lamia a validé la maquette « telle quelle » : la reprendre garantit un **rendu identique au pixel près** (vérifié par captures, §8.4).
+2. Moins de risque et de délai : ~5 000 lignes déjà recettées (le testeur les a vérifiées en détail) ne sont pas réécrites.
+3. Pas de bundler : le renderer charge des `<script src>` classiques depuis le protocole `app://`. La CSP reste stricte (aucun script inline ni `eval`).
 
-### 1.3 Framework d'interface : Svelte 5 + TypeScript + Vite
-
-| Option | Pour | Contre |
-|---|---|---|
-| Vanilla TS | Zéro dépendance, au plus près de la maquette | Kanban, tableau triable, Gantt, formulaires, modales : on réécrirait à la main la synchronisation état ↔ DOM, source de bugs |
-| **Svelte 5** ✅ | Gabarits **en HTML** : le balisage de la maquette se recopie presque tel quel ; compilé en JS natif (léger, sans DOM virtuel) ; réactivité simple (`$state`, `$derived`) ; pas d'`eval` (compatible CSP stricte) | Une syntaxe à apprendre (faible) |
-| React | Écosystème énorme | JSX (`className`…) qui oblige à réécrire toute la maquette ; plus lourd ; écosystème inutile ici |
-
-**Réutilisation de `design/` sans copie** (source unique, le DA continue de l'éditer) :
-
-- Alias Vite `@design` vers `../design`. Un seul fichier global `src/renderer/styles/app.css` :
-  `@import '@design/fonts/fonts.css'; @import '@design/tokens.css'; @import '@design/components.css'; @import '@design/sprites/pixel-bubble.css';` (ordre de `components.css`). `pixel-bubble.css` est prévu au contrat §8 mais pas encore livré. Vite résout les `url()` des polices et les embarque.
-- Les composants Svelte **produisent les classes de la maquette** (`<button class="btn btn--primary">`, `<section class="glass card">`, `.chip--flowline`, `.modal`, `.toast`…). Les `<style>` scopés de Svelte ne servent qu'à la mise en page propre à une vue (colonnes du Kanban, grille du Gantt).
-- `PixelCast`, `LamiaIcons` et `LamiaVoice` restent des **scripts classiques**. Ils sont importés pour leurs effets de bord (`import '@design/sprites/pixel-cast.js'`), ce qui est compatible : ils sont en `'use strict'` et s'attachent explicitement à `window`. Des types sont déclarés dans `src/renderer/types/design-globals.d.ts`. En repli, on peut les copier dans `public/` et les charger par `<script src>`.
-  - `<Icon name>` affiche `LamiaIcons.svg(name)` via `{@html}` (contenu local et statique).
-  - L'action Svelte `use:pixelCast={{ character, animation }}` appelle `mount`, puis `destroy`.
-  - Le Dashboard passe à `LamiaVoice.pick()` un contexte calculé depuis `data.json`, y compris `daysAway`. La petite mémoire `localStorage` de `phrases.js` (dernières répliques) reste propre à chaque PC : c'est acceptable, car non critique.
-- Le thème suit le contrat des tokens : `<html data-theme="light|dark">`, sans attribut pour « système ». Le main aligne `nativeTheme.themeSource` pour que la barre de titre et les barres de défilement Windows suivent.
-- Graphiques en **SVG faits main** (barres par catégorie, courbe d'humeur avec des trous) : maîtrise totale des tokens, rendu net en PDF, aucune bibliothèque. Dates : petites fonctions maison testées (§8), ou `date-fns` + locale `fr` si besoin.
+Ce qui change par rapport à la maquette : la persistance (`window.lamia` au lieu de `localStorage`), l'horloge (vraie date du jour), la logique métier **extraite dans `app/shared/`** (modules UMD testés, partagés avec le main), les exports (main), les Réglages (vrai dossier, sauvegardes, options Windows) et l'objectif perso du samedi.
 
 ---
 
-## 2. Résultats du spike (8 octobre 2026, environ 20 min)
-
-Le code jetable est resté dans le scratchpad (hors dépôt) : fenêtre + preload + `Donnees-Lamia/data.json` ; tout a été nettoyé ensuite. Les extraits utiles sont repris aux §3 et §5.
+## 2. Résultats du spike de phase 1 (8 octobre 2026)
 
 | Mesure | Résultat |
 |---|---|
 | Versions | Electron **44.7.0**, electron-builder **26.15.3**, Node 22.22, Playwright 1.56 |
-| `npm install` | 11 s (284 paquets). Electron 44 n'a **plus de postinstall** : le binaire est téléchargé au premier `require('electron')` (≈ 4 s ici, 283 Mo une fois décompressé) ; electron-builder télécharge à part le zip Windows (caches : 269 Mo pour Electron, 20 Mo pour NSIS et 7-Zip) |
-| **Build `--win portable --x64` depuis Linux, sans Wine** | ✅ **exit 0**. 205 s au 1er build (téléchargements compris), 204 s au 2e (caches chauds) |
-| Décomposition du temps | `--win dir` (packaging seul) : **15 s** ; compression LZMA du NSIS : **≈ 190 s** (4 vCPU). Avec `compression: store` : 9 s, mais exe de 336 Mo |
-| **Exe produit** | `Plateforme-de-suivi-Lamia-0.0.1-portable.exe`, **91 446 925 octets (91,4 Mo)**, PE32 « Nullsoft self-extracting ». L'app interne (PE32+ x64) occupe **321 Mo** décompressée ; seule la locale `fr.pak` est conservée (`electronLanguages: ["fr"]`) |
-| **Icône et métadonnées** | ✅ Contrairement à ce qu'on pensait, `signAndEditExecutable: false` est **inutile** : electron-builder 26 édite les ressources avec **`resedit` (pur JavaScript)**. Les deux exe (lanceur portable et exe interne) contiennent l'icône (ICO 16→256, 6 tailles) et le VERSIONINFO (ProductName, CompanyName, FileVersion…), vérifiés en relisant le binaire. Les lignes « signing with signtool.exe » du journal ne font rien sans certificat |
-| `PORTABLE_EXECUTABLE_DIR` | ✅ Vérifié dans le script NSIS généré : `SetEnvironmentVariable("PORTABLE_EXECUTABLE_DIR", $EXEDIR)` (+ `PORTABLE_EXECUTABLE_FILE`). L'app est extraite dans `%TEMP%`, lancée (arguments transmis), puis supprimée à la sortie |
-| **Playwright `_electron.launch`** | ✅ Dev : interface prête en 1,15 s ; **build Linux packagé : 0,41 s**. Vérifié : titre, `require` et `process` **absents** du rendu, API exposée limitée à 3 fonctions, `fetch('https://…')` **bloqué**, 2 écritures retrouvées dans `data.json` sur disque, aucun fichier temporaire restant, persistance après relance |
-| Repli si dossier inutilisable | ✅ Parent qui n'est pas un dossier (`ENOTDIR`) → repli détecté (dossier `userData`) |
-| `printToPDF` A4 | ✅ 51,9 Ko, fond imprimé |
-| Notifications | `Notification.isSupported()` = false dans le conteneur Linux (pas de D-Bus) : **non testable ici**, à valider sous Windows |
-| Build Linux `dir` (pour les e2e) | 7 s |
-
-**Limites du spike**
-- **Aucune exécution sous Windows** (ni Windows ni Wine ici). Restent à mesurer en phase 2, sur le runner et sur les PC de Lamia : temps de décompression, SmartScreen et antivirus, toasts Windows, écriture réelle à côté de l'exe. Le workflow du §7 inclut un *smoke test* Windows pour ça.
-- Tauri n'a pas été construit (time-box : Electron n'a pas bloqué).
-- Anecdote utile : `fs.mkdirSync(..., { recursive: true })` **boucle à l'infini** sur certains pseudo-systèmes de fichiers (`/proc`) et fige le processus. En phase 2, on crée `Donnees-Lamia` **sans `recursive`**, puisque le dossier de l'exe existe forcément.
+| `npm install` | 11 s (284 paquets). Electron 44 n'a **plus de postinstall** : le binaire est téléchargé au premier `require('electron')` (≈ 4 s, 283 Mo) |
+| Build Windows depuis Linux, sans Wine | ✅ exit 0. Icône et VERSIONINFO écrits par `resedit` (pur JavaScript) : `signAndEditExecutable: false` est inutile |
+| `PORTABLE_EXECUTABLE_DIR` | ✅ posé par le lanceur NSIS (`$EXEDIR`), ainsi que `PORTABLE_EXECUTABLE_FILE` (`$EXEPATH`). L'app est extraite dans `%TEMP%\<id>` puis supprimée à la sortie ; le code de sortie de l'app est renvoyé (`SetErrorLevel`) |
+| Playwright `_electron` | ✅ en dev et sur le build packagé |
+| Piège | `fs.mkdirSync(..., { recursive: true })` peut boucler sur certains pseudo-systèmes de fichiers : `Donnees-Lamia` est créé **sans** `recursive` |
 
 ---
 
-## 3. Données
-
-### 3.1 Emplacement
-
-Ordre de résolution (dans le main uniquement) :
-
-```ts
-function resolveBaseDir(): string {
-  if (process.env.LAMIA_DATA_DIR) return process.env.LAMIA_DATA_DIR;              // tests e2e
-  if (process.env.PORTABLE_EXECUTABLE_DIR) return process.env.PORTABLE_EXECUTABLE_DIR; // exe portable
-  if (app.isPackaged) return path.dirname(process.execPath);                       // variante ZIP « dossier »
-  return path.join(app.getAppPath(), '.dev-data');                                 // développement
-}
-```
-
-⚠️ En mode portable, `process.execPath` pointe vers le dossier d'extraction temporaire (`%TEMP%\…`) : il ne faut **jamais** s'en servir pour les données.
-
-```
-<dossier de l'exe>\                         (clé USB, OneDrive, Bureau…)
-├── Plateforme-de-suivi-Lamia-1.0.0-portable.exe
-└── Donnees-Lamia\
-    ├── data.json                       ← toutes les données
-    ├── verrou.json                     ← présent seulement quand l'app est ouverte
-    ├── LISEZ-MOI.txt                   ← « ne pas modifier à la main, déplacer avec l'exe »
-    ├── sauvegardes\
-    │   ├── data-2026-10-08.json        ← 1 par jour, 30 conservées
-    │   ├── avant-migration-v1-2026-10-08T09-12-03.json
-    │   ├── avant-import-….json / avant-restauration-….json   (10 de chaque, conservées à part)
-    └── exports\                        ← emplacement proposé par défaut pour le PDF, le CSV et le JSON
-```
-
-Ne se trouve **pas** dans `Donnees-Lamia` (et c'est voulu) : le cache Chromium, la taille et la position de la fenêtre (propres à chaque écran) et la mémoire anti-répétition de `LamiaVoice`. Tout cela va dans `%APPDATA%\Plateforme de suivi - Lamia\`, sans **aucune donnée métier** : on peut le supprimer sans rien perdre. On n'utilise **jamais** `localStorage` ni IndexedDB pour les données métier.
-
-### 3.2 Format : un seul `data.json` versionné
-
-Volume estimé : environ 500 tâches et 3 000 entrées de temps par an, soit moins de 2 Mo. On réécrit donc le fichier entier à chaque fois : c'est simple, robuste et lisible.
-
-```ts
-interface LamiaData {
-  schemaVersion: 1;                       // entier, incrémenté à chaque changement de format
-  meta: { appVersion: string; createdAt: string; savedAt: string;   // horodatages ISO UTC
-          savedBy: string /* nom du PC */; revision: number };      // +1 à chaque écriture
-  categories: Category[]; tasks: Task[]; moods: MoodEntry[]; settings: Settings;  // cf. CDC §7
-  activeTimer: { taskId: string; startedAt: string /* ISO UTC */; host: string } | null;
-  reminderLog: Record<string /* taskId */, string /* endDate déjà notifiée */>;
-}
-// Ajouts proposés au §7 : Settings.lastOpenedOn ('YYYY-MM-DD', pour la 1re ouverture du jour et daysAway),
-// Settings.ui (période du Dashboard, filtres de la liste : « mémorisés » d'après le brief), Settings.reminders { hour: 9 }.
-```
-
-Conventions :
-- Les dates « calendaires » sont en `'YYYY-MM-DD'` **locales** (jamais `new Date('2026-10-08')`, qui est interprété en UTC). Les instants sont en ISO UTC.
-- Les identifiants viennent de `crypto.randomUUID()`.
-
-**Au chargement** :
-1. `JSON.parse`.
-2. **Validation par schéma** (zod) : en cas d'échec, **aucune écriture**. Un écran de récupération propose de restaurer la dernière sauvegarde valide, et le fichier abîmé est conservé (`data-illisible-<date>.json`) (TR-3).
-3. **Migrations** : un tableau `migrations[n]` (vN → vN+1) appliqué en chaîne, précédé d'une copie `avant-migration-vN-…`.
-4. **Version plus récente que l'exe** (`schemaVersion` > version supportée, par exemple un vieil exe sur un autre PC) : ouverture en **lecture seule** avec le message « Mettez à jour l'application sur ce PC ».
-
-### 3.3 Écritures atomiques et file d'attente
-
-- Le **rendu envoie chaque modification** au main (IPC, peu coûteux). Le main garde le document en mémoire, le **valide**, puis l'écrit **300 ms après la dernière modification**, une écriture à la fois. Il force l'écriture **immédiatement** pour les actions sensibles (chrono démarré ou arrêté, import) et **de façon synchrone** sur `before-quit`, `session-end` (fermeture de session Windows) et `powerMonitor 'suspend'`.
-- Procédure : écrire `data.json.tmp` → `fsync` → `rename` vers `data.json` (code validé par le spike) :
-
-```ts
-function writeAtomic(file: string, content: string) {
-  const tmp = `${file}.tmp`;
-  const fd = fs.openSync(tmp, 'w');
-  try { fs.writeSync(fd, content); fs.fsyncSync(fd); } finally { fs.closeSync(fd); }
-  renameWithRetry(tmp, file); // Windows : EPERM/EBUSY/EACCES possibles (antivirus, OneDrive, indexation)
-}                             // → 6 tentatives, de 50 ms à 1,6 s ; si l'échec persiste, on garde en mémoire, on affiche « Enregistrement en attente » et on réessaie
-```
-
-- Au démarrage, un `data.json.tmp` orphelin est ignoré puis supprimé si `data.json` est valide ; il est examiné si `data.json` est absent.
-
-### 3.4 Sauvegardes, export et import
-
-- **Sauvegarde quotidienne** : à la première ouverture de chaque jour, `data.json` est copié vers `sauvegardes/data-AAAA-MM-JJ.json`. **30 sont conservées** (brief TR-3) ; les sauvegardes « avant-… » sont gérées à part (10 de chaque).
-- **Restauration** (Paramètres) : liste datée avec un résumé (nombre de tâches, d'entrées de temps, d'humeurs). La restauration sauvegarde d'abord l'état courant (`avant-restauration-…`), puis remplace.
-- **Export JSON** : le fichier `data.json` tel quel, via la boîte d'enregistrement native.
-- **Import** : validation → migration → aperçu (« 124 tâches, 61 humeurs ») → sauvegarde `avant-import-…` → remplacement. La fusion de fichiers est reportée en V2 (synchronisation).
-
-### 3.5 Verrou anti double ouverture et OneDrive
-
-- **Même PC** : `app.requestSingleInstanceLock()`. Une 2e fenêtre ne s'ouvre pas : la première est mise au premier plan.
-- **Plusieurs PC** (TR-4) : `verrou.json` contient `{ host: os.hostname(), user, pid, appVersion, openedAt, heartbeatAt }`. Il est créé avec l'option `wx`, rafraîchi **toutes les minutes** et supprimé à la fermeture.
-  - Verrou d'un **autre PC** daté de moins de **5 min** → **lecture seule** et bannière « Ouverte sur **PC-FLOWLINE-12** depuis 9 h 02 », avec les actions « Réessayer » et « Forcer l'ouverture » (après confirmation).
-  - Verrou périmé, ou venant du même PC (plantage) → reprise, avec un message discret.
-- **Contrôle de révision avant chaque écriture**, car le verrou n'est qu'un garde-fou : OneDrive synchronise avec du retard, et un PC hors ligne ne voit pas le verrou de l'autre. Le main compare `mtime`, taille et `meta.revision` du fichier avec la dernière version qu'il a lue ou écrite. Si le fichier a été modifié ailleurs, on **n'écrase pas** : notre version est écrite dans `data-conflit-<PC>-<date>.json`, l'app passe en lecture seule et propose « Recharger ».
-- **Copies de conflit OneDrive** (`data-<NomDuPC>.json`) : recherchées à l'ouverture et toutes les 5 min, avec une alerte qui propose de comparer ou de restaurer.
-- Conseils à Lamia : régler le dossier sur « Toujours conserver sur cet appareil », attendre la coche verte de synchronisation avant d'ouvrir l'app sur l'autre PC, et toujours « Éjecter » une clé USB (FAT32 et exFAT n'ont pas de journal).
-
-### 3.6 Si le dossier n'est pas accessible en écriture
-
-- Le test se fait par une **vraie écriture** (création puis suppression d'un fichier de test), pas avec `fs.access` (peu fiable avec les ACL Windows).
-- **Pas de repli silencieux** vers `%APPDATA%`, qui casserait la promesse « déplacer le dossier = déplacer les données ».
-  - Si `data.json` est lisible : **lecture seule**, avec une bannière qui explique (clé protégée en écriture, dossier en lecture seule, exe lancé **depuis un ZIP**…) et propose « Choisir un autre dossier… » ou « Copier mes données vers… ».
-  - Si aucune donnée n'existe : écran d'accueil qui demande où créer `Donnees-Lamia` (Documents par défaut).
-  - Le dossier choisi est mémorisé **pour ce PC** dans `%APPDATA%\…\config.json`.
-- **Lancement depuis un ZIP** (chemin `%TEMP%\Temp1_*.zip\…` ou `….zip\…`) : message dédié « Extrayez d'abord le dossier ».
-
----
-
-## 4. Fonctions système
-
-### 4.1 Chrono qui survit à la fermeture (ST-5, DB-7)
-
-- On ne stocke que `activeTimer = { taskId, startedAt, host }`, enregistré **immédiatement**. Le temps écoulé vaut toujours `now − startedAt` ; on n'incrémente jamais de compteur. Le chrono survit donc à la fermeture, à un plantage, à la mise en veille, et même au passage sur l'autre PC (avec la mention « démarré sur PC-X »).
-- Un seul chrono actif : en démarrer un autre arrête le premier, avec un message.
-- **À l'arrêt** :
-  - la durée est découpée **par jour local** si le chrono passe minuit (une `timeEntry` par date, `source: 'timer'`) ;
-  - au-delà de **10 h** (brief), on propose « Corriger l'heure de fin » ;
-  - en option : au réveil d'une veille de plus de 30 min (`powerMonitor 'resume'`), on propose de retirer ce temps.
-- Durées calculées **à partir des instants UTC** (justes aux changements d'heure), arrondies à la minute.
-
-### 4.2 Rappels d'échéance et notifications Windows (ST-7)
-
-- Calcul dans le **main** (fonction pure `shared/reminders.ts`) : au démarrage, toutes les 5 min et à l'heure de rappel (9 h par défaut). Une tâche non terminée avec `endDate` et `reminder.daysBefore` est due dès `endDate − daysBefore`. `reminderLog` évite les doublons, même d'un PC à l'autre.
-- Affichage : panneau « Rappels » à l'ouverture (toujours fiable), plus `new Notification({ title, body, icon })`. Un clic ramène la fenêtre sur la tâche.
-- **Windows** : appeler `app.setAppUserModelId('fr.lamia.plateforme-suivi')` dès le démarrage. D'après la documentation Electron, les toasts n'apparaissent de façon fiable que si un **raccourci du menu Démarrer** porte cet AUMID, or une app portable n'en crée pas.
-  - Parade proposée : à la 1re ouverture, **avec l'accord de Lamia**, créer le raccourci (`shell.writeShortcutLink(..., { target: PORTABLE_EXECUTABLE_FILE, appUserModelId })`) dans le menu Démarrer de l'utilisateur, sans droits administrateur. Il est mis à jour si l'exe a bougé.
-  - Repli : bannière dans l'app + `win.flashFrame(true)` (la barre des tâches clignote).
-  - **À valider sur Windows dès l'incrément ①.**
-- Limite : **aucun rappel quand l'app est fermée** (pas de service en arrière-plan sans installation). Options « Could » : réduire dans la zone de notification (`Tray`) au lieu de quitter, et lancement au démarrage de Windows (`app.setLoginItemSettings`, clé HKCU « Run » à mettre à jour si l'exe est déplacé). Décision de Lamia (§10).
-
-### 4.3 Export PDF (RC-6)
-
-- Une fenêtre **cachée** charge `print.html`, une 2e entrée Vite qui reprend les mêmes tokens avec une feuille `@media print` : thème clair forcé, verre aplati (pas de `backdrop-filter`), `@page { size: A4; margin: 14mm }`. Elle reçoit les données de la période par IPC et rend une section par catégorie, **sans total général**, avec les graphiques SVG.
-- Puis `webContents.printToPDF({ pageSize: 'A4', printBackground: true, preferCSSPageSize: true, displayHeaderFooter: true, footerTemplate: 'Page <span class="pageNumber"></span> / <span class="totalPages"></span>' })`. Le fichier est enregistré via `dialog.showSaveDialog`, avec par défaut `Donnees-Lamia/exports/recap-2026-S41.pdf`. Mécanisme prouvé par le spike.
-
-### 4.4 Export CSV (RC-5)
-
-- Une ligne par entrée de temps : `date ; catégorie ; tâche ; client ; durée (h) ; note`.
-- Séparateur `;`, **UTF-8 avec BOM**, fins de ligne CRLF, heures décimales **à virgule** (`1,50`).
-- Champs entre guillemets si nécessaire (`"` doublés, `;` et retours à la ligne protégés).
-- **Sous-totaux par catégorie, aucun total général**.
-- Format de date (`JJ/MM/AAAA` reconnu par Excel FR, ou ISO) et heures décimales ou `hh:mm` : à confirmer avec la comptable (question 5 du brief).
-- Génération dans `shared/csv.ts` (testée), écriture par le main.
-
-### 4.5 Polices embarquées
-
-- **Poppins** et **Pixelify Sans** (OFL) sont déjà dans `design/fonts/` et embarquées par Vite.
-- **General Sans** (Fontshare, *ITF Free Font License*) : `api.fontshare.com` est bloqué ici, mais accessible depuis un runner GitHub. Deux options :
-  - **A (recommandée)** : Lamia télécharge le zip sur fontshare.com et nous le transmet. On ajoute au dépôt les 4 WOFF2 (400, 500, 600, 700) **et le texte de licence**. Les builds sont alors reproductibles et ne dépendent pas de Fontshare.
-  - **B** : le script `scripts/fetch-general-sans.mjs` télécharge le zip en CI, vérifie son SHA-256 épinglé et extrait les WOFF2. Un échec fait échouer le build de release : pas de repli silencieux vers Poppins dans une version livrée.
-- Dans les deux cas, le DA ajoute `url("GeneralSans-*.woff2")` **avant** `local(...)` dans `fonts.css`, pour un rendu identique sur tous les PC. Le texte de la licence ITF FFL est à relire avant l'embarquement (brief, risques) et sera joint dans `licenses/` avec les licences OFL, Electron et Chromium.
-
----
-
-## 5. Sécurité (100 % hors ligne)
-
-- **Fenêtre** : `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, `webSecurity: true`, pas de `<webview>`. `setWindowOpenHandler` → `deny`, `will-navigate` → `preventDefault` (l'app n'a qu'une page, le routage est interne). Toutes les demandes de permission du rendu sont refusées : les notifications sont émises par le main.
-- **Chargement** par un protocole privilégié `app://lamia/` (`protocol.handle`), qui ne sert que les fichiers du dossier `renderer`, avec un contrôle anti-traversée de chemin. Cette pratique est recommandée par Electron, plutôt que `file://`. Le spike a validé `loadFile`, qui reste le repli.
-- **Aucune requête réseau** : `session.webRequest.onBeforeRequest` n'autorise que `app:`, `data:`, `blob:` et `devtools:` (+ `http://localhost:5173` en dev seulement). Prouvé par le spike : `fetch` externe → `TypeError`. Pas de `crashReporter`, pas d'autoUpdater. Le correcteur orthographique de Windows est natif et hors ligne.
-- **CSP stricte** (en `<meta>`, validée dans le spike, et en en-tête renvoyé par le gestionnaire `app://`) :
-  `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'`.
-  Si Svelte l'exige (attributs `style` statiques clonés depuis ses gabarits, transitions), on assouplit **les styles seulement** : d'abord `style-src-attr 'unsafe-inline'`, sinon `'unsafe-inline'` sur `style-src`. Le risque est faible sans contenu distant. On ne met jamais `unsafe-eval` ni de script inline.
-- **Preload, API minimale en liste blanche** (`window.lamia`) :
-  - `app.info()` ;
-  - `data.load()` et `data.save(doc)` ;
-  - `backup.list()` et `backup.restore(id)` ;
-  - `io.exportJson()`, `io.importJson()`, `io.exportCsv(kind, range)` et `io.exportPdf(range)` ;
-  - `on(channel, cb)`, limité aux canaux `lock-changed`, `external-change` et `reminder`.
-  
-  Pas d'`ipcRenderer` brut, pas de chemins arbitraires : les boîtes de dialogue sont ouvertes par le main. Chaque gestionnaire vérifie l'expéditeur (`event.senderFrame.url` en `app://`) et **valide le contenu** (zod).
-- **Fuses Electron** (option `electronFuses` d'electron-builder 26, vérifiée dans son schéma) : `runAsNode: false`, `enableNodeOptionsEnvironmentVariable: false`, `enableEmbeddedAsarIntegrityValidation: true`, `onlyLoadAppFromAsar: true`, `grantFileProtocolExtraPrivileges: false`, et `enableNodeCliInspectArguments: false` **en release seulement**, car Playwright a besoin de `--inspect`.
-- Confidentialité : JSON non chiffré en V1 (décision du brief). Pour une clé USB, recommander BitLocker To Go.
-
----
-
-## 6. Projet : arborescence, scripts et configuration
+## 3. Arborescence réelle
 
 ```
 / (dépôt loumiaaa/claude)
-├── design/                         # DA : tokens, composants, polices, sprites, phrases (importés tels quels)
-├── maquette/                       # UI/UX : référence visuelle (non embarquée)
-├── docs/
-├── app/
-│   ├── package.json                # versions EXACTES (electron 44.x, electron-builder 26.x…) + package-lock
-│   ├── electron.vite.config.ts     # alias @design → ../design ; entrées renderer index.html + print.html
-│   ├── electron-builder.config.cjs
-│   ├── build/                      # icon.ico (Memeow), splash.bmp (écran d'extraction), licences
-│   ├── scripts/fetch-general-sans.mjs
-│   ├── src/
-│   │   ├── shared/                 # TypeScript PUR (ni DOM ni Node), testé unitairement
-│   │   │   ├── model.ts  schema.ts  migrations/
-│   │   │   ├── dates.ts            # dates locales, semaines ISO, plages jour/semaine/mois
-│   │   │   ├── stats.ts            # heures par catégorie, objectifs, complétion, humeur
-│   │   │   ├── timer.ts  duration.ts  reminders.ts  csv.ts
-│   │   ├── main/
-│   │   │   ├── index.ts            # cycle de vie, fenêtre, sécurité, instance unique
-│   │   │   ├── paths.ts  store.ts  backups.ts  lock.ts  ipc.ts
-│   │   │   ├── protocol.ts  notifications.ts  export-pdf.ts  smoke.ts
-│   │   ├── preload/index.ts        # contextBridge → window.lamia (un seul fichier, sandbox)
-│   │   └── renderer/
-│   │       ├── index.html  print.html
-│   │       ├── main.ts  App.svelte
-│   │       ├── styles/app.css      # @import des fichiers de design/ + ajustements propres à l'app
-│   │       ├── types/design-globals.d.ts
-│   │       ├── lib/                # stores Svelte, client IPC typé, horloge injectable
-│   │       ├── components/         # Button, GlassCard, Chip, Modal, Drawer, Toast, Icon, PixelBubble, PixelStage…
-│   │       └── views/              # Dashboard, Taches (Kanban, Liste, Detail), Planning, Recap, Parametres
-│   └── tests/
-│       ├── unit/                   # Vitest
-│       └── e2e/                    # Playwright _electron + fixtures data.json
-└── .github/workflows/build-windows.yml   # créé en phase 2 (cf. §7)
+├── design/                         source unique : tokens, composants, icônes, phrases, polices, sprites
+├── maquette/                       référence visuelle validée (non embarquée, intacte)
+├── docs/                           00 → 06
+├── .github/workflows/build-windows.yml
+└── app/
+    ├── package.json · package-lock.json · electron-builder.config.cjs · README.md
+    ├── main/                       process principal
+    │   ├── index.js                cycle de vie, sécurité, instance unique, IPC, exports, smoke test
+    │   ├── preload.js              contextBridge → window.lamia (liste blanche)
+    │   ├── protocol.js             app://lamia/ (renderer/ + shared/), CSP, anti-traversée
+    │   ├── storage.js              DataStore : chargement, migration, écriture atomique, sauvegardes, conflits
+    │   ├── lock.js                 verrou.json (battement de cœur 1 min, périmé à 5 min)
+    │   ├── datadir.js              choix du dossier de données (pur, testé)
+    │   ├── system.js               zone de notification, démarrage, notifications, rappels / 15 min
+    │   └── assets/icon.ico|png
+    ├── shared/                     logique pure UMD (renderer + main + tests)
+    │   ├── dates.js  model.js  stats.js  csv.js  reminders.js  demo.js
+    ├── renderer/                   interface (maquette adaptée)
+    │   ├── index.html  css/app.css  js/*.js
+    │   ├── design/                 copie générée de ../design (ignorée par git)
+    │   └── fonts/general-sans/     police téléchargée (ignorée par git)
+    ├── scripts/                    sync-design.mjs, fetch-general-sans.mjs, make-icon.mjs, run-e2e.mjs
+    ├── tests/unit/                 11 fichiers, 69 tests
+    ├── tests/e2e/                  3 fichiers, 22 tests
+    └── build/icon.ico              icône de l'exe (16 → 256 px)
 ```
 
-**Scripts npm** (`app/package.json`) :
+**`design/` reste la source unique** : `scripts/sync-design.mjs` (lancé avant `start`, `test` et chaque build) le recopie dans `renderer/design/` en écartant les planches HTML et les PNG d'export. Le `fonts.css` de la copie reçoit les `url()` de General Sans **après** les `local()` si la police a été téléchargée ; `design/fonts/fonts.css` n'est jamais modifié.
 
-| Script | Commande | Rôle |
-|---|---|---|
-| `dev` | `electron-vite dev` | App en développement, rechargement à chaud de l'interface |
-| `build` | `electron-vite build` | Compile main, preload et renderer dans `out/` |
-| `typecheck` | `svelte-check && tsc --noEmit -p tsconfig.node.json` | Vérifie les types |
-| `lint` | `eslint .` | |
-| `test` | `vitest run` | Tests unitaires |
-| `test:e2e` | `npm run build && cross-env LAMIA_E2E=1 electron-builder --dir && playwright test` | E2E sur l'app packagée (Linux ou Windows), fuses de test |
-| `dist:win` | `npm run build && electron-builder --win --x64 --publish never` | **Exe portable + ZIP** |
-| `dist:win:fast` | `… -c.compression=store` | Build rapide (9 s au lieu de 190 s), pour les essais |
-| `fonts:fetch` | `node scripts/fetch-general-sans.mjs` | Option B des polices |
+**Modules partagés (UMD)** : chaque fichier de `shared/` se termine par `module.exports` sous Node et par `window.LamiaShared.<nom>` dans le renderer. `renderer/js/bridge.js` expose `L.dates`, et `L.q` (store) délègue ses requêtes à `stats.js`. Une seule implémentation est donc testée et exécutée partout.
 
-**`electron-builder.config.cjs`** (essentiel) :
+---
+
+## 4. Données
+
+### 4.1 Emplacement (`main/datadir.js`)
+
+Dossier de base, par priorité : `LAMIA_BASE_DIR` (tests) → `PORTABLE_EXECUTABLE_DIR` (exe portable : dossier de l'exe **d'origine**, jamais `%TEMP%`) → dossier de l'exe (ZIP) → `app/.dev-data` (développement). Données : `<base>/Donnees-Lamia`.
+
+Le dossier est testé par une **vraie écriture** (fichier d'essai écrit, `fsync`, supprimé). En cas d'échec : **repli dans `%APPDATA%\Plateforme de suivi - Lamia\Donnees-Lamia`**, bandeau explicatif dans l'app, chemin réel et raison dans les Réglages (dont le cas « exe lancé depuis un ZIP non extrait »). Les Réglages ont un bouton **Ouvrir le dossier**.
+
+```
+Donnees-Lamia\
+├── data.json          toutes les données
+├── verrou.json        présent tant que l'app est ouverte
+├── LISEZ-MOI.txt
+├── sauvegardes\       data-AAAA-MM-JJ.json (30) + avant-<motif>-<horodatage>.json (10 par motif)
+└── exports\           CSV, PDF, .json (dossier proposé par défaut)
+```
+
+Hors de `Donnees-Lamia` (propre à chaque PC, dans le dossier utilisateur Electron) : `reglages-pc.json` (zone de notification, démarrage, notifications), `fenetre.json` (taille et position), caches Chromium, mémoire anti-répétition des phrases.
+
+### 4.2 Format (`shared/model.js`)
 
 ```js
-const e2e = process.env.LAMIA_E2E === '1';
-module.exports = {
-  appId: 'fr.lamia.plateforme-suivi',
-  productName: 'Plateforme de suivi - Lamia',
-  directories: { output: 'dist', buildResources: 'build' },
-  files: ['out/**/*', 'package.json'],
-  asar: true,
-  electronLanguages: ['fr'],
-  compression: 'normal',
-  win: {
-    target: [{ target: 'portable', arch: ['x64'] }, { target: 'zip', arch: ['x64'] }],
-    icon: 'build/icon.ico',                       // icône + VERSIONINFO via resedit : OK même depuis Linux
-    artifactName: 'Plateforme-de-suivi-Lamia-${version}-win-x64.${ext}',
+{
+  schemaVersion: 2,
+  meta: { appVersion, createdAt, savedAt, savedBy /* nom du PC */, revision /* +1 par écriture */, demo? },
+  categories: [{ id, name, color, group: 'flowline' | 'auto-entreprise' }],
+  tasks: [{ id, title, description, categoryId, client, status, progress, priority, tags, startDate, endDate,
+            checklist: [{ id, label, done }], timeEntries: [{ id, date, minutes, note, source: 'timer' | 'manual' }],
+            reminder: { daysBefore } | null, createdAt, updatedAt, completedAt, order }],
+  moods: [{ date, level: 1..5, note }],
+  settings: {
+    theme: 'light' | 'dark' | 'system',
+    schedules: { flowline: { days: [1..5], weeklyHours: 35 },
+                 'auto-entreprise': { days: [6], weeklyHours: null, minDailyHours: 4 } },   // 4 h minimum le samedi
+    reminders: { hour: 9, inApp: true },
+    ui: { dashPeriod, recapPeriod, recapAnchor, tasksView, planningZoom, planningAnchor, filters, sort }
   },
-  portable: {
-    artifactName: 'Plateforme-de-suivi-Lamia-${version}-portable.${ext}',
-    requestExecutionLevel: 'user',               // jamais d'UAC
-    splashImage: 'build/splash.bmp',             // Memeow pendant l'extraction (BMP)
-    // pas de unpackDirName : un dossier temporaire unique par lancement (évite les collisions)
-  },
-  electronFuses: {
-    runAsNode: false, enableNodeOptionsEnvironmentVariable: false,
-    enableNodeCliInspectArguments: e2e,          // Playwright en a besoin
-    enableEmbeddedAsarIntegrityValidation: true, onlyLoadAppFromAsar: true,
-    grantFileProtocolExtraPrivileges: false,
-  },
-  linux: { target: ['dir'] },                     // e2e rapides en CI Linux
-};
+  activeTimer: { taskId, startedAt /* ISO */, accumulatedMs, pausedAt /* ISO | null */, host, longAlertAck? } | null,
+  lastTimerTaskId, flags: { lastOpenedOn, moodPromptedOn, remindersShownOn },
+  reminderLog: { [taskId]: 'AAAA-MM-JJ' }    // dernier jour notifié
+}
 ```
 
-**Icône** : le DA fournit `build/icon.ico` (Memeow en pixel art) avec les tailles 16, 24, 32, 48, 64, 128 et 256. **Chaque taille est retouchée ou agrandie au plus proche voisin** : un pixel art ne se réduit pas automatiquement. Il fournit aussi `build/splash.bmp`. La même icône est passée à `BrowserWindow({ icon })`.
+- **Premier lancement** : état vide, 3 catégories par défaut (Flow Line, Carnet by-pass, Auto-entreprise) et les objectifs ci-dessus.
+- **Migrations** : `MIGRATIONS[v]` appliquées en chaîne. v1 = export `.json` de la maquette (`version: 1`, chrono `timer` en millisecondes) → v2. Une copie `avant-migration-v1-…` est faite avant d'écrire.
+- **Normalisation** (QA-02) : tout document chargé ou importé est complété (catégories vides, catégorie inconnue réaffectée, `tags` / `checklist` / `timeEntries` manquants, `settings` absents…) puis **validé** ; un statut ou une date invalide fait refuser le fichier sans rien modifier.
+- **Format plus récent que l'exe** : ouverture en lecture seule (« mets à jour l'application sur ce PC »).
+- **Fichier illisible** : aucune écriture ; boîte de dialogue « Restaurer la dernière sauvegarde / Repartir de zéro / Quitter », le fichier abîmé est conservé (`data-illisible-…`). Dans l'interface, si le rendu échoue malgré tout, un écran de récupération propose la même restauration.
 
----
+### 4.3 Flux des données
 
-## 7. Pipeline de build (exemple de workflow, à créer en phase 2)
-
-```yaml
-# .github/workflows/build-windows.yml
-name: Exe Windows portable
-on:
-  push:
-    tags: ['v*']          # v1.0.0 → release GitHub avec l'exe
-  workflow_dispatch:      # build manuel → artefact téléchargeable
-permissions:
-  contents: write
-jobs:
-  windows:
-    runs-on: windows-latest
-    defaults: { run: { working-directory: app } }
-    env:
-      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'   # Electron fournit son propre Chromium
-      CSC_IDENTITY_AUTO_DISCOVERY: 'false'    # pas de certificat en V1
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: 22, cache: npm, cache-dependency-path: app/package-lock.json }
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/AppData/Local/electron/Cache
-            ~/AppData/Local/electron-builder/Cache
-          key: electron-${{ hashFiles('app/package-lock.json') }}
-      - run: npm ci
-      - run: npm run fonts:fetch        # option B seulement (sinon les WOFF2 sont dans le dépôt)
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-      - name: E2E Playwright sur l'app packagée (dossier, fuses de test)
-        run: npx electron-builder --win dir --x64 && npx playwright test
-        env: { LAMIA_E2E: '1' }
-      - name: Exe portable + ZIP (release, fuses verrouillés)
-        run: npx electron-builder --win --x64 --publish never
-      - name: "Smoke test : données à côté de l'exe + temps d'ouverture"
-        shell: pwsh
-        run: |
-          $usb = New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\cle-usb"
-          Copy-Item dist\*-portable.exe $usb
-          $exe = (Get-ChildItem $usb -Filter *-portable.exe)[0].FullName
-          $t = Measure-Command {
-            $p = Start-Process $exe -ArgumentList '--smoke-test' -PassThru
-            if (-not $p.WaitForExit(120000)) { $p.Kill(); throw 'délai dépassé' }
-          }
-          if (-not (Test-Path "$usb\Donnees-Lamia\data.json")) { throw 'data.json absent à côté de l''exe' }
-          if (Test-Path "$usb\Donnees-Lamia\verrou.json") { throw 'verrou non libéré' }
-          "Ouverture + fermeture (extraction comprise) : $([int]$t.TotalMilliseconds) ms" >> $env:GITHUB_STEP_SUMMARY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: plateforme-suivi-lamia-windows
-          path: |
-            app/dist/*-portable.exe
-            app/dist/*-win-x64.zip
-          retention-days: 30
-      - if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            app/dist/*-portable.exe
-            app/dist/*-win-x64.zip
+```
+renderer (L.store)                      preload (window.lamia)                main (DataStore)
+──────────────────                      ──────────────────────                ────────────────
+boot()  ─────────────────────────────►  app:boot  ──────────────────────────► doc chargé + infos
+modification → emit() → 250 ms ──────►  data:save(doc) ──────────────────────► validate → contrôle de révision
+chrono, création, humeur → immédiat                                            → écriture atomique (.tmp, fsync, rename)
+beforeunload / arrêt → saveSync ─────►  data:save-sync (synchrone)             → { ok, revision, savedAt }
 ```
 
-- `--smoke-test` : le main initialise tout (dossier, `data.json`, verrou, sauvegarde), attend `ready-to-show`, libère le verrou et quitte avec le code 0. Le temps mesuré sert à **suivre TR-1 à chaque build**.
-- Un job `ubuntu-latest` (typecheck, tests unitaires, e2e sous `xvfb-run` avec `--no-sandbox`) peut tourner en parallèle sur chaque push : il est plus rapide pour les retours.
-- En phase 2, épingler les actions par leur SHA. Si le dépôt est public, l'exe et le code le sont aussi : **aucune donnée de Lamia ne passe jamais par le dépôt**.
-- Depuis Linux, le même `npm run dist:win` fonctionne aussi (prouvé), ce qui dépanne si GitHub Actions est indisponible.
+- Le renderer garde l'état en mémoire et envoie **le document entier** (moins de 2 Mo attendus par an). Le main le **valide**, vérifie la révision, écrit, et répond.
+- **Arrêt** : `before-quit` demande au renderer d'enregistrer (`flushSync`, délai borné à 1,5 s), puis **détruit** la fenêtre sans passer par `beforeunload`. Fermer une fenêtre **cachée** (zone de notification) pouvait sinon bloquer l'arrêt une fois sur quatre (trouvé par les tests e2e).
+- **Contrôle de révision** : avant chaque écriture, si `data.json` a changé sur disque (autre PC via OneDrive) et que sa `meta.revision` diffère, notre version part dans `data-conflit-<PC>-<horodatage>.json`, rien n'est écrasé, l'app passe en lecture seule avec « Recharger les données ».
+
+### 4.4 Sauvegardes, export, import, démo
+
+- **Quotidienne** : à l'ouverture (puis toutes les 30 min si l'app reste ouverte plusieurs jours), copie de `data.json` en `sauvegardes/data-AAAA-MM-JJ.json` ; **30 conservées**.
+- **Avant toute opération qui remplace les données** : `avant-import-…`, `avant-restauration-…`, `avant-demo-…`, `avant-migration-…` (10 de chaque).
+- **Restaurer** (Réglages) : liste datée avec résumé (tâches, entrées, humeurs), copie de l'état actuel, remplacement.
+- **Export / import `.json`** : boîtes de dialogue natives ouvertes par le main. L'import montre un aperçu (« 24 tâches, 55 entrées, 26 humeurs ») avant de remplacer.
+- **Données de démo** (Réglages → « Charger les données de démo ») : les données fictives de la maquette, **décalées à la date du jour** (identiques à la maquette le 8 octobre 2026), avec confirmation et sauvegarde préalable.
+
+### 4.5 Verrou entre PC et instance unique
+
+- **Même PC** : `app.requestSingleInstanceLock()` ; une 2e ouverture remet la fenêtre existante au premier plan.
+- **Plusieurs PC** : `verrou.json` = `{ host, user, pid, appVersion, openedAt, heartbeatAt }`, rafraîchi **chaque minute**, **périmé après 5 min**, supprimé à la fermeture (seulement s'il est toujours à nous). Verrou frais d'un autre PC → **lecture seule** avec un bandeau explicite (« ouverte sur PC-X depuis 9 h 02 ») et les actions **Réessayer** / **Forcer l'ouverture** (avec confirmation). Verrou périmé ou du même PC (plantage) → repris.
 
 ---
 
-## 8. Stratégie de tests
+## 5. Fonctions système
 
-**Unitaires (Vitest, `src/shared` + `src/main`, objectif ≥ 90 % de couverture sur `shared/`)**, avec une horloge et un nom de PC injectables :
-- **Semaines ISO** : 08/10/2026 → **2026-S41** (du lundi 5 au dimanche 11) ; 31/12/2026 et 03/01/2027 → **2026-S53** (2026 compte 53 semaines) ; 04/01/2027 → 2027-S01.
-- **Heures par catégorie** par jour, semaine ISO et mois, **jamais additionnées**. On vérifie qu'aucun « total général » n'existe, ni dans l'API ni dans le CSV. Objectif Flow Line : 35 h/semaine et 7 h/jour du lundi au vendredi ; samedi sans objectif.
-- **Chrono** :
-  - découpage à minuit ;
-  - journée de 25 h du **25/10/2026** (passage à l'heure d'hiver) et de 23 h du **28/03/2027** ;
-  - alerte au-delà de 10 h ;
-  - un seul chrono actif.
-- **Saisie des durées** : `1h30`, `1 h 30`, `90`, `1,5`, `1.5`, `0h45` → minutes ; les saisies invalides sont refusées.
-- Retards (« à replanifier »), échéances à 7 jours, rappels dus (J-n, pas de doublon, rien pour une tâche terminée), taux de complétion, courbe d'humeur **avec des trous**.
-- **CSV** : BOM, `;`, virgule décimale, échappements, sous-totaux.
-- **Store** (vrais dossiers temporaires) :
-  - écriture atomique : on simule un échec de `rename`, `data.json` doit rester intact ;
-  - rotation des 30 sauvegardes ;
-  - migrations sur des fichiers d'exemple vN ;
-  - fichier illisible → aucune écriture ;
-  - `schemaVersion` trop récent → lecture seule ;
-  - verrou (autre PC < 5 min, périmé, même PC) ;
-  - conflit de révision → copie de conflit.
+### 5.1 Dates réelles et horloge centrale
 
-**End-to-end (Playwright `_electron`, sur l'app packagée)** :
-- Lancement avec `LAMIA_DATA_DIR` pointant vers un dossier temporaire et des fichiers `data.json` d'exemple. L'horloge est injectée via `LAMIA_FAKE_NOW`, pris en compte seulement si `LAMIA_E2E=1`. Les boîtes de dialogue sont simulées par `app.evaluate` (stub de `dialog.showSaveDialog`).
-- Scénarios (un par story) :
-  - 1re ouverture : création de `Donnees-Lamia` et proposition d'humeur (DB-3) ;
-  - Kanban : glisser-déposer **et** alternative clavier, ordre conservé après relance (ST-2) ;
-  - chrono démarré → app fermée → relancée → toujours actif → arrêté → entrée créée (ST-5) ;
-  - Récap par catégorie (RC-2) ;
-  - CSV relu et comparé (RC-5) ; PDF commençant par `%PDF` (RC-6) ;
-  - fichier corrompu → écran de récupération (TR-3) ;
-  - `verrou.json` d'un « AUTRE-PC » → lecture seule (TR-4) ;
-  - réseau bloqué (TR-1) ;
-  - thème sombre (TR-5) ;
-  - **axe-core** sans violation et parcours au clavier (TR-6).
-- Exécution sous **Linux** (`xvfb-run`, à chaque push) et sous **Windows** (`win-unpacked`, avant chaque release), plus le *smoke test* de l'exe portable. Le spike donne environ 0,4 s par lancement : la suite restera rapide.
-- Le **Testeur** réutilise ce harnais pour la phase 3. La recette manuelle sur les vrais PC (SmartScreen, OneDrive à deux PC, clé USB retirée, toasts, temps d'ouverture) reste indispensable.
+`DEMO_TODAY` a disparu. `shared/dates.js` fournit `today()`, `now()`, `nowMs()` à partir de la vraie date, et `setNow()` pour les tests. En e2e (`LAMIA_E2E=1`) ou en développement, `LAMIA_FAKE_NOW` décale l'horloge du main, qui transmet l'instant au renderer au démarrage : le temps continue de s'écouler (le chrono tourne). Les vues se rafraîchissent au passage de minuit ; les ancres de période (Récap, Planning) repartent d'aujourd'hui à chaque ouverture.
 
----
+### 5.2 Chrono
 
-## 9. Points d'attention pour Lamia
+- `activeTimer` (instants ISO) est enregistré **immédiatement** : le chrono survit à la fermeture, au plantage, à la mise en veille. Le temps affiché vaut toujours `maintenant − startedAt (+ accumulé)`.
+- À l'arrêt, la durée est **découpée par jour local** si le chrono a tourné d'une traite par-dessus minuit ; moins de 10 s : rien n'est enregistré (QA-07).
+- **Plus de 10 h** : alerte douce « Tu as oublié d'arrêter le chrono ? » (toast avec « Corriger la durée » ou « Il tourne encore »), et lien « Oublié ? Corriger la durée » dans le widget. Le dialogue de correction demande la durée **et le jour travaillé** (par défaut, le jour du démarrage).
 
-1. **Alerte SmartScreen** (exe non signé, téléchargé depuis GitHub ou reçu par mail) : « Windows a protégé votre ordinateur » → **Informations complémentaires → Exécuter quand même**. On peut aussi faire, avant le 1er lancement, clic droit → Propriétés → cocher **Débloquer**. L'alerte peut revenir **à chaque nouvelle version**. Sur Windows 11, si **Smart App Control** est activé, un exe non signé est **bloqué sans contournement**.
-2. **Politique informatique de Flow Line** : AppLocker, WDAC ou les règles ASR de Defender peuvent interdire les exe inconnus ou non signés, ou l'exécution depuis `%TEMP%` (justement là où l'exe portable s'extrait), et les clés USB peuvent être bloquées. Il faut aussi vérifier que la charte autorise ces données (clients Flow Line, humeur) sur OneDrive perso ou sur une clé. → **Exe « coquille » testé sur le PC pro dès la 1re semaine de la phase 2**, et demander à la DSI si besoin (le nom de l'exe et son hash suffisent pour une règle d'autorisation).
-3. **Signature de code** (non prévue en V1) :
-   - Ce qu'elle apporte : « Éditeur : <nom> » au lieu de « Éditeur inconnu », l'acceptation par Smart App Control et les règles « éditeur » des DSI, moins de faux positifs des antivirus.
-   - Ce qu'elle n'apporte **pas** : la disparition immédiate de SmartScreen. Depuis 2024, même un certificat EV ne donne plus de réputation instantanée ; elle se construit avec le nombre de téléchargements, donc lentement pour une seule utilisatrice.
-   - Coût indicatif, à vérifier au moment de décider : le service cloud de Microsoft (Trusted Signing, rebaptisé Artifact Signing) **environ 10 $/mois**, si une auto-entrepreneuse française y est éligible ; certificat OV classique **quelques centaines d'euros par an**, clé matérielle ou HSM cloud obligatoire depuis 2023. electron-builder sait signer en CI (`win.azureSignOptions` / `signtoolOptions`).
-   - **Avis** : ne pas payer en V1, sauf si la DSI ou Smart App Control l'imposent.
-4. **Démarrage de l'exe portable** : chaque lancement décompresse environ 320 Mo dans `%TEMP%`, puis les supprime à la fermeture. Il faut s'attendre à **plusieurs secondes** (à mesurer : antivirus, et surtout depuis une clé USB lente), alors que le brief vise moins de 3 s (TR-1).
-   - Parades : écran Memeow pendant l'extraction, mesure à chaque build, option `portable.useZip` à évaluer.
-   - Alternative : la **version ZIP « dossier »** (même app, une vingtaine de fichiers à extraire une fois, exe principal dans le dossier). Elle démarre **sans extraction**, et les données restent à côté de l'exe.
-5. **Pas de mise à jour automatique** (hors ligne, sans installation) : pour mettre à jour, on remplace l'exe ; les données restent et sont migrées. **Mettre à jour l'exe sur tous les PC** : un ancien exe ouvre des données plus récentes en lecture seule.
-6. **Rappels** : affichés seulement quand l'app est ouverte (sauf si Lamia choisit la zone de notification ou le lancement au démarrage). Le mode « Ne pas déranger » de Windows peut masquer les toasts.
-7. Divers :
-   - environ 100 Mo sur la clé ou dans OneDrive (exe + données + 30 sauvegardes de moins de 1 Mo) ;
-   - PC Windows ARM : l'exe x64 tourne en émulation, et un exe arm64 peut être produit au besoin ;
-   - si l'affichage pose problème sur un vieux PC ou en bureau à distance, un réglage « désactiver l'accélération graphique » (propre à chaque PC) est prévu.
+### 5.3 Objectif perso du samedi
+
+`stats.persoGoal()` additionne **uniquement** les catégories du pôle auto-entreprise (Auto-entreprise + Carnet by-pass) les jours perso (samedi par défaut) et compare à `minDailyHours` (4 h). Les heures Flow Line n'y entrent jamais, même un samedi ; chaque catégorie garde son propre compteur. Affichage : jauge « Samedi perso : x / 4 h minimum » dans la carte « Heures de la semaine » du Dashboard, et carte pleine largeur « Samedi perso » au Récap (un résultat par samedi de la période). Réglable dans Réglages → Objectifs d'heures.
+
+### 5.4 Rappels d'échéance
+
+- **Calcul** (`shared/reminders.js`) : tâche non terminée avec `endDate` et `reminder.daysBefore` → due de `fin − n` jusqu'au jour de la fin. `reminderLog` garantit **une seule notification par tâche et par jour** (même d'une session à l'autre), complété par un ensemble en mémoire dans le main.
+- **App ouverte** : à l'ouverture, toast groupé des rappels du jour (option « Rappel dans l'app », activée par défaut). Puis le main vérifie **toutes les 15 minutes** (et au réveil du PC), à partir de l'heure réglée (9 h par défaut) : toast dans l'app **et** notification Windows si l'option est active ; clic sur la notification → fenêtre et tâche ouvertes ; la barre des tâches clignote si la fenêtre n'a pas le focus.
+- **App « fermée »** : option **Fermer dans la zone de notification** (la croix cache la fenêtre ; icône Memeow ; menu **Ouvrir la plateforme / Chrono en cours : … / Quitter**, mis à jour chaque minute) et option **Lancer au démarrage de Windows** (`app.setLoginItemSettings({ openAtLogin, path: PORTABLE_EXECUTABLE_FILE || execPath, args: ['--au-demarrage'] })` : l'exe **d'origine**, jamais la copie de `%TEMP%`). Lancée au démarrage avec la zone de notification active, l'app reste discrète.
+- **Notifications Windows** : `app.setAppUserModelId('fr.lamia.plateforme-suivi')` dès le démarrage. Une app portable n'a pas de raccourci : l'option **Activer les notifications Windows** crée `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Plateforme de suivi - Lamia.lnk` (`shell.writeShortcutLink`, avec `appUserModelId`), mis à jour si l'exe a bougé, supprimé si l'option est désactivée. Repli si les notifications ne sont pas disponibles : `tray.displayBalloon`, puis clignotement de la barre des tâches.
+- Ces trois options sont **désactivées par défaut** et **propres à chaque PC** (`reglages-pc.json`).
+
+### 5.5 Exports
+
+- **CSV** (`shared/csv.js`, généré par le renderer, enregistré par le main via `dialog.showSaveDialog`) : **UTF-8 avec BOM**, séparateur `;`, CRLF, colonnes `Date;Catégorie;Pôle;Client / projet;Tâche;Durée (h);Durée (hh:mm);Source;Note`, dates JJ/MM/AAAA, heures décimales **à virgule** (`1,50`) et `h:mm` (`1:30`), sous-total par catégorie, **aucun total général**. Les textes commençant par `= + - @` reçoivent une espace (pas de formule involontaire dans Excel).
+- **PDF** : le renderer passe en thème clair, puis le main appelle `webContents.printToPDF({ pageSize: 'A4', printBackground: true, preferCSSPageSize: true })` sur la page du Récap (feuille `@media print` de la maquette) et enregistre via la boîte de dialogue. Les deux exports proposent ensuite « Afficher le fichier ».
+
+### 5.6 Polices
+
+Poppins et Pixelify Sans sont dans `design/fonts/`. **General Sans** : `scripts/fetch-general-sans.mjs` télécharge `https://api.fontshare.com/v2/fonts/download/general-sans`, lit l'archive avec un **lecteur ZIP maison** (sans dépendance), vérifie la signature `wOF2` des 4 graisses (400, 500, 600, 700) et **exige la licence** (ITF FFL) avant de tout poser dans `renderer/fonts/general-sans/`. Sans réseau (cas de ce conteneur), il prévient et sort **sans erreur** : l'app garde Poppins (`--strict` pour échouer). En CI, la police est embarquée.
+
+### 5.7 Icône
+
+`scripts/make-icon.mjs` (décodeur et encodeur PNG + conteneur ICO maison) compose la 1re image de `design/sprites/png/memeow-idle.png` sur un **carré arrondi vitré bleu-violet** (dégradé `#B9CCFF → #9C8BF2 → #5B47D0`, reflet laiteux, liseré). Agrandissement **au plus proche voisin** à une échelle entière : Memeow entière de 32 à 256 px (×1, ×2, ×4, ×8), sa tête à 24 et 48 px, réduction au plus proche voisin à 16 px. Sorties : `build/icon.ico` (exe), `main/assets/icon.ico` et `icon.png` (fenêtre, zone de notification, notifications).
 
 ---
 
-## 10. Décisions à faire valider
+## 6. Sécurité (100 % hors ligne)
 
-**Par Lamia**
-1. **Electron** et un exe d'environ **90 Mo** (au lieu d'environ 10 Mo avec Tauri), en échange d'un rendu identique partout, de l'export PDF et de tests automatisés fiables.
-2. **Format de livraison** : exe unique portable (plus lent à ouvrir), **ZIP « dossier »** (rapide), ou **les deux** (recommandé : la CI produit les deux).
-3. **Signature** : aucune en V1 (procédure SmartScreen expliquée), ou budget de signature si la DSI ou Smart App Control l'exigent.
-4. **Rappels quand l'app est fermée** : non (V1 simple), ou zone de notification et/ou lancement au démarrage. Accord pour **créer un raccourci dans le menu Démarrer** (fiabilité des notifications Windows).
-5. **General Sans** : Lamia télécharge le zip sur fontshare.com et nous l'envoie (recommandé), ou téléchargement automatique en CI.
-6. **Dossier non inscriptible** : lecture seule + choix d'un autre dossier (recommandé), plutôt qu'un repli silencieux sur le PC.
-7. **CSV** : format de date et de durée attendu par la comptable.
+- `BrowserWindow` : `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, `webSecurity: true`, DevTools seulement en développement et en e2e, pas de menu.
+- **Protocole `app://lamia/`** (`protocol.handle`) : ne sert que `renderer/` et `shared/`, refuse `..`, les antislashs et tout autre hôte ; CSP renvoyée en en-tête et en `<meta>` :
+  `default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; … ; base-uri 'none'; form-action 'none'`.
+  Seuls les **attributs** `style` (variables CSS `--value`, `--l`, `--w` des gabarits de la maquette) sont autorisés ; jamais de script inline ni d'`eval`.
+- **Réseau** : `session.webRequest.onBeforeRequest` annule toute requête hors `app:`, `data:`, `blob:`, `devtools:` (vérifié en e2e : `fetch` et images externes bloqués). Permissions refusées ; `will-navigate` hors `app://`, nouvelles fenêtres et `<webview>` interdits.
+- **Preload** : `window.lamia` expose une liste fermée de fonctions (`app`, `data`, `backup`, `io`) et 5 canaux d'événements. Pas d'`ipcRenderer` brut, pas de chemin fourni par l'interface : boîtes de dialogue et accès disque sont faits par le main, qui vérifie que l'expéditeur est `app://lamia/`. « Afficher le fichier » n'accepte que les fichiers que l'app vient d'écrire.
+- **Fusibles Electron** (vérifiés dans l'exe) : `RunAsNode`, `EnableNodeOptionsEnvironmentVariable`, `EnableNodeCliInspectArguments` (sauf build e2e), `GrantFileProtocolExtraPrivileges` **désactivés** ; `OnlyLoadAppFromAsar` **activé**. L'intégrité ASAR intégrée n'est pas activée tant qu'elle n'a pas été testée sous Windows.
 
-**Dans l'équipe (à harmoniser)**
-- **Nom du dossier de données** : le brief dit `donnees/`, la mission technique `Donnees-Lamia/`. Je recommande **`Donnees-Lamia/`**, plus explicite quand l'exe est posé sur le Bureau, dans Téléchargements ou à la racine de OneDrive, et sans accent. C'est une constante unique dans `paths.ts` ; le CEO tranche.
-- **Ajouts au modèle §7** (CEO) : `schemaVersion`, `meta` (dont `revision`), `activeTimer`, `reminderLog`, `Settings.lastOpenedOn`, `Settings.ui` et `Settings.reminders`.
-- **DA** : `icon.ico` en tailles multiples retouchées, `splash.bmp`, et l'ajout des `url()` de General Sans dans `fonts.css`.
+---
+
+## 7. Build et CI
+
+### 7.1 electron-builder (`app/electron-builder.config.cjs`)
+
+- `appId: fr.lamia.plateforme-suivi`, `productName: Plateforme de suivi - Lamia`, version `0.1.0`, `asar: true`, `electronLanguages: ['fr']`, `npmRebuild: false`.
+- `files` en **liste blanche** (`main/`, `shared/`, `renderer/`, `package.json`) : ni tests, ni scripts, ni sources de design inutiles (planches HTML, PNG d'export).
+- Cibles Windows x64 : `portable` (`Plateforme-de-suivi-Lamia-${version}-portable.exe`, `requestExecutionLevel: user`) et `zip` (`Plateforme-de-suivi-Lamia-${version}-win-x64.zip`). Cible Linux `dir` pour les e2e (avec le binaire Electron installé par npm : `electronDist`).
+
+**Compression : choix et justification.** L'exe portable se décompresse **à chaque lancement** ; c'est le temps qui compte le plus (objectif TR-1 : ouverture en moins de 3 s). Mesures (même machine, 1 cœur, 321 Mo écrits) :
+
+| Exe portable | Taille | Décompression | Build |
+|---|---|---|---|
+| 7z LZMA (défaut d'electron-builder) | 91,7 Mo | **4,4 s** (archive 7z puis décodage LZMA) | 2 min 37 s |
+| **NSIS zlib** (`portable.useZip: true`) ✅ | 145,5 Mo | **2,4 s** | 2 min 17 s |
+
+On retient **zlib** : environ **2 s de gagnées à chaque ouverture** pour 54 Mo de plus sur le disque (OneDrive ou clé, une fois par version). Sur une clé USB 2.0 très lente, la lecture des Mo supplémentaires annule une partie du gain : c'est le cas où la **version ZIP** (aucune décompression au lancement) est la meilleure. Le ZIP garde la compression `normal` (deflate) : il ne se décompresse qu'une fois.
+
+### 7.2 CI GitHub Actions (`.github/workflows/build-windows.yml`)
+
+Déclencheurs : `push` sur `claude/**` et `main`, et `workflow_dispatch` (entrée facultative `version`). Job `build` sur `windows-latest`, Node 22 :
+1. `actions/checkout@v4`, `actions/setup-node@v4` (cache npm), cache des binaires Electron et electron-builder ;
+2. (release) `npm pkg set version=<version>` après validation du format ;
+3. `npm ci` ;
+4. **General Sans** (`node scripts/fetch-general-sans.mjs`), avec un avertissement dans le résumé si elle manque ;
+5. **tests unitaires** (`npm test`) ;
+6. **build** (`npm run build:win`) ;
+7. **smoke test Windows** : l'exe portable est copié dans un dossier « clé USB » et le ZIP extrait ; chacun est lancé **deux fois** avec `--smoke-test` (création des données, puis relance) ; on vérifie le code de sortie, `Donnees-Lamia/data.json` à côté de l'exe, le résultat `smoke-test-result.json` et la libération du verrou ; temps de lancement et tailles dans le résumé du job ;
+8. **artefacts** `plateforme-suivi-lamia-windows` (`actions/upload-artifact@v4`, 30 jours).
+
+Job `release` (seulement sur `workflow_dispatch` avec une version, `permissions: contents: write`) : télécharge l'artefact et crée la **pré-release `v<version>`** avec les deux fichiers (`softprops/action-gh-release@v2.2.2`, version figée).
+
+`--smoke-test` (main) : pas de fenêtre visible, pas d'instance unique ; vérifie que les données sont à côté de l'exe (pas de repli), charge ou crée `data.json`, prend le verrou, écrit et relit un fichier d'essai, enregistre `data.json` de façon atomique, le relit et le valide, contrôle la sauvegarde du jour, attend que l'interface soit prête (fenêtre cachée), mesure les temps, écrit `Donnees-Lamia/smoke-test-result.json`, libère le verrou et quitte avec **0** ou **1**.
+
+---
+
+## 8. Tests
+
+### 8.1 Unitaires (`npm test`, `node --test`, 69 tests, ~1 s)
+
+| Fichier | Couvre |
+|---|---|
+| `dates` | semaines ISO (2026-S41, 2026 à 53 semaines, 2027-S01), dates locales, écarts insensibles aux changements d'heure, journées de 25 h / 23 h, horloge simulée, périodes, saisie des durées (« 1h75 » refusé), formats |
+| `stats` | heures par catégorie sans total, par pôle sans mélange, objectif Flow Line, **objectif du samedi** (sans Flow Line, atteint, désactivé, plusieurs jours perso, sur un mois), chrono (pause, > 10 h, découpage à minuit), retards, échéances, récap |
+| `csv` | BOM, `;`, CRLF, en-tête exact, virgule décimale, h:mm, sous-totaux sans total général, échappements, formules neutralisées |
+| `model` | état du premier lancement, migration v1 (vrai export de la maquette) → v2, idempotence, format trop récent ou inconnu, validation, normalisation, **4 variantes d'import incomplet (QA-02)** |
+| `reminders` | fenêtre J-n, tâches terminées, une fois par jour, ménage du journal, texte des notifications |
+| `datadir` | portable, ZIP, tests, développement, repli `%APPDATA%`, ZIP non extrait, sonde d'écriture |
+| `storage` | premier lancement, révision, **écriture atomique** (renommage en échec : `data.json` intact ; EBUSY : nouvelles tentatives), fichier illisible, format trop récent, migration avec copie, **30 sauvegardes**, restauration, **conflit OneDrive** |
+| `lock` | décision (autre PC frais / périmé / même PC), battement de cœur, libération, forçage, verrou repris par un autre PC |
+| `protocol-demo` | protocole (traversées refusées), CSP, démo identique à la maquette et relative à la date du jour |
+| `icon`, `fonts` | ICO (7 tailles PNG), aller-retour PNG ; lecteur ZIP, injection des `url()` sans toucher `design/` |
+
+### 8.2 End-to-end (`npm run test:e2e`, 22 tests, ~30 s)
+
+Playwright `_electron` (installation globale, `NODE_PATH=$(npm root -g)`) sur `dist/linux-unpacked` construit avec le binaire Electron de npm, sous Xvfb, `PORTABLE_EXECUTABLE_DIR` pointant vers un dossier temporaire (comme l'exe portable) et l'horloge au jeudi 8 octobre 2026.
+- `app.test.js` : premier lancement vide (fichiers créés, humeur proposée, chemin réel affiché) ; création d'une tâche ; humeur ; **chrono démarré, app fermée, relancée 1 h 30 plus tard, toujours actif, arrêté → entrée de 90 min** ; export **CSV** relu ; export **PDF** (`%PDF-`) ; **aucune requête réseau** ; **verrou d'un « AUTRE-PC » → lecture seule**, rien d'écrit ; démo puis restauration ; **0 erreur console**.
+- `features.test.js` : smoke test (code 0, et code 1 si les données ne peuvent pas être à côté de l'exe) ; rappels à l'ouverture une seule fois par jour ; chrono oublié (> 10 h) corrigé ; zone de notification (la croix cache la fenêtre, l'app reste ouverte puis quitte proprement).
+- `recette.test.js` : non-régression des défauts de la maquette (§8.3).
+
+### 8.3 Défauts de la recette de la maquette, traités dans l'app
+
+| Défaut | Correction |
+|---|---|
+| QA-01 (majeur) graphiques du Récap qui débordent entre 1280 et 1440 px | plancher des SVG ramené de 240 à 160 px (libellés en lettres quand c'est étroit) ; test e2e : 0 px de débordement à 1440, 1366, 1300, 1280, 1024 et 390 px |
+| QA-02 (majeur) import incomplet qui corrompt les données | validation + normalisation au chargement **et** à l'import (main), aperçu, copie `avant-import`, refus sans rien modifier si invalide, écran de récupération (restaurer la dernière sauvegarde) |
+| QA-03 (majeur) focus perdu au clavier | `data-focus-key` stables (▶/Pause, widget et pastille du chrono, tiroir, replanifier, « Modifier » l'humeur, lignes du Dashboard et du Récap) ; replis explicites (tâche voisine après une suppression ou une replanification, sinon titre de l'onglet) |
+| QA-04 Gantt du mois coupé | 24 px par jour au lieu de 27 |
+| QA-05 « 1h75 » accepté | minutes > 59 et durées > 24 h refusées |
+| QA-06 samedi « 0 h sur 0 h — objectif atteint » | « Pas d'objectif ce jour-là » ; carte « Samedi perso : 4 h minimum » |
+| QA-07 double-clic sur ▶ / Stop | 2e clic ignoré ; chrono de moins de 10 s non enregistré |
+| QA-08 cibles tactiles | 44 px minimum sous 860 px |
+| QA-09 mot très long | `overflow-wrap: anywhere` et ellipses |
+| QA-10 texte d'accueil la nuit | « La journée est faite » de 18 h à 5 h |
+| QA-11 nuit + humeur basse | le cœur (réconfort) l'emporte, Memeow reste endormie (`design/phrases.js`) |
+| QA-12 / QA-13 rôles ARIA, repères | cartes et tiroir en `div`, héros sans nom en double, groupe nommé, menu dans `<main>` |
+| QA-14 contrastes | compteur de la barre latérale et jours de week-end du Gantt |
+| QA-15 états vides sans tâche | « Pas encore de tâche » (Liste, Planning) |
+| QA-16 champ vidé | l'ancien titre ou nom revient, avec un message |
+| QA-17 infobulle au focus | n'est plus masquée par le défilement que le focus provoque |
+| QA-18 Gantt sous la colonne d'étiquettes | fond opaque |
+
+### 8.4 Fidélité visuelle
+
+Captures de l'app packagée (1440 × 900, démo au 8 octobre 2026) comparées à la maquette : Dashboard clair et sombre, Réglages, Récap, Planning, Tâches identiques, aux ajouts près (jauge « Samedi perso », Réglages réels, bandeaux) et à la barre de défilement classique d'Electron.
+
+---
+
+## 9. Points d'attention
+
+**Pour la CI**
+- Le smoke test est le **seul passage sous Windows** : surveiller son résumé (temps de lancement de l'exe portable, extraction comprise, et du ZIP).
+- Fontshare peut changer d'URL ou de structure d'archive : un avertissement apparaît alors dans le résumé et l'app part avec Poppins.
+- Les actions sont épinglées par version (`@v4`, `@v2.2.2`), pas par SHA.
+- Les tests e2e ne tournent pas en CI (Playwright n'est pas une dépendance du projet) : les lancer avec `npm run test:e2e` avant une release.
+
+**Pour Lamia** (détails dans `docs/06-guide-utilisatrice.md`)
+1. **SmartScreen** au premier lancement de chaque version (exe non signé) : « Informations complémentaires → Exécuter quand même ». La DSI de Flow Line peut bloquer l'exe (ou l'extraction dans `%TEMP%`) : à tester sur le PC pro.
+2. **Exe portable ou ZIP** : l'exe se décompresse à chaque ouverture (quelques secondes) ; le ZIP démarre plus vite.
+3. **Mise à jour** : remplacer l'exe (ou le dossier) en gardant `Donnees-Lamia` à côté ; mettre à jour sur tous les PC.
+4. **Deux PC via OneDrive** : une seule ouverture à la fois (verrou), attendre la synchronisation.
+5. **Notifications Windows** : à activer dans les Réglages (raccourci du menu Démarrer) ; le mode « Ne pas déranger » les masque.
+
+**Non vérifié dans ce conteneur** (pas de Windows ni de Wine) : démarrage réel et temps d'ouverture de l'exe portable et du ZIP, comportement de Defender et SmartScreen, toasts Windows et AppUserModelID, raccourci du menu Démarrer, `setLoginItemSettings`, icône dans la zone de notification de Windows, polices General Sans réelles, format des `<input type="date">` sous Windows. Les notifications ne sont pas disponibles dans le conteneur Linux (`Notification.isSupported()` = false) : la voie de repli est utilisée.
+
+## 10. Suites proposées
+
+- Recette sur les PC de Lamia (PC Flow Line lundi 12 octobre) : SmartScreen, temps d'ouverture, notifications, zone de notification, démarrage de Windows.
+- Ajouter un job Linux (Xvfb) qui lance les tests e2e en CI.
+- Activer l'intégrité ASAR après un essai sous Windows ; envisager la signature de code si la DSI l'exige.
+- V2 : synchronisation multi-appareils et version mobile (le renderer est déjà responsive de 390 à 1440 px).

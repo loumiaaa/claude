@@ -94,7 +94,7 @@
   /* --- Cartes ------------------------------------------------------------- */
   function leadText(ctx) {
     var now = D.now();
-    var late = now.getHours() >= 18 || D.dow(D.today()) === 0;
+    var late = now.getHours() >= 18 || now.getHours() < 5 || D.dow(D.today()) === 0;   // soir, nuit (QA-10) et dimanche
     if (!S.get().tasks.length) return 'Bienvenue dans ta plateforme ! Commence par une première tâche, le reste suivra à ton rythme.';
     if (late) return 'La journée est faite. Le reste attendra demain : profite de ta soirée.';
     var bits = [];
@@ -186,7 +186,7 @@
       body = '<div class="mood-now">' + U.pixelImg('mood-' + m.level, 3, 'mood-now__art', '') +
         '<div class="mood-now__text"><p class="mood-now__level">' + esc(U.moodLabel(m.level)) + '</p>' +
         (m.note ? '<p class="mood-now__note">« ' + esc(m.note) + ' »</p>' : '<p class="mood-now__note text-muted">Aucune note, et c’est très bien aussi.</p>') + '</div>' +
-        '<button type="button" class="btn btn--secondary btn--sm" data-mood-edit>' + icon('edit') + 'Modifier</button></div>';
+        '<button type="button" class="btn btn--secondary btn--sm" data-mood-edit data-focus-key="mood-edit">' + icon('edit') + 'Modifier</button></div>';
     } else {
       body = '<p class="mood-ask">Comment te sens-tu aujourd’hui ? Un clic suffit.</p>' +
         '<div class="mood-picker mood-picker--inline" role="group" aria-label="Humeur du jour">' + L.mood.optionsHTML(null, 'dash') + '</div>';
@@ -203,11 +203,11 @@
     var mine = tm && tm.taskId === t.id;
     var play = mine
       ? (tm.pausedAt
-        ? '<button type="button" class="btn btn--soft btn--icon task-row__play is-paused" data-chrono="resume" aria-label="Reprendre le chrono sur « ' + esc(t.title) + ' »">' + icon('play') + '</button>'
-        : '<button type="button" class="btn btn--primary btn--icon task-row__play is-running" data-chrono="pause" aria-label="Mettre en pause le chrono de « ' + esc(t.title) + ' »">' + icon('pause') + '</button>')
-      : '<button type="button" class="btn btn--soft btn--icon task-row__play" data-chrono="start" data-task="' + t.id + '" aria-label="Démarrer le chrono sur « ' + esc(t.title) + ' »">' + icon('play') + '</button>';
+        ? '<button type="button" class="btn btn--soft btn--icon task-row__play is-paused" data-chrono="resume" data-focus-key="play-' + t.id + '" aria-label="Reprendre le chrono sur « ' + esc(t.title) + ' »">' + icon('play') + '</button>'
+        : '<button type="button" class="btn btn--primary btn--icon task-row__play is-running" data-chrono="pause" data-focus-key="play-' + t.id + '" aria-label="Mettre en pause le chrono de « ' + esc(t.title) + ' »">' + icon('pause') + '</button>')
+      : '<button type="button" class="btn btn--soft btn--icon task-row__play" data-chrono="start" data-task="' + t.id + '" data-focus-key="play-' + t.id + '" aria-label="Démarrer le chrono sur « ' + esc(t.title) + ' »">' + icon('play') + '</button>';
     return '<li class="task-row' + (mine ? ' is-timing' : '') + '">' + play +
-      '<button type="button" class="task-row__main" data-open-task="' + t.id + '">' +
+      '<button type="button" class="task-row__main" data-open-task="' + t.id + '" data-focus-key="doing-' + t.id + '">' +
         '<span class="task-row__title">' + esc(t.title) + '</span>' +
         '<span class="task-row__meta">' + U.catDot(c) + '<span class="task-row__meta-text">' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + '</span></span></button>' +
       (mine ? '<span class="task-row__clock num" data-timer-elapsed role="timer" aria-label="Temps écoulé">' + D.clock(L.chrono.elapsed()) + '</span>'
@@ -245,25 +245,25 @@
     var today = D.today();
     var late = Q.overdue();
     var soon = Q.dueBetween(today, D.addDays(today, 7));
-    var lateHTML = late.length ? '<div class="replan" aria-labelledby="dh-replan">' +
+    var lateHTML = late.length ? '<div class="replan" role="group" aria-labelledby="dh-replan">' +
       '<h3 class="replan__title" id="dh-replan">' + icon('refresh') + 'À replanifier <span class="badge badge--neutral">' + late.length + '</span></h3>' +
       '<p class="replan__hint">Pas de panique : choisis simplement une nouvelle date.</p>' +
       '<ul class="replan__list" role="list">' + late.map(function (t) {
         var c = S.category(t.categoryId);
-        return '<li class="replan-row"><button type="button" class="replan-row__main" data-open-task="' + t.id + '">' +
+        return '<li class="replan-row"><button type="button" class="replan-row__main" data-open-task="' + t.id + '" data-focus-key="late-' + t.id + '">' +
           '<span class="replan-row__title">' + esc(t.title) + '</span>' +
           '<span class="replan-row__meta">' + U.catDot(c) + esc(c.name) + ' · prévue le ' + esc(D.dayMonth(t.endDate)) + '</span></button>' +
           '<div class="replan-row__actions" role="group" aria-label="Replanifier « ' + esc(t.title) + ' »">' +
-            '<button type="button" class="btn btn--secondary btn--sm" data-replan="tomorrow" data-task="' + t.id + '">Demain</button>' +
-            '<button type="button" class="btn btn--secondary btn--sm" data-replan="monday" data-task="' + t.id + '">Lundi prochain</button>' +
-            '<button type="button" class="btn btn--ghost btn--sm" data-replan="pick" data-task="' + t.id + '">' + icon('calendar') + 'Choisir</button>' +
+            '<button type="button" class="btn btn--secondary btn--sm" data-replan="tomorrow" data-task="' + t.id + '" data-focus-key="replan-tomorrow-' + t.id + '">Demain</button>' +
+            '<button type="button" class="btn btn--secondary btn--sm" data-replan="monday" data-task="' + t.id + '" data-focus-key="replan-monday-' + t.id + '">Lundi prochain</button>' +
+            '<button type="button" class="btn btn--ghost btn--sm" data-replan="pick" data-task="' + t.id + '" data-focus-key="replan-pick-' + t.id + '">' + icon('calendar') + 'Choisir</button>' +
           '</div></li>';
       }).join('') + '</ul></div>' : '';
     var soonHTML = soon.length ? '<ul class="due-list" role="list">' + soon.map(function (t) {
       var c = S.category(t.categoryId);
       var d = D.parse(t.endDate);
       var n = D.diff(today, t.endDate);
-      return '<li><button type="button" class="due-row" data-open-task="' + t.id + '">' +
+      return '<li><button type="button" class="due-row" data-open-task="' + t.id + '" data-focus-key="due-' + t.id + '">' +
         '<span class="date-tile' + (n <= 1 ? ' date-tile--soon' : '') + '"><span class="date-tile__dow">' + D.DAYS_SHORT[d.getDay()].replace('.', '') + '</span><span class="date-tile__day num">' + d.getDate() + '</span></span>' +
         '<span class="due-row__text"><span class="due-row__title">' + esc(t.title) + '</span>' +
         '<span class="due-row__meta">' + U.catDot(c) + esc(c.name) + ' · ' + esc(D.relative(t.endDate)) + '</span></span>' +
@@ -271,7 +271,7 @@
         '</button></li>';
     }).join('') + '</ul>' : '<p class="empty-line">Aucune échéance dans les 7 prochains jours. Le calme avant… le calme.</p>';
     return '<section class="glass card due-card" aria-labelledby="dh-due">' +
-      '<div class="card__header"><div><h2 class="card__title" id="dh-due">Échéances</h2><p class="card__subtitle">Les 7 prochains jours</p></div>' +
+      '<div class="card__header"><div><h2 class="card__title" id="dh-due" tabindex="-1">Échéances</h2><p class="card__subtitle">Les 7 prochains jours</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#planning">Planning' + icon('chevron-right') + '</a></div></div>' +
       lateHTML + soonHTML + '</section>';
   }
@@ -318,7 +318,7 @@
     var hadScene = !!el.querySelector('.scene');
     var html =
       '<div class="dash-grid">' +
-        '<section class="glass card hero" aria-labelledby="h-dashboard">' +
+        '<section class="glass card hero">' +
           '<div class="hero__text"><p class="eyebrow">' + esc(D.cap(D.long(today))) + ' · semaine ' + D.isoWeek(today) + '</p>' +
             '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour Lamia</h1>' +
             '<p class="hero__lead" data-lead>' + esc(leadText(ctx)) + '</p>' +
@@ -360,6 +360,16 @@
     var t = S.task(id);
     if (!t) return;
     var today = D.today();
+    // Après la replanification, la ligne disparaît : le focus passe à la suivante (QA-03)
+    var row = anchor && anchor.closest('.replan-row');
+    var sib = row && (row.nextElementSibling || row.previousElementSibling);
+    var nextKey = sib ? 'replan-' + how + '-' + sib.querySelector('[data-replan]').getAttribute('data-task') : null;
+    function refocus() {
+      setTimeout(function () {
+        var target = (nextKey && el.querySelector('[data-focus-key="' + nextKey + '"]')) || el.querySelector('#dh-due');
+        if (target) target.focus({ preventScroll: false });
+      }, 30);
+    }
     function apply(date) {
       var prev = { endDate: t.endDate, startDate: t.startDate };
       var patch = { endDate: date };
@@ -368,11 +378,13 @@
       U.toast({ kind: 'success', icon: 'calendar', title: 'Replanifiée au ' + D.dayMonthLong(date), text: '« ' + t.title + ' ». Nouvelle date, nouvel élan.', duration: 7000,
         actions: [{ label: 'Annuler', fn: function () { S.updateTask(id, prev); } }] });
       U.announce('Tâche replanifiée au ' + D.dayMonthLong(date));
+      refocus();
     }
     if (how === 'tomorrow') return apply(D.addDays(today, 1));
     if (how === 'monday') return apply(D.addDays(D.startOfWeek(today), 7));
     U.dialog({
       title: 'Choisir une nouvelle date', desc: '« ' + t.title + ' »', returnTo: anchor,
+      fallbackFocus: function () { return (nextKey && el.querySelector('[data-focus-key="' + nextKey.replace('-pick-', '-tomorrow-') + '"]')) || el.querySelector('#dh-due'); },
       body: '<div class="field"><label class="label" for="dlg-date">Nouvelle échéance</label><input class="input" type="date" id="dlg-date" name="date" value="' + D.addDays(today, 2) + '" min="' + today + '">' +
         '<p class="hint">Prends la marge qu’il te faut.</p></div>',
       confirmLabel: 'Replanifier',

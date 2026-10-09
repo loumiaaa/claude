@@ -58,6 +58,8 @@ const S = {
 };
 
 function host() { return os.hostname() || 'PC'; }
+// Journal du cycle de vie (diagnostic) : LAMIA_DEBUG=1
+function trace(msg) { if (process.env.LAMIA_DEBUG) { try { process.stderr.write('[lamia] ' + msg + '\n'); } catch (e) { /* rien */ } } }
 function exePath() { return process.env.PORTABLE_EXECUTABLE_FILE || process.execPath; }
 
 /* --- Instance unique ---------------------------------------------------- */
@@ -77,13 +79,29 @@ function start() {
 
   app.whenReady().then(onReady).catch((e) => fatal(e));
 
-  app.on('before-quit', () => { S.quitting = true; });
-  app.on('window-all-closed', () => app.quit());
+  // Arrêt : on fait enregistrer l'interface (délai borné), puis on détruit la fenêtre sans passer par
+  // beforeunload. Fermer une fenêtre CACHÉE (zone de notification) pouvait sinon bloquer l'arrêt.
+  app.on('before-quit', (e) => {
+    trace('before-quit');
+    S.quitting = true;
+    if (S.flushedForQuit || !S.win || S.win.isDestroyed()) return;
+    e.preventDefault();
+    flushRenderer(1500).then((r) => {
+      trace('flush avant arrêt : ' + r);
+      S.flushedForQuit = true;
+      if (S.win && !S.win.isDestroyed()) { saveBounds(); S.win.destroy(); }
+      app.quit();
+    });
+  });
+  app.on('window-all-closed', () => { trace('window-all-closed'); app.quit(); });
   app.on('will-quit', () => {
+    trace('will-quit');
     if (S.system) S.system.stop();
+    trace('system stopped');
     if (S.lock) S.lock.release();
     if (S.dayTimer) clearInterval(S.dayTimer);
   });
+  app.on('quit', () => trace('quit'));
 }
 
 function fatal(e) {
@@ -247,6 +265,7 @@ function createWindow() {
   });
 
   S.win.on('close', (e) => {
+    trace('window close (quitting=' + S.quitting + ')');
     saveBounds();
     if (!S.quitting && !SMOKE && S.system && S.system.options.closeToTray) {
       e.preventDefault();
@@ -255,7 +274,7 @@ function createWindow() {
       S.system.hiddenToTray();
     }
   });
-  S.win.on('closed', () => { S.win = null; });
+  S.win.on('closed', () => { trace('window closed'); S.win = null; });
   S.win.on('focus', () => { try { S.win.flashFrame(false); } catch (e) { /* rien */ } });
 }
 
@@ -264,6 +283,16 @@ function showWindow() {
   if (S.win.isMinimized()) S.win.restore();
   S.win.show();
   S.win.focus();
+}
+
+// Demande à l'interface d'écrire tout de suite ses modifications en attente
+function flushRenderer(timeoutMs) {
+  if (!S.win || S.win.isDestroyed()) return Promise.resolve('sans fenêtre');
+  const js = 'window.Lamia && window.Lamia.store && window.Lamia.store.flushSync ? (window.Lamia.store.flushSync(), "ok") : "absent"';
+  return Promise.race([
+    S.win.webContents.executeJavaScript(js, true).catch((e) => 'erreur ' + e.message),
+    new Promise((r) => setTimeout(() => r('délai dépassé'), timeoutMs))
+  ]);
 }
 
 function send(channel, payload) {
@@ -361,10 +390,14 @@ function registerIpc() {
     ['closeToTray', 'openAtLogin', 'windowsNotifications'].forEach((k) => { if (patch && k in patch) clean[k] = !!patch[k]; });
     return S.system.set(clean);
   });
-  handle('app:test-notification', () => ({ shown: S.system.notify('Les rappels sont prêts', 'Tu recevras ici les rappels d’échéance. À très vite, Lamia !') }));
+  handle('app:test-notification', () => {
+    if (S.system.options.windowsNotifications) S.system.ensureShortcut();   // recrée le raccourci s'il a disparu
+    return { shown: S.system.notify('Les rappels sont prêts', 'Tu recevras ici les rappels d’échéance. À très vite, Lamia !') };
+  });
 
   handle('data:save', (doc) => saveDoc(doc));
   ipcMain.on('data:save-sync', (e, doc) => {
+    trace('save-sync');
     if (!trusted(e)) { e.returnValue = { ok: false }; return; }
     try { e.returnValue = saveDoc(doc); } catch (x) { e.returnValue = { ok: false, error: String(x.message || x) }; }
   });

@@ -282,6 +282,13 @@
     el.addEventListener('input', function (e) {
       if (e.target.hasAttribute('data-cat-name')) rename(e.target.closest('[data-cat]').getAttribute('data-cat'), e.target.value);
     });
+    el.addEventListener('focusout', function (e) {
+      var t = e.target;
+      if (!t.hasAttribute || !t.hasAttribute('data-cat-name') || t.value.trim()) return;
+      var c = S.category(t.closest('[data-cat]').getAttribute('data-cat'));
+      t.value = c.name;
+      U.toast({ icon: 'info', title: 'Le nom ne peut pas être vide', text: 'On garde « ' + c.name + ' ».', duration: 3500 });
+    });
     el.addEventListener('change', function (e) {
       var t = e.target;
       if (t.hasAttribute('data-cat-group')) S.updateCategory(t.closest('[data-cat]').getAttribute('data-cat'), { group: t.value });

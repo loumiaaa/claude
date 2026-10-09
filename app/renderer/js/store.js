@@ -330,7 +330,7 @@
       var tm = state.activeTimer; if (!tm) return null;
       var parts = opts && opts.minutes != null
         ? [{ date: opts.date || D.dateOf(Date.parse(tm.startedAt)) || D.today(), minutes: opts.minutes }]
-        : ST.timerEntries(tm);
+        : timerElapsed(tm) < 10000 ? [] : ST.timerEntries(tm);   // QA-07 : moins de 10 s, rien n'est enregistré
       state.activeTimer = null;
       var t = task(tm.taskId);
       var minutes = 0, entries = [];

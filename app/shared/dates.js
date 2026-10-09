@@ -257,7 +257,7 @@
     var s = String(input || '').trim().toLowerCase().replace(/\s+/g, '');
     if (!s) return null;
     var m, v = null;
-    if ((m = /^(\d{1,2})(?:h|:)(\d{1,2})?(?:min|m)?$/.exec(s))) { if (m[2] && +m[2] > 59) return null; v = +m[1] * 60 + (m[2] ? +m[2] : 0); }   // « 1h75 » refusé (QA-02)
+    if ((m = /^(\d{1,2})(?:h|:)(\d{1,2})?(?:min|m)?$/.exec(s))) { if (m[2] && +m[2] > 59) return null; v = +m[1] * 60 + (m[2] ? +m[2] : 0); }   // « 1h75 » refusé (recette QA-05)
     else if ((m = /^(\d+)(?:min|mn|m)$/.exec(s))) v = +m[1];
     else if ((m = /^(\d+)[,.](\d+)(?:h)?$/.exec(s))) v = Math.round(parseFloat(m[1] + '.' + m[2]) * 60);
     else if ((m = /^(\d+)$/.exec(s))) v = +m[1] < 15 ? +m[1] * 60 : +m[1];

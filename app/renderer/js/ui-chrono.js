@@ -22,8 +22,8 @@
       return '<div class="chrono__head"><span class="chrono__icon">' + icon('timer') + '</span><span class="chrono__eyebrow">Chrono</span></div>' +
         '<p class="chrono__idle">Aucun chrono en cours. Une pause bien méritée ?</p>' +
         (last && last.status !== 'done'
-          ? '<button type="button" class="btn btn--soft btn--sm btn--block chrono__resume" data-chrono="start" data-task="' + last.id + '">' + icon('play') + '<span class="chrono__resume-label">Reprendre « ' + esc(last.title) + ' »</span></button>'
-          : '<a class="btn btn--soft btn--sm btn--block" href="#dashboard">' + icon('play') + 'Choisir une tâche</a>');
+          ? '<button type="button" class="btn btn--soft btn--sm btn--block chrono__resume" data-chrono="start" data-task="' + last.id + '" data-focus-key="w-stop">' + icon('play') + '<span class="chrono__resume-label">Reprendre « ' + esc(last.title) + ' »</span></button>'
+          : '<a class="btn btn--soft btn--sm btn--block" href="#dashboard" data-focus-key="w-stop">' + icon('play') + 'Choisir une tâche</a>');
     }
     var t = S.task(tm.taskId);
     var c = S.category(t.categoryId);
@@ -33,12 +33,12 @@
       '<button type="button" class="chrono__task" data-open-task="' + t.id + '" title="Ouvrir le détail de la tâche">' + esc(t.title) + '</button>' +
       '<div class="chrono__meta">' + U.catDot(c) + '<span>' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + '</span></div>' +
       '<div class="chrono__time num" role="timer" aria-label="Temps écoulé" data-timer-elapsed>' + D.clock(elapsed()) + '</div>' +
-      (elapsed() > TEN_HOURS ? '<button type="button" class="btn btn--ghost btn--sm btn--block chrono__fix" data-chrono="fix">' + icon('edit') + 'Oublié ? Corriger la durée</button>' : '') +
+      (elapsed() > TEN_HOURS ? '<button type="button" class="btn btn--ghost btn--sm btn--block chrono__fix" data-chrono="fix" data-focus-key="w-fix">' + icon('edit') + 'Oublié ? Corriger la durée</button>' : '') +
       '<div class="chrono__actions">' +
         (paused
-          ? '<button type="button" class="btn btn--soft btn--sm" data-chrono="resume">' + icon('play') + 'Reprendre</button>'
-          : '<button type="button" class="btn btn--soft btn--sm" data-chrono="pause">' + icon('pause') + 'Pause</button>') +
-        '<button type="button" class="btn btn--secondary btn--sm" data-chrono="stop">' + icon('stop') + 'Stop</button>' +
+          ? '<button type="button" class="btn btn--soft btn--sm" data-chrono="resume" data-focus-key="w-toggle">' + icon('play') + 'Reprendre</button>'
+          : '<button type="button" class="btn btn--soft btn--sm" data-chrono="pause" data-focus-key="w-toggle">' + icon('pause') + 'Pause</button>') +
+        '<button type="button" class="btn btn--secondary btn--sm" data-chrono="stop" data-focus-key="w-stop">' + icon('stop') + 'Stop</button>' +
       '</div>';
   }
 
@@ -51,9 +51,9 @@
       '<button type="button" class="chrono-pill__task" data-open-task="' + t.id + '"><span class="sr-only">' + (paused ? 'Chrono en pause sur ' : 'Chrono en cours sur ') + '</span>' + esc(t.title) + '</button>' +
       '<span class="chrono-pill__time num" role="timer" aria-label="Temps écoulé" data-timer-elapsed>' + D.clock(elapsed()) + '</span>' +
       (paused
-        ? '<button type="button" class="btn btn--soft btn--icon btn--sm" data-chrono="resume" aria-label="Reprendre le chrono">' + icon('play') + '</button>'
-        : '<button type="button" class="btn btn--soft btn--icon btn--sm" data-chrono="pause" aria-label="Mettre le chrono en pause">' + icon('pause') + '</button>') +
-      '<button type="button" class="btn btn--secondary btn--icon btn--sm" data-chrono="stop" aria-label="Arrêter le chrono et enregistrer">' + icon('stop') + '</button>';
+        ? '<button type="button" class="btn btn--soft btn--icon btn--sm" data-chrono="resume" data-focus-key="p-toggle" aria-label="Reprendre le chrono">' + icon('play') + '</button>'
+        : '<button type="button" class="btn btn--soft btn--icon btn--sm" data-chrono="pause" data-focus-key="p-toggle" aria-label="Mettre le chrono en pause">' + icon('pause') + '</button>') +
+      '<button type="button" class="btn btn--secondary btn--icon btn--sm" data-chrono="stop" data-focus-key="p-stop" aria-label="Arrêter le chrono et enregistrer">' + icon('stop') + '</button>';
   }
 
   function render() {
@@ -94,7 +94,9 @@
       var prev = S.task(res.stopped.taskId);
       U.toast({
         kind: 'success', icon: 'timer', title: 'Chrono basculé sur « ' + t.title + ' »',
-        text: (prev ? 'Temps enregistré sur « ' + prev.title + ' » : ' : 'Temps enregistré : ') + D.duration(res.stopped.minutes) + '. Un seul chrono à la fois.'
+        text: res.stopped.minutes
+          ? (prev ? 'Temps enregistré sur « ' + prev.title + ' » : ' : 'Temps enregistré : ') + D.duration(res.stopped.minutes) + '. Un seul chrono à la fois.'
+          : 'Le précédent avait tourné moins de 10 secondes : rien d’enregistré. Un seul chrono à la fois.'
       });
     } else {
       U.toast({ icon: 'play', title: 'Chrono lancé', text: '« ' + t.title + ' ». Bon courage !', duration: 3500 });
@@ -144,6 +146,11 @@
     var res = S.stopTimer(minutes != null ? { minutes: minutes, date: date } : null);
     if (!res) return;
     var t = S.task(res.taskId);
+    if (!res.entries.length) {
+      U.toast({ icon: 'timer', title: 'Chrono arrêté', text: 'Moins de 10 secondes : rien n’a été enregistré.', duration: 3500 });
+      U.announce('Chrono arrêté, rien enregistré');
+      return;
+    }
     U.toast({
       kind: 'success', icon: 'check',
       title: 'Temps enregistré : ' + D.duration(res.minutes),
@@ -160,9 +167,14 @@
   }
 
   // Délégation : boutons [data-chrono] partout dans l'interface
+  var lastAction = 0;
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-chrono]');
     if (b && b.tagName === 'BUTTON') {
+      // QA-07 : un double-clic vaut un clic (le 2e tomberait sur le bouton qui remplace le 1er)
+      // (au clavier, e.detail vaut 0 : les actions enchaînées ne sont jamais freinées)
+      if (e.detail > 1 || (e.detail === 1 && Date.now() - lastAction < 350)) { e.preventDefault(); return; }
+      if (e.detail) lastAction = Date.now();
       var a = b.getAttribute('data-chrono');
       if (a === 'start') start(b.getAttribute('data-task'));
       else if (a === 'pause') pause();

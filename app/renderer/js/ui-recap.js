@@ -74,9 +74,13 @@
     var prevMins = Q.minutesByCategory(prev.start, prev.end, false)[c.id] || 0;
     var prevName = { day: 'la veille', week: 'S' + D.isoWeek(prev.start), month: D.MONTHS_SHORT[D.parse(prev.start).getMonth()] }[p.kind];
     var deltaTxt = prevMins || mins ? (mins - prevMins >= 0 ? '+' : '−') + NB + D.duration(Math.abs(mins - prevMins)) + ' vs ' + prevName : '';
-    var compare = g ? '<span class="hcard__goal">sur ' + D.duration(goalTotal) + '</span>' : '';
+    // QA-06 : un jour sans objectif (samedi, dimanche pour Flow Line) n'affiche ni « sur 0 h » ni « objectif atteint »
+    var hasGoal = !!g && goalTotal > 0;
+    var compare = hasGoal ? '<span class="hcard__goal">sur ' + D.duration(goalTotal) + '</span>' : '';
     var goalNote = '';
-    if (g) {
+    if (g && !hasGoal) {
+      goalNote = 'Pas d’objectif ' + (p.kind === 'day' ? 'ce jour-là' : 'sur cette période') + (D.isWeekend(p.start) && p.kind === 'day' ? ' : c’est le week-end.' : '.');
+    } else if (g) {
       var left = goalTotal - mins;
       if (isCurrent(p) && p.kind !== 'day') {
         var toDate = 0;
@@ -96,7 +100,7 @@
     if (p.kind === 'day') {
       var entries = [];
       S.get().tasks.forEach(function (t) { if (t.categoryId === c.id) t.timeEntries.forEach(function (e) { if (e.date === p.start) entries.push({ t: t, e: e }); }); });
-      body = (g ? '<span class="progress progress--lg ' + progressCls(c) + '" style="--value:' + (goalTotal ? Math.min(100, Math.round(mins / goalTotal * 100)) : 0) + '" aria-hidden="true"></span>' : '') +
+      body = (hasGoal ? '<span class="progress progress--lg ' + progressCls(c) + '" style="--value:' + Math.min(100, Math.round(mins / goalTotal * 100)) + '" aria-hidden="true"></span>' : '') +
         (entries.length ? '<ul class="day-entries" role="list">' + entries.map(function (x) {
           return '<li><span class="day-entries__title">' + esc(x.t.title) + '</span><span class="day-entries__dur num">' + D.duration(x.e.minutes) + '</span></li>';
         }).join('') + runningRow(c, p) + '</ul>' : '<p class="empty-line">Pas d’heures ce jour-là' + (D.isWeekend(p.start) && c.group === 'flowline' ? ' : c’était le week-end.' : '.') + '</p>');
@@ -215,7 +219,7 @@
     var shown = more > 0 && !expanded[key] ? list.slice(0, MAX) : list;
     return '<ul class="recap-list" role="list">' + shown.map(function (t) {
       var c = S.category(t.categoryId);
-      return '<li><button type="button" class="recap-item" data-open-task="' + t.id + '">' + U.catDot(c) +
+      return '<li><button type="button" class="recap-item" data-open-task="' + t.id + '" data-focus-key="rc-' + key + '-' + t.id + '">' + U.catDot(c) +
         '<span class="recap-item__text"><span class="recap-item__title">' + esc(t.title) + '</span><span class="recap-item__meta">' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + ' · ' + t.progress + NB + '%</span></span>' +
         U.dueBadge(t) + '</button></li>';
     }).join('') + '</ul>' +

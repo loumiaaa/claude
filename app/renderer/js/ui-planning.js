@@ -156,7 +156,7 @@
         (unplanned.length ? '<ul class="unplanned__list" role="list">' + unplanned.map(function (t) {
           var c = S.category(t.categoryId);
           return '<li><button type="button" class="glass glass--nested glass--interactive unplanned__item" data-open-task="' + t.id + '">' + U.catDot(c) + '<span>' + esc(t.title) + '</span>' + icon('calendar') + '<span class="sr-only">Ajouter des dates</span></button></li>';
-        }).join('') + '</ul>' : '<p class="empty-line">Tout est daté. Bel ordre !</p>') +
+        }).join('') + '</ul>' : '<p class="empty-line">' + (S.get().tasks.length ? 'Tout est daté. Bel ordre !' : 'Pas encore de tâche : le planning se remplira avec tes dates de début et de fin.') + '</p>') +
       '</section>';
     U.keepFocus(el, function () { el.innerHTML = html; });
     U.typo(el);

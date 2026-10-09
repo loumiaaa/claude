@@ -58,7 +58,7 @@
     var timing = tm && tm.taskId === t.id;
     var d = U.due(t);
     var label = t.title + ', ' + c.name + ', priorité ' + Q.prioLabel(t.priority).toLowerCase() + (d ? ', ' + d.long : '') + ', avancement ' + t.progress + ' %';
-    return '<article class="glass glass--nested glass--interactive task-card' + (t.status === 'done' ? ' task-card--done' : '') + (timing ? ' is-timing' : '') + '" ' +
+    return '<div class="glass glass--nested glass--interactive task-card' + (t.status === 'done' ? ' task-card--done' : '') + (timing ? ' is-timing' : '') + '" ' +
       'role="listitem" tabindex="0" draggable="true" data-id="' + t.id + '" data-focus-key="card-' + t.id + '" aria-label="' + esc(label) + '" aria-describedby="kanban-help">' +
       '<span class="task-card__grip" data-grip aria-hidden="true" title="Glisser pour déplacer">' + icon('grip') + '</span>' +
       '<div class="task-card__top">' + U.catChip(c) + (t.priority !== 'normal' ? U.prio(t.priority) : '') +
@@ -75,7 +75,7 @@
         (t.status === 'done'
           ? '<span class="task-card__due task-card__done">' + icon('check') + (t.completedAt ? 'Terminée le ' + esc(D.dayMonth(t.completedAt)) : 'Terminée') + '</span>'
           : '<span class="task-card__due">' + U.dueBadge(t) + '</span>') +
-      '</div></article>';
+      '</div></div>';
   }
 
   function columnEmpty(status, filtered) {
@@ -143,7 +143,7 @@
         '<button type="button" class="th-sort' + (sorted ? ' is-sorted' : '') + '" data-sort="' + key + '" data-focus-key="sort-' + key + '">' + esc(label) +
         '<span class="th-sort__icon">' + icon(sorted ? (s.dir === 'desc' ? 'arrow-down' : 'arrow-up') : 'sort') + '</span></button></th>';
     }
-    if (!rows.length) return emptyFiltered();
+    if (!rows.length) return S.get().tasks.length ? emptyFiltered() : emptyNone();
     return '<section class="glass card list-card" aria-label="Liste des tâches"><div class="table-scroll"><table class="task-table">' +
       '<caption class="sr-only">Tâches, triées par ' + esc((SORTS.filter(function (x) { return x[0] === s.key; })[0] || [])[1] || '') + '. Les en-têtes de colonnes permettent de trier.</caption>' +
       '<thead><tr>' + th('title', 'Tâche', 'col-title') + th('category', 'Catégorie') + th('status', 'Statut') + th('priority', 'Priorité') +
@@ -162,6 +162,12 @@
           '<td data-label="Heures" class="col-num num">' + (mins ? D.duration(mins, { compact: true }) : '<span class="text-subtle">—</span>') + '</td>' +
         '</tr>';
       }).join('') + '</tbody></table></div></section>';
+  }
+
+  function emptyNone() {
+    return '<section class="glass card"><div class="empty-state"><div class="empty-state__art">' + icon('tasks') + '</div>' +
+      '<p class="empty-state__title">Pas encore de tâche</p><p class="empty-state__text">Crée la première : seul le titre est obligatoire.</p>' +
+      '<div class="empty-state__actions"><button type="button" class="btn btn--primary btn--sm" data-action="new-task">' + icon('plus') + 'Nouvelle tâche</button></div></div></section>';
   }
 
   function emptyFiltered() {

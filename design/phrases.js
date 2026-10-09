@@ -597,6 +597,8 @@
   }
 
   function memeowCategory(rule, c) {
+    // Humeur basse : le réconfort (cœur) prime, même la nuit (recette QA-11)
+    if (rule.category === 'humeurBasse') return 'humeurBasse';
     if (c.slot === 'nuit') return 'nuit';
     if (rule.category === 'humeurBasse' || rule.category === 'retour' || rule.category === 'objectif') {
       return rule.category;
@@ -635,7 +637,7 @@
     return {
       lamia: typo(fill(template, rule.n)),
       memeow: { text: typo(reply.text), icon: reply.icon },
-      memeowAnimation: reply.animation,
+      memeowAnimation: c.slot === 'nuit' ? 'sleep' : reply.animation,   // la nuit, Memeow dort (avec son cœur si l'humeur est basse)
       lamiaAnimation: sample(anims)
     };
   }

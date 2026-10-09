@@ -32,7 +32,10 @@ test('écarts de jours insensibles aux changements d’heure', () => {
   assert.equal(D.addMonths('2026-01-31', 1), '2026-02-28');
 });
 
-test('découpage par jour local : 25 h le 25/10/2026, 23 h le 28/03/2027', () => {
+// TZ=Europe/Paris est-il appliqué par cette version de Node (Windows) ? Sinon, pas de changement d'heure à tester.
+const dstActive = new Date(2026, 9, 24).getTimezoneOffset() !== new Date(2026, 9, 26).getTimezoneOffset();
+
+test('découpage par jour local : 25 h le 25/10/2026, 23 h le 28/03/2027', { skip: !dstActive && 'fuseau Europe/Paris indisponible' }, () => {
   const a = new Date(2026, 9, 25, 0, 0).getTime();
   const b = new Date(2026, 9, 26, 0, 0).getTime();
   assert.deepEqual(D.splitByDay(a, b), [{ date: '2026-10-25', ms: 25 * 3600000 }]);
@@ -77,7 +80,7 @@ test('saisie des durées : 1h30, 1 h 30, 90, 1,5, 1.5, 0h45, 2h, 90 min', () => 
   for (const [input, minutes] of Object.entries(cases)) assert.equal(D.parseDuration(input), minutes, input);
 });
 
-test('saisie des durées : refus des saisies invalides, dont « 1h75 » (QA-02)', () => {
+test('saisie des durées : refus des saisies invalides, dont « 1h75 » (QA-05)', () => {
   for (const bad of ['', 'abc', '1h75', '1h99', '0', '-2', '25h', 'h30']) assert.equal(D.parseDuration(bad), null, bad);
 });
 

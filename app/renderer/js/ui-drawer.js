@@ -9,7 +9,7 @@
 
   var D = L.dates, S = L.store, U = L.ui, Q = L.q;
   var esc = U.esc, icon = U.icon;
-  var ov = null, current = null, root = null, showAllEntries = false, editingEntry = null;
+  var ov = null, current = null, root = null, showAllEntries = false, editingEntry = null, opener = null, removing = null;
 
   function t() { return current && S.task(current); }
 
@@ -27,11 +27,11 @@
       ctl = '<div class="hours-hero__live"><span class="chrono__live' + (paused ? ' is-paused' : '') + '" aria-hidden="true"></span>' +
         '<span class="hours-hero__clock num" role="timer" aria-label="Temps écoulé" data-timer-elapsed>' + D.clock(L.chrono.elapsed()) + '</span></div>' +
         '<div class="hours-hero__actions">' + (paused
-          ? '<button type="button" class="btn btn--soft btn--sm" data-chrono="resume">' + icon('play') + 'Reprendre</button>'
-          : '<button type="button" class="btn btn--soft btn--sm" data-chrono="pause">' + icon('pause') + 'Pause</button>') +
-        '<button type="button" class="btn btn--primary btn--sm" data-chrono="stop">' + icon('stop') + 'Stop et enregistrer</button></div>';
+          ? '<button type="button" class="btn btn--soft btn--sm" data-chrono="resume" data-focus-key="dr-toggle">' + icon('play') + 'Reprendre</button>'
+          : '<button type="button" class="btn btn--soft btn--sm" data-chrono="pause" data-focus-key="dr-toggle">' + icon('pause') + 'Pause</button>') +
+        '<button type="button" class="btn btn--primary btn--sm" data-chrono="stop" data-focus-key="dr-start">' + icon('stop') + 'Stop et enregistrer</button></div>';
     } else {
-      ctl = '<div class="hours-hero__actions"><button type="button" class="btn btn--primary" data-chrono="start" data-task="' + task.id + '"' + (task.status === 'done' ? ' disabled' : '') + '>' + icon('play') + 'Démarrer le chrono</button></div>' +
+      ctl = '<div class="hours-hero__actions"><button type="button" class="btn btn--primary" data-chrono="start" data-task="' + task.id + '" data-focus-key="dr-start"' + (task.status === 'done' ? ' disabled' : '') + '>' + icon('play') + 'Démarrer le chrono</button></div>' +
         (tm ? '<p class="hint">Le chrono en cours sur une autre tâche sera arrêté et enregistré.</p>' : '');
     }
     return '<div class="glass glass--nested hours-hero">' + head + ctl + '</div>';
@@ -127,7 +127,7 @@
   function render(task) {
     var st = S.get();
     var c = S.category(task.categoryId);
-    return '<aside class="drawer task-drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" tabindex="-1">' +
+    return '<div class="drawer task-drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" tabindex="-1">' +
       '<div class="drawer__header">' +
         '<div class="drawer__heading"><div class="drawer__chips" data-dr-chips>' + U.catChip(c) + U.statusChip(task.status) + '</div>' +
         '<h2 class="sr-only" id="dr-title">' + esc(task.title) + '</h2>' +
@@ -168,7 +168,7 @@
         '<span class="saved-note">' + icon('check') + 'Enregistré automatiquement</span>' +
         '<button type="button" class="btn btn--secondary" data-dr-close>Fermer</button>' +
       '</div>' +
-    '</aside>';
+    '</div>';
   }
 
   // Le titre éditable grandit avec son texte (pas de barre de défilement)
@@ -324,6 +324,16 @@
       }
     });
 
+    root.addEventListener('focusout', function (e) {
+      var task = t();
+      if (task && e.target.id === 'dr-t' && !e.target.value.trim()) {
+        e.target.value = task.title;
+        fitTitle();
+        root.querySelector('#dr-title').textContent = task.title;
+        U.toast({ icon: 'info', title: 'Le titre ne peut pas être vide', text: 'On garde « ' + task.title + ' ».', duration: 3500 });
+      }
+    });
+
     root.addEventListener('keydown', function (e) {
       // Alt + ↑ / ↓ sur une case : réordonner la checklist
       if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target.hasAttribute('data-check-toggle')) {
@@ -385,11 +395,26 @@
     });
   }
 
+  // Élément focalisable voisin de la tâche supprimée, dans l'onglet affiché (QA-03)
+  function neighbour(id) {
+    var list = U.$$('.view:not([hidden]) [data-open-task][data-focus-key], .view:not([hidden]) .task-card[data-focus-key]');
+    var tid = function (el) { return el.getAttribute('data-open-task') || el.getAttribute('data-id'); };
+    var i = opener ? list.indexOf(opener) : -1;
+    if (i < 0) list.forEach(function (el, k) { if (i < 0 && tid(el) === id) i = k; });
+    if (i < 0) return null;
+    for (var a = i + 1; a < list.length; a++) if (tid(list[a]) !== id) return list[a];
+    for (var b = i - 1; b >= 0; b--) if (tid(list[b]) !== id) return list[b];
+    return null;
+  }
+
   function remove(id) {
     var task = S.task(id);
     if (!task) return;
+    var target = neighbour(id);
+    removing = id;                        // la fermeture est faite ici, avec le bon focus
     var snap = S.deleteTask(id);
-    close(true);
+    removing = null;
+    close(true, target);
     U.toast({
       icon: 'trash', title: 'Tâche supprimée', text: '« ' + task.title + ' ». Tu as 10 secondes pour changer d’avis.', duration: 10000,
       actions: [{ label: 'Annuler', fn: function () { S.restoreTask(snap); U.toast({ kind: 'success', icon: 'refresh', title: 'Tâche restaurée', text: '« ' + task.title + ' » est de retour.', duration: 3000 }); } }]
@@ -407,7 +432,10 @@
     root = ov.querySelector('.task-drawer');
     bind();
     U.typo(root);
-    if (!reopening) U.openLayer(ov, { initialFocus: root, returnTo: opts.returnTo, onClose: function () { current = null; root = null; } });
+    if (!reopening) {
+      opener = opts.returnTo || document.activeElement;
+      U.openLayer(ov, { initialFocus: root, returnTo: opts.returnTo, onClose: function () { current = null; root = null; } });
+    }
     requestAnimationFrame(fitTitle);
     if (opts.section === 'hours') {
       setTimeout(function () {
@@ -417,14 +445,14 @@
     }
   }
 
-  function close(deleted) {
+  function close(deleted, focusTarget) {
     if (!ov || ov.hidden) return;
-    U.closeLayer(ov, deleted ? 'deleted' : 'close');
+    U.closeLayer(ov, deleted ? 'deleted' : 'close', focusTarget);
   }
 
   S.subscribe(function (type, d) {
     if (!current || !root) return;
-    if (type === 'task:delete' && d.id === current) { close(true); return; }
+    if (type === 'task:delete' && d.id === current && removing !== d.id) { close(true); return; }
     if (type === 'timer') { refresh('timer'); return; }
     if (type === 'task:move' && d.id === current) { refresh('meta'); return; }
     if (type === 'task:update' && d.id === current) {

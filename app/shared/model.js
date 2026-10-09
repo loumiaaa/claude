@@ -164,16 +164,42 @@
     ui.filters = Object.assign(defaultUI().filters, ui.filters || {});
     ui.sort = Object.assign(defaultUI().sort, ui.sort || {});
     s.ui = ui;
+    // Catégories : identifiant, nom, couleur et groupe toujours présents (QA-02)
+    d.categories = d.categories.filter(function (c) { return c && typeof c === 'object'; }).map(function (c, i) {
+      return Object.assign({}, c, {
+        id: typeof c.id === 'string' && c.id ? c.id : 'cat-' + (i + 1),
+        name: typeof c.name === 'string' && c.name.trim() ? c.name : 'Catégorie ' + (i + 1),
+        color: typeof c.color === 'string' && c.color ? c.color : 'blue',
+        group: GROUPS.indexOf(c.group) >= 0 ? c.group : 'auto-entreprise'
+      });
+    });
+    if (!d.categories.length) d.categories = clone(DEFAULT_CATEGORIES);
+    var catIds = d.categories.map(function (c) { return c.id; });
+    var n = 0;
+    function id(prefix) { n += 1; return prefix + '-n' + n; }
+    d.tasks = d.tasks.filter(function (t) { return t && typeof t === 'object'; });
     d.tasks.forEach(function (t) {
-      t.tags = Array.isArray(t.tags) ? t.tags : [];
-      t.checklist = Array.isArray(t.checklist) ? t.checklist : [];
-      t.timeEntries = Array.isArray(t.timeEntries) ? t.timeEntries : [];
+      if (typeof t.id !== 'string' || !t.id) t.id = id('t');
+      if (typeof t.title !== 'string') t.title = t.title == null ? 'Sans titre' : String(t.title);
+      if (catIds.indexOf(t.categoryId) < 0) t.categoryId = catIds[0];          // catégorie inconnue : réaffectée
+      t.tags = Array.isArray(t.tags) ? t.tags.filter(function (g) { return typeof g === 'string'; }) : [];
+      t.checklist = (Array.isArray(t.checklist) ? t.checklist : []).filter(function (c) { return c && typeof c === 'object'; }).map(function (c) {
+        return { id: typeof c.id === 'string' && c.id ? c.id : id('c'), label: String(c.label == null ? '' : c.label), done: !!c.done };
+      });
+      t.timeEntries = (Array.isArray(t.timeEntries) ? t.timeEntries : []).filter(function (e) { return e && typeof e === 'object'; }).map(function (e) {
+        return Object.assign({}, e, { id: typeof e.id === 'string' && e.id ? e.id : id('e'), note: e.note == null ? '' : String(e.note), source: e.source === 'timer' ? 'timer' : 'manual' });
+      });
       if (t.description == null) t.description = '';
       if (t.client == null) t.client = '';
-      if (typeof t.progress !== 'number') t.progress = 0;
+      if (typeof t.progress !== 'number' || isNaN(t.progress)) t.progress = 0;
+      t.progress = Math.max(0, Math.min(100, t.progress));
+      if (PRIORITIES.indexOf(t.priority) < 0) t.priority = 'normal';
       if (t.reminder === undefined) t.reminder = null;
       if (typeof t.order !== 'number') t.order = 0;
+      if (t.startDate === undefined || t.startDate === '') t.startDate = null;
+      if (t.endDate === undefined || t.endDate === '') t.endDate = null;
     });
+    d.moods = d.moods.filter(function (m) { return m && typeof m === 'object'; });
     if (d.activeTimer === undefined) d.activeTimer = null;
     if (d.lastTimerTaskId === undefined) d.lastTimerTaskId = null;
     d.flags = Object.assign({}, def.flags, d.flags || {});

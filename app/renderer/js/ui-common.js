@@ -179,7 +179,7 @@
   function openLayer(overlay, opts) {
     opts = opts || {};
     if (stack.some(function (l) { return l.el === overlay; })) return;
-    var layer = { el: overlay, returnTo: opts.returnTo || document.activeElement, onClose: opts.onClose };
+    var layer = { el: overlay, returnTo: opts.returnTo || document.activeElement, onClose: opts.onClose, fallbackFocus: opts.fallbackFocus };
     stack.push(layer);
     overlay.hidden = false;
     document.documentElement.classList.add('has-layer');
@@ -189,7 +189,13 @@
     if (target) setTimeout(function () { target.focus(); }, 20);
   }
 
-  function closeLayer(overlay, reason) {
+  function focusViewTitle() {
+    var h = document.querySelector('.view:not([hidden]) h1');
+    if (h) h.focus({ preventScroll: true });
+  }
+
+  // focusTarget (facultatif) : élément à focaliser à la place de l'origine (qui a pu disparaître)
+  function closeLayer(overlay, reason, focusTarget) {
     var i = -1;
     stack.forEach(function (l, k) { if (l.el === overlay) i = k; });
     if (i < 0) return;
@@ -198,16 +204,20 @@
     if (!stack.length) document.documentElement.classList.remove('has-layer');
     setInert();
     if (layer.onClose) layer.onClose(reason);
-    var back = layer.returnTo;
+    var back = focusTarget || layer.returnTo;
     if (!back || back === document.body || back === document.documentElement) {
       // Ouverte au chargement (humeur du matin) : on rend le focus au titre de l'onglet
-      var h = document.querySelector('.view:not([hidden]) h1');
-      if (h) h.focus({ preventScroll: true });
-    } else if (document.contains(back) && visible(back)) back.focus();
-    else if (back && back.getAttribute && back.getAttribute('data-focus-key')) {
-      var again = document.querySelector('[data-focus-key="' + back.getAttribute('data-focus-key') + '"]');
-      if (again) again.focus();
+      focusViewTitle();
+      return;
     }
+    if (document.contains(back) && visible(back)) { back.focus(); return; }
+    // L'origine a été re-rendue : on la retrouve par sa clé ; sinon repli explicite, puis titre de l'onglet (QA-03)
+    var key = back.getAttribute && back.getAttribute('data-focus-key');
+    var again = key ? document.querySelector('[data-focus-key="' + key + '"]') : null;
+    if (again && visible(again)) { again.focus(); return; }
+    var fb = layer.fallbackFocus ? layer.fallbackFocus() : null;
+    if (fb && document.contains(fb)) { fb.focus(); return; }
+    focusViewTitle();
   }
 
   function topLayer() { return stack[stack.length - 1] || null; }
@@ -266,7 +276,7 @@
     $$('[data-dlg-cancel]', ov).forEach(function (b) { b.addEventListener('click', function () { closeLayer(ov, 'cancel'); }); });
     if (o.onMount) o.onMount(form);
     typo(ov);
-    openLayer(ov, { initialFocus: o.initialFocus || 'input, select, [type="submit"]', returnTo: o.returnTo });
+    openLayer(ov, { initialFocus: o.initialFocus || 'input, select, [type="submit"]', returnTo: o.returnTo, fallbackFocus: o.fallbackFocus });
   }
 
   /* --- Menu contextuel (direct enfant de <body>) -------------------------- */
@@ -328,7 +338,7 @@
     }).join('');
     // Rattacher au calque ouvert pour rester utilisable (le reste est inert)
     var top = topLayer();
-    var host = top ? top.el : document.body;
+    var host = top ? top.el : (document.getElementById('main') || document.body);   // QA-13 : dans un repère
     if (menuEl.parentNode !== host) host.appendChild(menuEl);
     menuEl.hidden = false;
     anchor.setAttribute('aria-expanded', 'true');

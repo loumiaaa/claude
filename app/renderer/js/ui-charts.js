@@ -41,6 +41,8 @@
   }
 
   function hideTip() { if (tip) tip.hidden = true; }
+  var focusShownAt = 0;
+  function hideTipOnScroll() { if (Date.now() - focusShownAt > 500) hideTip(); }
 
   function tipRow(value, label, key) {
     return '<div class="chart-tip__row">' + (key ? '<span class="chart-tip__key ' + key + '"></span>' : '') +
@@ -88,14 +90,21 @@
       if (g) { g.classList.add('is-hover'); at(g, e); } else hideTip();
     });
     svg.addEventListener('pointerleave', function () { hideTip(); svg.querySelectorAll('.is-hover').forEach(function (n) { n.classList.remove('is-hover'); }); });
-    svg.addEventListener('focusin', function (e) { var g = e.target.closest('[data-hit]'); if (g) { g.classList.add('is-hover'); at(g, { type: 'focus' }); } });
+    svg.addEventListener('focusin', function (e) {
+      var g = e.target.closest('[data-hit]');
+      if (!g) return;
+      g.classList.add('is-hover');
+      focusShownAt = Date.now();
+      at(g, { type: 'focus' });
+      setTimeout(function () { if (document.activeElement === g) at(g, { type: 'focus' }); }, 350);   // après le défilement
+    });
     svg.addEventListener('focusout', function (e) { var g = e.target.closest('[data-hit]'); if (g) g.classList.remove('is-hover'); hideTip(); });
   }
 
   /* --- Colonnes : heures d'une catégorie --------------------------------- */
   // o = { data: [{ key, label, sub, value, goal, future, current, title }], hue, height, ariaLabel }
   function bars(host, o) {
-    var W = Math.max(240, Math.floor(host.clientWidth || 320));
+    var W = Math.max(160, Math.floor(host.clientWidth || 320));   // QA-01 : s’adapte aux cartes étroites (1280–1500 px)
     var H = o.height || 196;
     var pad = { l: 34, r: 8, t: 22, b: o.data.some(function (d) { return d.sub; }) ? 40 : 26 };
     var iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
@@ -149,7 +158,7 @@
   /* --- Barres horizontales : répartition ---------------------------------- */
   // o = { rows: [{ label, value, display, hue }], ariaLabel, unit }
   function hbars(host, o) {
-    var W = Math.max(240, Math.floor(host.clientWidth || 320));
+    var W = Math.max(160, Math.floor(host.clientWidth || 320));   // QA-01 : s’adapte aux cartes étroites (1280–1500 px)
     var rowH = 34, bh = 14;
     var labelW = Math.min(150, Math.round(W * 0.38));
     var H = o.rows.length * rowH + 4;
@@ -183,7 +192,7 @@
   /* --- Courbe d'humeur ---------------------------------------------------- */
   // o = { days: [{ date, level|null, note }], band: [a, b], ariaLabel }
   function moodLine(host, o) {
-    var W = Math.max(260, Math.floor(host.clientWidth || 320));
+    var W = Math.max(200, Math.floor(host.clientWidth || 320));   // QA-01
     var H = o.height || 200;
     var pad = { l: 34, r: 14, t: 14, b: 28 };
     var iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
@@ -273,7 +282,7 @@
     });
   }
 
-  window.addEventListener('scroll', hideTip, true);
+  window.addEventListener('scroll', hideTipOnScroll, true);
 
   L.charts = { bars: bars, hbars: hbars, moodLine: moodLine, hideTip: hideTip };
 })(window.Lamia = window.Lamia || {});

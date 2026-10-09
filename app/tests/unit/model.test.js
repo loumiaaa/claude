@@ -85,3 +85,31 @@ test('normalisation : complète les champs facultatifs manquants', () => {
   assert.equal(d.tasks[0].reminder, null);
   assert.deepEqual(M.summarize(d), { tasks: 1, entries: 0, moods: 0, categories: 3 });
 });
+
+// QA-02 : imports .json incomplets (édition manuelle, ancienne version) : complétés, jamais plantés
+test('QA-02 : fichiers incomplets complétés par des valeurs par défaut', () => {
+  const variants = [
+    { version: 1, tasks: [], categories: [{ id: 'a', name: 'A', color: 'blue', group: 'flowline' }], moods: [] },   // sans settings
+    { version: 1, tasks: [], categories: [{ id: 'a', name: 'A', color: 'blue', group: 'flowline' }] },               // sans moods
+    { version: 1, tasks: [], categories: [], moods: [] },                                                           // catégories vides
+    { version: 1, categories: [{ id: 'a', name: 'A', color: 'blue', group: 'flowline' }], moods: [],
+      tasks: [{ id: 't1', title: 'Sans listes', categoryId: 'inconnue', status: 'todo' }] }                         // tâche sans tags, checklist, heures
+  ];
+  for (const v of variants) {
+    const r = M.migrate(JSON.parse(JSON.stringify(v)), { nowIso: '2026-10-09T07:00:00.000Z' });
+    assert.equal(M.validate(r.doc).ok, true, JSON.stringify(M.validate(r.doc).errors));
+    const d = r.doc;
+    assert.ok(d.settings.ui.filters && d.settings.schedules.flowline && d.settings.schedules['auto-entreprise']);
+    assert.ok(d.categories.length >= 1);
+    assert.ok(Array.isArray(d.moods));
+    d.tasks.forEach((t) => {
+      assert.ok(Array.isArray(t.tags) && Array.isArray(t.checklist) && Array.isArray(t.timeEntries));
+      assert.ok(d.categories.some((c) => c.id === t.categoryId), 'catégorie connue');
+    });
+  }
+});
+
+test('QA-02 : statut invalide → refusé (rien n’est remplacé)', () => {
+  const r = M.migrate({ version: 1, categories: [], moods: [], tasks: [{ id: 'x', title: 'X', status: 'n’importe quoi' }] });
+  assert.equal(M.validate(r.doc).ok, false);
+});
