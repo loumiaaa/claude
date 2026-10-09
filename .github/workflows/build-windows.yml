@@ -158,7 +158,8 @@ jobs:
         run: npm ci
 
       - name: Télécharger General Sans (Fontshare, licence ITF FFL)
-        run: node scripts/fetch-general-sans.mjs || echo "::warning::General Sans non téléchargée : repli Poppins."
+        run: |
+          node scripts/fetch-general-sans.mjs || echo "::warning::General Sans non téléchargée : repli Poppins."
 
       - name: Build (.app universel Intel + Apple Silicon)
         run: npm run build:mac
