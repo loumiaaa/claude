@@ -1,0 +1,56 @@
+# Plateforme de suivi - Lamia : version web (PWA) publiée sur GitHub Pages.
+# Prérequis (une fois) : dépôt public, et Settings → Pages → Source : « GitHub Actions ».
+name: Publier l'app web
+
+on:
+  push:
+    branches: ['claude/**', 'main']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Construire l'app web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Télécharger General Sans (Fontshare, licence ITF FFL)
+        run: |
+          node scripts/fetch-general-sans.mjs || echo "::warning::General Sans non téléchargée : repli Poppins."
+
+      - name: Construire
+        run: node scripts/build-web.mjs
+
+      - name: Tests unitaires
+        run: node --test "tests/unit/*.test.js"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/web-dist
+
+  deploy:
+    name: Publier
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -75,12 +75,12 @@
   function themeCard() {
     var th = S.get().settings.theme;
     return '<section class="glass card" aria-labelledby="st-theme"><div class="card__header"><div><h2 class="card__title" id="st-theme">Apparence</h2>' +
-      '<p class="card__subtitle">Clair, sombre, ou comme Windows.</p></div></div>' +
+      '<p class="card__subtitle">Clair, sombre, ou comme ton ordinateur.</p></div></div>' +
       '<div class="segmented segmented--block" role="group" aria-label="Thème">' +
         [['light', 'sun', 'Clair'], ['dark', 'moon', 'Sombre'], ['system', 'settings', 'Système']].map(function (o) {
           return '<button type="button" class="segmented__item" data-theme-set="' + o[0] + '" data-focus-key="th-' + o[0] + '" aria-pressed="' + (th === o[0]) + '">' + icon(o[1]) + o[2] + '</button>';
         }).join('') + '</div>' +
-      '<p class="hint">Les animations de Lamia et Memeow s’arrêtent si « Réduire les animations » est activé dans Windows.</p></section>';
+      '<p class="hint">Les animations de Lamia et Memeow s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
   }
 
   function sw(attr, on, label, hint, disabled) {
@@ -95,13 +95,14 @@
     var m = machine();
     var win = m.platform === 'win32';
     return '<section class="glass card" aria-labelledby="st-rem"><div class="card__header"><div><h2 class="card__title" id="st-rem">Rappels d’échéance</h2>' +
-      '<p class="card__subtitle">Dans l’application, et en notification Windows si tu le souhaites, même fenêtre fermée.</p></div></div>' +
+      '<p class="card__subtitle">' + (info().web ? 'Dans l’application, et en notification du navigateur si tu le souhaites.' : 'Dans l’application, et en notification Windows si tu le souhaites, même fenêtre fermée.') + '</p></div></div>' +
       '<div class="field"><label class="label" for="st-rem-h">Heure des rappels</label><select class="select" id="st-rem-h" data-rem-hour data-focus-key="rem-h">' +
         [8, 9, 10, 14].map(function (x) { return '<option value="' + x + '"' + (x === h ? ' selected' : '') + '>' + x + NB + 'h</option>'; }).join('') + '</select>' +
         '<p class="hint">Le délai (J-1, J-2…) se règle tâche par tâche, dans son détail. Vérification toutes les 15 minutes, un seul rappel par tâche et par jour.</p></div>' +
       '<ul class="option-list" role="list">' +
         sw('data-rem-inapp', r.inApp !== false, 'Rappel dans l’application', 'Un message à l’ouverture et pendant la journée.') +
       '</ul>' +
+      (info().web ? webDeviceOptions(m) :
       '<h3 class="goal-block__title st-subtitle">Sur ce PC</h3>' +
       '<ul class="option-list" role="list">' +
         sw('data-opt-notif', m.windowsNotifications, 'Activer les notifications Windows',
@@ -111,10 +112,50 @@
           'La croix garde l’application en arrière-plan (rappels, chrono). Pour quitter : clic droit sur l’icône près de l’horloge, puis « Quitter ».') +
         sw('data-opt-login', m.openAtLogin, 'Lancer au démarrage de Windows',
           win || !m.platform ? 'L’application s’ouvre avec Windows' + (m.closeToTray ? ', discrètement dans la zone de notification.' : '.') + ' Si tu déplaces l’exe, ouvre-le une fois depuis son nouveau dossier.' : 'Disponible sous Windows uniquement.', m.platform && !m.loginItemSupported) +
-      '</ul></section>';
+      '</ul>') + '</section>';
+  }
+
+  function webDeviceOptions(m) {
+    return '<h3 class="goal-block__title st-subtitle">Sur cet appareil</h3>' +
+      '<ul class="option-list" role="list">' +
+        sw('data-opt-notif', m.windowsNotifications, 'Notifications du navigateur',
+          (m.notificationsSupported ? 'Le navigateur affiche les rappels, même quand l’onglet est en arrière-plan.' : 'Ce navigateur ne propose pas les notifications : les rappels restent dans l’application.') +
+          (m.windowsNotifications ? ' <button type="button" class="btn btn--ghost btn--sm" data-test-notif>' + icon('bell') + 'Tester</button>' : ''), !m.notificationsSupported) +
+      '</ul>';
+  }
+
+  function syncCard() {
+    var i = info(), s = i.sync || {};
+    var cloud = s.mode === 'cloud';
+    var at = s.at ? new Date(s.at) : null;
+    var hhmm = at ? ('0' + at.getHours()).slice(-2) + NB + 'h' + NB + ('0' + at.getMinutes()).slice(-2) : '';
+    var status = !s.cloud ? icon('info') + 'Synchronisation non configurée : tes données restent dans ce navigateur.'
+      : !cloud ? icon('info') + 'Sans synchro : tes données restent sur cet appareil.'
+      : s.status === 'offline' ? icon('alert') + 'Hors ligne : tes changements partiront au retour de la connexion.'
+      : s.status === 'error' ? icon('alert') + 'Synchronisation en échec : ' + esc(s.error || '')
+      : s.status === 'signed-out' ? icon('alert') + esc(s.error || 'Déconnectée.')
+      : s.status === 'syncing' ? icon('refresh') + 'Synchronisation en cours…'
+      : icon('check') + 'Synchronisé' + (hhmm ? ' à ' + hhmm : '');
+    var account = cloud && s.email ? esc(s.email) : (s.cloud ? 'Pas connectée' : 'Cet appareil uniquement');
+    return '<section class="glass card" aria-labelledby="st-data" id="st-data-card"><div class="card__header"><div><h2 class="card__title" id="st-data">Synchronisation</h2>' +
+      '<p class="card__subtitle">Tes tâches, tes heures et tes humeurs, les mêmes sur ton Mac, ton PC et ton téléphone.</p></div></div>' +
+      '<div class="folder"><span class="folder__icon">' + icon('user') + '</span><div class="folder__text"><span class="folder__path">' + account + '</span>' +
+        '<span class="folder__meta">' + status + '</span></div></div>' +
+      '<div class="btn-row">' +
+        (cloud ? '<button type="button" class="btn btn--secondary btn--sm" data-web="sync">' + icon('refresh') + 'Synchroniser maintenant</button>' +
+                 '<button type="button" class="btn btn--ghost btn--sm" data-web="logout">Se déconnecter</button>'
+               : (s.cloud ? '<button type="button" class="btn btn--primary btn--sm" data-web="login">' + icon('user') + 'Se connecter</button>' : '')) +
+      '</div>' +
+      '<div class="btn-row">' +
+        '<button type="button" class="btn btn--secondary btn--sm" data-data="export-json">' + icon('download') + 'Exporter une sauvegarde</button>' +
+        '<button type="button" class="btn btn--secondary btn--sm" data-data="import">' + icon('upload') + 'Importer une sauvegarde</button>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-data="restore">' + icon('refresh') + 'Restaurer…</button></div>' +
+      '<p class="hint">' + (cloud ? 'Une sauvegarde par jour dans ton compte (30 jours), et des copies de sécurité sur cet appareil avant chaque import ou restauration.' : 'Exporter puis importer un .json permet de passer d’un appareil à l’autre.') + '</p>' +
+      '<p class="hint text-subtle">Version ' + esc(i.version || '') + ' · ' + esc(i.host || '') + '</p></section>';
   }
 
   function dataCard() {
+    if (info().web) return syncCard();
     var i = info();
     var dir = i.dataDir || 'Donnees-Lamia';
     var sep = dir.indexOf('\\') >= 0 ? '\\' : '/';
@@ -326,6 +367,13 @@
         api.app.testNotification().then(function (r) {
           U.toast({ icon: 'bell', title: r && r.shown ? 'Notification envoyée' : 'Notification non affichée', text: r && r.shown ? 'Si rien n’apparaît, vérifie le mode « Ne pas déranger » de Windows.' : 'Windows ne l’a pas acceptée : les rappels resteront dans l’application.' });
         });
+        return;
+      }
+      if ((b = e.target.closest('[data-web]')) && window.lamia.web) {
+        var w = b.getAttribute('data-web');
+        b.disabled = true;
+        (w === 'sync' ? window.lamia.web.syncNow() : w === 'login' ? window.lamia.web.login() : window.lamia.web.logout())
+          .then(function (i) { L.info = i; if (L.views.settings) L.views.settings.render(); }, function () { b.disabled = false; });
         return;
       }
       if ((b = e.target.closest('[data-data]'))) {
