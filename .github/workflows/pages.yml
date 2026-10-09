@@ -37,6 +37,29 @@ jobs:
       - name: Construire
         run: node scripts/build-web.mjs
 
+      - name: Vérifier Supabase (tables, connexion par e-mail)
+        continue-on-error: true
+        run: |
+          node -e "
+          const src = require('fs').readFileSync('web/config.js', 'utf8');
+          const url = /supabaseUrl: '([^']*)'/.exec(src)[1], key = /supabaseAnonKey: '([^']*)'/.exec(src)[1];
+          if (!url) { console.log('Synchro non configurée'); process.exit(0); }
+          const h = { apikey: key, Authorization: 'Bearer ' + key };
+          (async () => {
+            const lines = [];
+            for (const t of ['lamia_data', 'lamia_backups']) {
+              const r = await fetch(url + '/rest/v1/' + t + '?select=*&limit=1', { headers: h });
+              lines.push('Table ' + t + ' : ' + (r.ok ? 'OK (protégée, ' + (await r.json()).length + ' ligne visible sans connexion)' : 'ERREUR ' + r.status + ' ' + (await r.text()).slice(0, 160)));
+            }
+            const s = await (await fetch(url + '/auth/v1/settings', { headers: h })).json();
+            lines.push('Connexion par e-mail : ' + (s.external && s.external.email ? 'activée' : 'DÉSACTIVÉE'));
+            lines.push('Confirmation par e-mail désactivée : ' + (s.mailer_autoconfirm ? 'oui' : 'NON'));
+            lines.push('Inscriptions fermées : ' + (s.disable_signup ? 'oui' : 'non'));
+            console.log(lines.join('\n'));
+            require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Supabase\n' + lines.map((l) => '- ' + l).join('\n') + '\n');
+          })().catch((e) => { console.log('Supabase injoignable : ' + e.message); });
+          "
+
       - name: Tests unitaires
         run: node --test "tests/unit/*.test.js"
 
