@@ -30,6 +30,11 @@ function baseDirOf(o) {
   const env = o.env || {};
   if (env.LAMIA_BASE_DIR) return { baseDir: env.LAMIA_BASE_DIR, mode: 'test' };
   if (env.PORTABLE_EXECUTABLE_DIR) return { baseDir: env.PORTABLE_EXECUTABLE_DIR, mode: 'portable' };
+  if (o.isPackaged && o.platform === 'darwin') {
+    // Mac : à côté du paquet .app (jamais dedans : il serait en lecture seule ou invalidé)
+    const bundle = /^(.*?\.app)\//.exec(o.execPath);
+    if (bundle) return { baseDir: p.dirname(bundle[1]), mode: 'mac' };
+  }
   if (o.isPackaged) return { baseDir: p.dirname(o.execPath), mode: 'zip' };
   return { baseDir: p.join(o.appPath, '.dev-data'), mode: 'dev' };
 }

@@ -35,7 +35,7 @@ if (process.env.LAMIA_FAKE_NOW && (E2E || !app.isPackaged)) D.setNow(process.env
 // Dossier utilisateur isolé (tests, smoke test) : à régler avant tout le reste
 if (process.env.LAMIA_USER_DATA) app.setPath('userData', process.env.LAMIA_USER_DATA);
 
-app.setAppUserModelId(AUMID);
+if (process.platform === 'win32') app.setAppUserModelId(AUMID);
 protocol.registerSchemesAsPrivileged([proto.privilegedScheme()]);
 Menu.setApplicationMenu(null);
 

@@ -21,6 +21,7 @@
     "test": "node --test \"tests/unit/*.test.js\"",
     "build:linux-dir": "npm run sync-design && electron-builder --config electron-builder.config.cjs --linux dir --x64 --publish never -c.electronDist=node_modules/electron/dist",
     "test:e2e": "node scripts/run-e2e.mjs",
+    "build:mac": "npm run sync-design && electron-builder --config electron-builder.config.cjs --mac --universal --publish never",
     "build:win": "npm run sync-design && electron-builder --config electron-builder.config.cjs --win --x64 --publish never"
   },
   "devDependencies": {

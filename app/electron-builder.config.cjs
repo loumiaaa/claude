@@ -41,6 +41,15 @@ module.exports = {
     requestExecutionLevel: 'user',    // jamais de demande de droits administrateur
     useZip: true                      // décompression plus rapide à chaque lancement
   },
+  // Mac : paquet .app universel (Intel + Apple Silicon), non signé par un certificat
+  // Apple ; la CI le signe en ad hoc puis le zippe avec ditto.
+  mac: {
+    target: [{ target: 'dir', arch: ['universal'] }],
+    icon: 'build/icon-mac.png',
+    identity: null,
+    category: 'public.app-category.productivity',
+    darwinDarkModeSupport: true
+  },
   linux: {
     target: ['dir'],
     executableName: 'plateforme-suivi-lamia',

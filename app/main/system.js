@@ -140,7 +140,9 @@ class SystemIntegration {
   ensureTray() {
     if (this.tray) return this.tray;
     try {
-      this.tray = new this.e.Tray(this.e.nativeImage.createFromPath(this.iconPath));
+      let img = this.e.nativeImage.createFromPath(this.iconPath);
+      if (this.platform === 'darwin') img = img.resize({ width: 18, height: 18, quality: 'best' });   // barre des menus
+      this.tray = new this.e.Tray(img);
     } catch (e) { this.tray = null; return null; }
     this.tray.setToolTip(PRODUCT);
     this.tray.on('click', () => this.showWindow());

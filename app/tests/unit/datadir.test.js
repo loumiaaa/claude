@@ -22,6 +22,12 @@ test('version ZIP : dossier de l’exe', () => {
   assert.equal(r.mode, 'zip');
 });
 
+test('Mac : Donnees-Lamia à côté du paquet .app, jamais à l’intérieur', () => {
+  const r = resolveDataDir({ platform: 'darwin', isPackaged: true, execPath: '/Users/lamia/Documents/Plateforme/Plateforme de suivi - Lamia.app/Contents/MacOS/Plateforme de suivi - Lamia', appPath: '/x', appDataPath: '/Users/lamia/Library/Application Support', env: {}, probe: ok });
+  assert.equal(r.dataDir, '/Users/lamia/Documents/Plateforme/Donnees-Lamia');
+  assert.equal(r.mode, 'mac');
+});
+
 test('tests et développement', () => {
   assert.equal(resolveDataDir(win({ env: { LAMIA_BASE_DIR: 'C:\\tmp\\base', PORTABLE_EXECUTABLE_DIR: 'E:\\x' } })).dataDir, 'C:\\tmp\\base\\Donnees-Lamia');
   const dev = resolveDataDir({ platform: 'linux', isPackaged: false, execPath: '/usr/bin/electron', appPath: '/home/l/app', appDataPath: '/home/l/.config', env: {}, probe: ok });

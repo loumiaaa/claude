@@ -5,7 +5,7 @@
 #   Windows de l'exe portable ET du ZIP, puis artefacts téléchargeables.
 # - Release : uniquement à la demande, avec une version (ex. 0.1.0) :
 #   pré-release GitHub v<version> avec les deux fichiers.
-name: Build Windows
+name: Build Windows et Mac
 
 on:
   push:
@@ -132,6 +132,75 @@ jobs:
           path: |
             app/dist/*-portable.exe
             app/dist/*-win-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  build-mac:
+    name: Build et smoke test (macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: app
+        shell: bash
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'      # pas de certificat Apple : signature ad hoc ci-dessous
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Télécharger General Sans (Fontshare, licence ITF FFL)
+        run: node scripts/fetch-general-sans.mjs || echo "::warning::General Sans non téléchargée : repli Poppins."
+
+      - name: Build (.app universel Intel + Apple Silicon)
+        run: npm run build:mac
+
+      - name: Signature ad hoc, ZIP et smoke test Mac
+        run: |
+          set -uo pipefail
+          APP="$(find dist -maxdepth 2 -name '*.app' -type d | head -1)"
+          [ -n "$APP" ] || { echo "Paquet .app introuvable dans dist/"; exit 1; }
+          NAME="$(basename "$APP")"
+          codesign --force --deep --sign - "$APP" || exit 1
+          codesign --verify --deep --strict "$APP" || exit 1
+          lipo -archs "$APP/Contents/MacOS/Plateforme de suivi - Lamia"
+          VERSION="$(node -p "require('./package.json').version")"
+          OUT="dist/Plateforme-de-suivi-Lamia-${VERSION}-mac-universal.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "$OUT" || exit 1
+
+          # Le .app extrait dans un dossier « clé USB » : Donnees-Lamia doit apparaître à côté
+          SMOKE="$RUNNER_TEMP/smoke-mac"; rm -rf "$SMOKE"; mkdir -p "$SMOKE"
+          ditto -x -k "$OUT" "$SMOKE" || exit 1
+          BIN="$SMOKE/$NAME/Contents/MacOS/Plateforme de suivi - Lamia"
+          DATA="$SMOKE/Donnees-Lamia"
+          for i in 1 2; do
+            START=$(date +%s)
+            "$BIN" --smoke-test & PID=$!
+            ( sleep 180; kill "$PID" 2>/dev/null ) & WATCH=$!
+            wait "$PID"; CODE=$?
+            kill "$WATCH" 2>/dev/null || true
+            [ -f "$DATA/smoke-test-result.json" ] || { echo "Lancement $i : aucun résultat dans Donnees-Lamia (code $CODE)"; exit 1; }
+            node -e "const r=require(process.argv[1]); for (const c of r.checks||[]) console.log('  ['+(c.ok?'ok':'ÉCHEC')+'] '+c.name+' '+(c.detail||'')); process.exit(r.ok?0:1)" "$DATA/smoke-test-result.json" || { echo "Lancement $i : échec du smoke test"; exit 1; }
+            [ "$CODE" -eq 0 ] || { echo "Lancement $i : code de sortie $CODE"; exit 1; }
+            [ -f "$DATA/data.json" ] || { echo "Lancement $i : data.json absent à côté du .app"; exit 1; }
+            [ ! -f "$DATA/verrou.json" ] || { echo "Lancement $i : verrou non libéré"; exit 1; }
+            echo "Lancement $i : OK en $(( $(date +%s) - START )) s"
+          done
+          echo "## Smoke test Mac : OK ($(du -h "$OUT" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Artefact (.app universel zippé)
+        uses: actions/upload-artifact@v4
+        with:
+          name: plateforme-suivi-lamia-mac
+          path: app/dist/*-mac-universal.zip
           if-no-files-found: error
           retention-days: 30
 
