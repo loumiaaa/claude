@@ -47,8 +47,7 @@ module.exports = {
     target: [{ target: 'dir', arch: ['universal'] }],
     icon: 'build/icon-mac.png',
     identity: null,
-    category: 'public.app-category.productivity',
-    darwinDarkModeSupport: true
+    category: 'public.app-category.productivity'
   },
   linux: {
     target: ['dir'],
