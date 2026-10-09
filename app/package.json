@@ -1,0 +1,26 @@
+{
+  "name": "plateforme-suivi-lamia",
+  "productName": "Plateforme de suivi - Lamia",
+  "version": "0.1.0",
+  "description": "Suivi des tâches, des heures, des échéances et de l'humeur de Lamia, 100 % hors ligne.",
+  "author": "Lamia",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main/index.js",
+  "scripts": {
+    "sync-design": "node scripts/sync-design.mjs",
+    "fonts": "node scripts/fetch-general-sans.mjs",
+    "icon": "node scripts/make-icon.mjs",
+    "prestart": "npm run sync-design",
+    "start": "electron .",
+    "pretest": "npm run sync-design",
+    "test": "node --test \"tests/unit/*.test.js\"",
+    "build:linux-dir": "npm run sync-design && electron-builder --config electron-builder.config.cjs --linux dir --x64 --publish never -c.electronDist=node_modules/electron/dist",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "build:win": "npm run sync-design && electron-builder --config electron-builder.config.cjs --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  }
+}

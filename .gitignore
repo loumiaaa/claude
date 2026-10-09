@@ -2,3 +2,11 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Application (phase 2)
+app/node_modules/
+app/dist/
+app/renderer/design/
+app/renderer/fonts/
+app/.dev-data/
+app/.e2e/
