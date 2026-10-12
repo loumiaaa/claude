@@ -441,7 +441,7 @@
       if (drag) return;
       if (type === 'ui' && !(d.filters || d.tasksView || d.sort)) return;
       if (type === 'mood') return;
-      render();
+      U.keepFocus(el, render);
     });
   }
 

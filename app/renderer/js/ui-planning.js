@@ -182,7 +182,7 @@
       if (L.app.view() !== 'planning') { el.dataset.stale = '1'; return; }
       if (type === 'ui' && !('planningZoom' in d || 'planningAnchor' in d)) return;
       if (type === 'mood' || type === 'timer') return;
-      render();
+      U.keepFocus(el, render);
     });
   }
 

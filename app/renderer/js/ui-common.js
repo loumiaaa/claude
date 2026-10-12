@@ -179,7 +179,7 @@
   function openLayer(overlay, opts) {
     opts = opts || {};
     if (stack.some(function (l) { return l.el === overlay; })) return;
-    var layer = { el: overlay, returnTo: opts.returnTo || document.activeElement, onClose: opts.onClose, fallbackFocus: opts.fallbackFocus };
+    var layer = { el: overlay, returnTo: opts.returnTo || document.activeElement, onClose: opts.onClose, fallbackFocus: opts.fallbackFocus, scrollY: window.scrollY };
     stack.push(layer);
     overlay.hidden = false;
     document.documentElement.classList.add('has-layer');
@@ -204,20 +204,33 @@
     if (!stack.length) document.documentElement.classList.remove('has-layer');
     setInert();
     if (layer.onClose) layer.onClose(reason);
+    restoreFocus(layer, focusTarget);
+    // La page reste là où on l'avait laissée (le focus ne la fait jamais remonter)
+    if (!stack.length && layer.scrollY != null) keepScroll(layer.scrollY);
+  }
+  function restoreFocus(layer, focusTarget) {
+    var quiet = { preventScroll: true };
     var back = focusTarget || layer.returnTo;
     if (!back || back === document.body || back === document.documentElement) {
       // Ouverte au chargement (humeur du matin) : on rend le focus au titre de l'onglet
       focusViewTitle();
       return;
     }
-    if (document.contains(back) && visible(back)) { back.focus(); return; }
+    if (document.contains(back) && visible(back)) { back.focus(quiet); return; }
     // L'origine a été re-rendue : on la retrouve par sa clé ; sinon repli explicite, puis titre de l'onglet (QA-03)
     var key = back.getAttribute && back.getAttribute('data-focus-key');
     var again = key ? document.querySelector('[data-focus-key="' + key + '"]') : null;
-    if (again && visible(again)) { again.focus(); return; }
+    if (again && visible(again)) { again.focus(quiet); return; }
     var fb = layer.fallbackFocus ? layer.fallbackFocus() : null;
-    if (fb && document.contains(fb)) { fb.focus(); return; }
+    if (fb && document.contains(fb)) { fb.focus(quiet); return; }
     focusViewTitle();
+  }
+  // Remet la page à une position, sans animation (aussi après le rendu suivant)
+  function keepScroll(y) {
+    var hash = location.hash;
+    var go = function () { if (location.hash === hash && Math.abs(window.scrollY - y) > 1) window.scrollTo({ top: y, left: 0, behavior: 'instant' }); };
+    go();
+    if (window.requestAnimationFrame) requestAnimationFrame(go);
   }
 
   function topLayer() { return stack[stack.length - 1] || null; }
@@ -360,15 +373,21 @@
   }
 
   // Conserve le focus lors d'un re-rendu (clé data-focus-key)
+  // Re-rendu d'une vue : le champ actif garde le focus et la page ne bouge pas
   function keepFocus(container, render) {
     var a = document.activeElement;
     var key = a && container.contains(a) ? a.getAttribute('data-focus-key') : null;
     var sel = a && key && (a.selectionStart != null) ? [a.selectionStart, a.selectionEnd] : null;
+    var y = window.scrollY;
+    // La hauteur ne s'effondre pas pendant le remplacement du contenu (sinon le navigateur remonte)
+    container.style.minHeight = container.offsetHeight + 'px';
     render();
     if (key) {
       var el = container.querySelector('[data-focus-key="' + key + '"]');
-      if (el) { el.focus(); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* rien */ } }
+      if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* rien */ } }
     }
+    if (!stack.length) keepScroll(y);
+    setTimeout(function () { container.style.minHeight = ''; }, 400);
   }
 
   function reducedMotion() {

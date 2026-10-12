@@ -64,11 +64,12 @@
     if (view !== 'settings' && view !== 'profile') { var sp = SPACES[view] || 'prod'; document.documentElement.setAttribute('data-space', sp); openSection(sp); }
     closeSpaceMenu();
     if (changed && !opts.initial) {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       var h = U.$('#view-' + view + ' h1');
       if (h) h.focus({ preventScroll: true });
       L.charts.hideTip();
     }
+    if (viewEl && (changed || opts.initial)) L.fun.reveal(viewEl);
   }
 
   /* --- Menus déroulants de la barre latérale et choix d'espace (mobile) ------- */
@@ -333,6 +334,7 @@
 
     initSections();
     applyPersona();
+    L.fun.watchScroll();
     L.fun.sidebarCat();
     S.subscribe(function (type, d) {
       var done = (type === 'task:move' && d.status === 'done' && d.prevStatus !== 'done') ||

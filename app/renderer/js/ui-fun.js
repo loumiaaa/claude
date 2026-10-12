@@ -139,5 +139,58 @@
     });
   }
 
-  L.fun = { miniScene: miniScene, celebrate: celebrate, countUp: countUp, meow: meow, sidebarCat: sidebarCat };
+  /* --- Défilement animé ----------------------------------------------------------------
+     Les blocs encore sous l'écran apparaissent en glissant quand on descend vers eux.
+     Seulement à l'arrivée sur un onglet : un re-rendu (valeur saisie) ne rejoue rien. */
+  var io = null, ioBatch = 0, ioTimer = null;
+  var REVEAL = '.card, .stat, .hcard, .goal-card, .profile-card, .pet-card, .mini-scene, .hero, .profile-hero, .profile-section, .page-head + *';
+  function reveal(view) {
+    if (!view || reduced() || !('IntersectionObserver' in window)) return;
+    if (!io) {
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          var n = en.target;
+          io.unobserve(n);
+          n.style.transitionDelay = Math.min(ioBatch++, 5) * 70 + 'ms';
+          n.classList.add('is-revealed');
+          setTimeout(function () { n.classList.remove('reveal', 'is-revealed'); n.style.transitionDelay = ''; }, 1100);
+        });
+        clearTimeout(ioTimer); ioTimer = setTimeout(function () { ioBatch = 0; }, 120);
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    }
+    var fold = window.innerHeight * 0.9;
+    var list = [].slice.call(view.querySelectorAll(REVEAL)).filter(function (n) {
+      // un seul niveau : pas de bloc animé dans un bloc animé
+      var p = n.parentElement;
+      while (p && p !== view) { if (p.matches && p.matches(REVEAL)) return false; p = p.parentElement; }
+      return true;
+    });
+    list.forEach(function (n) {
+      if (n.getBoundingClientRect().top < fold) return;
+      n.classList.add('reveal');
+      io.observe(n);
+    });
+  }
+
+  // Barre du haut : plus présente dès qu'on a quitté le haut de la page
+  function watchScroll() {
+    var root = document.documentElement, ticking = false;
+    function update() {
+      ticking = false;
+      root.classList.toggle('is-scrolled', window.scrollY > 8);
+      // Tout en bas de la page : les derniers blocs apparaissent, même s'ils sont petits
+      if (window.scrollY + window.innerHeight >= root.scrollHeight - 4) {
+        document.querySelectorAll('.view:not([hidden]) .reveal:not(.is-revealed)').forEach(function (n) {
+          if (io) io.unobserve(n);
+          n.classList.add('is-revealed');
+          setTimeout(function () { n.classList.remove('reveal', 'is-revealed'); }, 1100);
+        });
+      }
+    }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    update();
+  }
+
+  L.fun = { miniScene: miniScene, celebrate: celebrate, countUp: countUp, meow: meow, sidebarCat: sidebarCat, reveal: reveal, watchScroll: watchScroll };
 })(window.Lamia = window.Lamia || {});

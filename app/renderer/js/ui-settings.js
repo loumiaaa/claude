@@ -432,7 +432,7 @@
       if (type === 'category' || type === 'settings' || type === 'reset') {
         var a = document.activeElement;
         if (a && a.hasAttribute && a.hasAttribute('data-cat-name')) return;   // pas de re-rendu pendant la saisie
-        render();
+        U.keepFocus(el, render);
       }
     });
   }

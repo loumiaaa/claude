@@ -423,7 +423,7 @@
       if (L.app.view() !== 'recap') { el.dataset.stale = '1'; return; }
       if (type === 'ui' && !('recapPeriod' in d || 'recapAnchor' in d)) return;
       if (type === 'timer' && d.action !== 'stop') return;
-      render();
+      U.keepFocus(el, render);
     });
     var w = window.innerWidth;
     window.addEventListener('resize', U.debounce(function () {
