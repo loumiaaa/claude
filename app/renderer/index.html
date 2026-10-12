@@ -27,16 +27,33 @@
       <button type="button" class="btn btn--primary btn--block" data-action="new-task"><span data-icon="plus"></span>Nouvelle tâche</button>
 
       <nav class="sidebar__nav" aria-label="Navigation principale">
-        <p class="nav-group" aria-hidden="true">Productivité</p>
-        <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
-        <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
-        <a class="nav-item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
-        <a class="nav-item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
-        <p class="nav-group" aria-hidden="true">Santé</p>
-        <a class="nav-item" href="#sante" data-nav="health"><span data-icon="heart"></span><span class="nav-item__label">Tableau de bord</span></a>
-        <a class="nav-item" href="#corps" data-nav="body"><span data-icon="trend"></span><span class="nav-item__label">Poids &amp; mensurations</span></a>
-        <a class="nav-item" href="#alimentation" data-nav="food"><span data-icon="coffee"></span><span class="nav-item__label">Alimentation</span></a>
-        <a class="nav-item" href="#sport" data-nav="sport"><span data-icon="timer"></span><span class="nav-item__label">Sport</span></a>
+        <div class="nav-section" data-section="prod">
+          <button type="button" class="nav-group" aria-expanded="true" aria-controls="ns-prod" data-nav-toggle="prod"><span data-icon="tasks"></span><span class="nav-group__label">Productivité</span><span class="nav-group__chev"><span data-icon="chevron-down"></span></span></button>
+          <div class="nav-section__items" id="ns-prod">
+            <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
+            <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
+            <a class="nav-item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
+            <a class="nav-item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
+          </div>
+        </div>
+        <div class="nav-section" data-section="health">
+          <button type="button" class="nav-group" aria-expanded="true" aria-controls="ns-health" data-nav-toggle="health"><span data-icon="heart"></span><span class="nav-group__label">Santé</span><span class="nav-group__chev"><span data-icon="chevron-down"></span></span></button>
+          <div class="nav-section__items" id="ns-health">
+            <a class="nav-item" href="#sante" data-nav="health"><span data-icon="dashboard"></span><span class="nav-item__label">Tableau de bord</span></a>
+            <a class="nav-item" href="#corps" data-nav="body"><span data-icon="trend"></span><span class="nav-item__label">Poids &amp; mensurations</span></a>
+            <a class="nav-item" href="#alimentation" data-nav="food"><span data-icon="coffee"></span><span class="nav-item__label">Alimentation</span></a>
+            <a class="nav-item" href="#sport" data-nav="sport"><span data-icon="timer"></span><span class="nav-item__label">Sport</span></a>
+          </div>
+        </div>
+        <div class="nav-section" data-section="budget">
+          <button type="button" class="nav-group" aria-expanded="true" aria-controls="ns-budget" data-nav-toggle="budget"><span data-icon="wallet"></span><span class="nav-group__label">Budget</span><span class="nav-group__chev"><span data-icon="chevron-down"></span></span></button>
+          <div class="nav-section__items" id="ns-budget">
+            <a class="nav-item" href="#budget" data-nav="budget"><span data-icon="dashboard"></span><span class="nav-item__label">Tableau de bord</span></a>
+            <a class="nav-item" href="#depenses" data-nav="money"><span data-icon="list"></span><span class="nav-item__label">Entrées &amp; dépenses</span></a>
+            <a class="nav-item" href="#factures" data-nav="bills"><span data-icon="receipt"></span><span class="nav-item__label">Factures &amp; 4x</span></a>
+            <a class="nav-item" href="#epargne" data-nav="savings"><span data-icon="piggy"></span><span class="nav-item__label">Économies</span></a>
+          </div>
+        </div>
         <span class="sidebar__sep" role="presentation"></span>
         <a class="nav-item" href="#reglages" data-nav="settings"><span data-icon="settings"></span><span class="nav-item__label">Réglages</span></a>
       </nav>
@@ -72,6 +89,10 @@
       <section class="view" id="view-body" data-view="body" aria-labelledby="h-body" hidden></section>
       <section class="view" id="view-food" data-view="food" aria-labelledby="h-food" hidden></section>
       <section class="view" id="view-sport" data-view="sport" aria-labelledby="h-sport" hidden></section>
+      <section class="view" id="view-budget" data-view="budget" aria-labelledby="h-budget" hidden></section>
+      <section class="view" id="view-money" data-view="money" aria-labelledby="h-money" hidden></section>
+      <section class="view" id="view-bills" data-view="bills" aria-labelledby="h-bills" hidden></section>
+      <section class="view" id="view-savings" data-view="savings" aria-labelledby="h-savings" hidden></section>
       <section class="view" id="view-settings" data-view="settings" aria-labelledby="h-settings" hidden></section>
     </main>
   </div>
@@ -84,13 +105,21 @@
       <a class="tabbar__item" href="#taches" data-nav="tasks" data-space="prod"><span data-icon="tasks"></span><span>Tâches</span></a>
       <a class="tabbar__item" href="#planning" data-nav="planning" data-space="prod"><span data-icon="planning"></span><span>Planning</span></a>
       <a class="tabbar__item" href="#recap" data-nav="recap" data-space="prod"><span data-icon="recap"></span><span>Récap</span></a>
-      <a class="tabbar__item tabbar__item--switch" href="#sante" data-space="prod"><span data-icon="heart"></span><span>Santé</span></a>
       <a class="tabbar__item" href="#sante" data-nav="health" data-space="health"><span data-icon="heart"></span><span>Santé</span></a>
       <a class="tabbar__item" href="#corps" data-nav="body" data-space="health"><span data-icon="trend"></span><span>Corps</span></a>
       <a class="tabbar__item" href="#alimentation" data-nav="food" data-space="health"><span data-icon="coffee"></span><span>Repas</span></a>
       <a class="tabbar__item" href="#sport" data-nav="sport" data-space="health"><span data-icon="timer"></span><span>Sport</span></a>
-      <a class="tabbar__item tabbar__item--switch" href="#dashboard" data-space="health"><span data-icon="dashboard"></span><span>Productivité</span></a>
+      <a class="tabbar__item" href="#budget" data-nav="budget" data-space="budget"><span data-icon="wallet"></span><span>Budget</span></a>
+      <a class="tabbar__item" href="#depenses" data-nav="money" data-space="budget"><span data-icon="list"></span><span>Mouvements</span></a>
+      <a class="tabbar__item" href="#factures" data-nav="bills" data-space="budget"><span data-icon="receipt"></span><span>Factures</span></a>
+      <a class="tabbar__item" href="#epargne" data-nav="savings" data-space="budget"><span data-icon="piggy"></span><span>Épargne</span></a>
+      <button type="button" class="tabbar__item tabbar__item--switch" data-space-menu aria-expanded="false" aria-controls="space-menu"><span data-icon="menu"></span><span>Espaces</span></button>
     </nav>
+    <div class="glass glass--strong space-menu" id="space-menu" hidden>
+      <a class="space-menu__item" href="#dashboard" data-space-go="prod"><span data-icon="tasks"></span>Productivité</a>
+      <a class="space-menu__item" href="#sante" data-space-go="health"><span data-icon="heart"></span>Santé</a>
+      <a class="space-menu__item" href="#budget" data-space-go="budget"><span data-icon="wallet"></span>Budget</a>
+    </div>
   </div>
 
   <!-- Couches : enfants directs de <body> -->
@@ -109,6 +138,7 @@
   <script src="shared/stats.js"></script>
   <script src="shared/reminders.js"></script>
   <script src="shared/csv.js"></script>
+  <script src="shared/budget.js"></script>
   <script src="js/bridge.js"></script>
   <script src="js/store.js"></script>
   <script src="js/ui-common.js"></script>
@@ -123,6 +153,7 @@
   <script src="js/ui-recap.js"></script>
   <script src="js/ui-settings.js"></script>
   <script src="js/ui-health.js"></script>
+  <script src="js/ui-budget.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

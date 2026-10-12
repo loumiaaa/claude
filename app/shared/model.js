@@ -202,6 +202,7 @@
     d.moods = d.moods.filter(function (m) { return m && typeof m === 'object'; });
     if (d.activeTimer === undefined) d.activeTimer = null;
     if (d.lastTimerTaskId === undefined) d.lastTimerTaskId = null;
+    d.budget = normalizeBudget(d.budget);
     d.health = normalizeHealth(d.health);
     d.flags = Object.assign({}, def.flags, d.flags || {});
     d.reminderLog = d.reminderLog && typeof d.reminderLog === 'object' && !Array.isArray(d.reminderLog) ? d.reminderLog : {};
@@ -223,6 +224,24 @@
       sports: list(h.sports).filter(function (x) { return typeof x.minutes === 'number' && x.minutes >= 0; }),
       // Plan alimentaire (indications de la diététicienne) : sans date, un ou plusieurs moments
       plan: (Array.isArray(h.plan) ? h.plan : []).filter(function (x) { return x && typeof x.text === 'string' && Array.isArray(x.slots); })
+    };
+  }
+
+  /* --- Budget (facultatif) : flux, factures, paiements en plusieurs fois, épargne --- */
+  function normalizeBudget(b) {
+    b = b && typeof b === 'object' && !Array.isArray(b) ? b : {};
+    function arr(a) { return Array.isArray(a) ? a.filter(function (x) { return x && typeof x === 'object'; }) : []; }
+    function amount(x) { return typeof x.amount === 'number' && isFinite(x.amount) && x.amount >= 0; }
+    return {
+      // Entrées et dépenses datées : { id, date, type: 'income'|'expense', label, amount, category }
+      entries: arr(b.entries).filter(function (x) { return DATE_RE.test(x.date) && (x.type === 'income' || x.type === 'expense') && amount(x); }),
+      // Factures récurrentes : { id, label, amount, day (1-31), every: 'month'|'year', month (1-12, si annuel), since: 'YYYY-MM-DD', until?, category }
+      bills: arr(b.bills).filter(function (x) { return typeof x.label === 'string' && amount(x) && x.day >= 1 && x.day <= 31 && DATE_RE.test(x.since); }),
+      // Paiements en plusieurs fois : { id, label, total, count, first: 'YYYY-MM-DD', category }
+      installments: arr(b.installments).filter(function (x) { return typeof x.label === 'string' && typeof x.total === 'number' && x.total > 0 && x.count >= 2 && DATE_RE.test(x.first); }),
+      // Cagnottes d'épargne : { id, name, target? } et versements : { id, goalId, date, amount }
+      goals: arr(b.goals).filter(function (x) { return typeof x.name === 'string'; }),
+      deposits: arr(b.deposits).filter(function (x) { return DATE_RE.test(x.date) && typeof x.goalId === 'string' && typeof x.amount === 'number' && isFinite(x.amount); })
     };
   }
 
@@ -259,6 +278,7 @@
       if (!m || !DATE_RE.test(m.date) || !(m.level >= 1 && m.level <= 5)) err('moods[' + i + '] invalide.');
     });
     if (!doc.settings || typeof doc.settings !== 'object') err('settings manquant.');
+    if (doc.budget != null && (typeof doc.budget !== 'object' || Array.isArray(doc.budget))) err('budget : objet attendu.');
     var h = doc.health;
     if (h != null) {
       if (typeof h !== 'object' || Array.isArray(h)) err('health : objet attendu.');
@@ -285,6 +305,6 @@
     DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
     defaultState: defaultState, defaultSettings: defaultSettings, defaultUI: defaultUI,
     versionOf: versionOf, migrate: migrate, normalize: normalize, validate: validate, summarize: summarize,
-    normalizeHealth: normalizeHealth, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
+    normalizeHealth: normalizeHealth, normalizeBudget: normalizeBudget, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
   };
 });

@@ -1543,19 +1543,6 @@ h1[tabindex="-1"]:focus { outline: none; }
 /* ==========================================================================
    Espace « Santé » (poids, mensurations, alimentation, sport)
    ========================================================================== */
-.nav-group {
-  margin: var(--space-3) var(--space-3) var(--space-1);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
-  color: var(--color-text-subtle);
-}
-.nav-group:first-child { margin-top: 0; }
-
-/* Barre d'onglets mobile : les onglets de l'espace en cours, plus un raccourci vers l'autre espace */
-html:not([data-space="health"]) .tabbar__item[data-space="health"],
-html[data-space="health"] .tabbar__item[data-space="prod"] { display: none; }
 .tabbar__item--switch { color: var(--accent); }
 .topbar__settings { display: inline-flex; }
 
@@ -1680,3 +1667,89 @@ html[data-space="health"] .tabbar__item[data-space="prod"] { display: none; }
 #view-food > .card { margin-bottom: var(--space-6); }
 .meal-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 @media (max-width: 720px) { .health-list--plan li strong { grid-row: 1; } .health-list--plan li .health-list__actions { grid-row: 1; } }
+
+/* ==========================================================================
+   Navigation en menus déroulants (Productivité, Santé, Budget)
+   ========================================================================== */
+.nav-section { display: grid; gap: var(--space-1); }
+.nav-group {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  height: 36px; padding: 0 12px 0 16px; margin-top: var(--space-2);
+  border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer;
+  font-family: inherit; font-size: var(--fs-xs); font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide); text-transform: uppercase; color: var(--color-text-subtle);
+}
+.nav-section:first-child .nav-group { margin-top: 0; }
+.nav-group:hover { color: var(--color-text); background: var(--color-hover, var(--accent-soft)); }
+.nav-group:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.nav-group .icon { width: 16px; height: 16px; }
+.nav-group__label { flex: 1; text-align: left; }
+.nav-group__chev .icon { transition: transform var(--dur-fast) var(--ease-out); }
+.nav-group[aria-expanded="false"] .nav-group__chev .icon { transform: rotate(-90deg); }
+.nav-section__items { display: grid; gap: var(--space-1); }
+.nav-section__items[hidden] { display: none; }
+
+/* Barre d'onglets mobile : les onglets de l'espace en cours + « Espaces » */
+html:not([data-space="health"]) .tabbar__item[data-space="health"],
+html:not([data-space="budget"]) .tabbar__item[data-space="budget"],
+html[data-space="health"] .tabbar__item[data-space="prod"],
+html[data-space="budget"] .tabbar__item[data-space="prod"] { display: none; }
+button.tabbar__item { border: 0; background: transparent; font-family: inherit; cursor: pointer; }
+.dock { position: fixed; }
+.space-menu {
+  position: absolute; right: 0; bottom: calc(100% + var(--space-2));
+  display: grid; gap: 2px; min-width: 210px; padding: var(--space-2); border-radius: var(--radius-lg);
+}
+.space-menu[hidden] { display: none; }
+.space-menu__item {
+  display: flex; align-items: center; gap: var(--space-3); min-height: 48px; padding: 0 var(--space-4);
+  border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-weight: var(--fw-medium);
+}
+.space-menu__item .icon { width: 20px; height: 20px; color: var(--accent); }
+.space-menu__item:hover, .space-menu__item:focus-visible { background: var(--accent-soft); outline: none; }
+
+/* ==========================================================================
+   Espace « Budget »
+   ========================================================================== */
+#view-budget .period-bar, #view-money .period-bar, #view-savings .period-bar { margin-bottom: var(--space-5); flex-wrap: wrap; }
+#view-money > .card, #view-bills > .card, #view-savings > .card { margin-bottom: var(--space-6); min-width: 0; max-width: 100%; }
+.kpi-row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: var(--space-6); }
+.budget-form .slot-checks { grid-column: 1 / -1; }
+.budget-amount { font-family: var(--font-display); font-weight: var(--fw-semibold); white-space: nowrap; text-align: right; color: var(--color-text); }
+.is-pos { color: var(--success); }
+.is-neg { color: var(--danger); }
+.stat--pos .stat__value { color: var(--success); }
+.stat--neg .stat__value { color: var(--danger); }
+.health-list--money li { grid-template-columns: minmax(130px, auto) minmax(0, 1fr) auto auto auto; }
+.health-list--due li { grid-template-columns: minmax(130px, auto) minmax(0, 1fr) auto auto; }
+.health-list--due li.is-past { opacity: .65; }
+.budget-table td.is-pos, .budget-table td.is-neg { font-weight: var(--fw-semibold); }
+.budget-table tr.is-current th { color: var(--accent); }
+.goal-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; gap: var(--space-4); }
+.goal-list__head { display: flex; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
+.goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-6); }
+.goal-card { min-width: 0; }
+.goal-card .card__header { display: flex; justify-content: space-between; gap: var(--space-3); align-items: flex-start; }
+.goal-card .card__title { display: inline-flex; align-items: center; gap: var(--space-2); }
+.goal-card .card__title .icon { width: 18px; height: 18px; color: var(--accent); }
+.goal-card .progress { margin: var(--space-3) 0; }
+.deposit-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-3); align-items: end; margin-top: var(--space-4); }
+.deposit-form .btn { justify-self: start; }
+.inst-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.inst-card { padding: var(--space-4); border-radius: var(--radius-md); }
+.inst-card__head { display: flex; align-items: center; gap: var(--space-3); }
+.inst-card__head strong { flex: 1; }
+.inst-card .progress { margin: var(--space-3) 0 var(--space-2); }
+.inst-card__meta { font-size: var(--fs-sm); color: var(--color-text-muted); }
+.inst-steps { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.inst-steps li { display: grid; gap: 2px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-muted); font-size: var(--fs-xs); color: var(--color-text-muted); }
+.inst-steps li.is-paid { background: var(--success-soft); color: var(--success); }
+@media (max-width: 1100px) { .kpi-row--3 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 720px) {
+  .health-list--money li, .health-list--due li { grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--space-3); }
+  .health-list--money li .budget-amount, .health-list--due li .budget-amount { grid-column: 2; grid-row: 1; }
+  .health-list--money li .health-list__actions { grid-column: 2; grid-row: 2 / span 2; }
+  .health-list--due li .text-subtle, .health-list--money li .text-subtle { grid-column: 1; grid-row: 3; }
+  .deposit-form { grid-template-columns: minmax(0, 1fr); }
+}
+.nav-group__chev { display: inline-flex; }

@@ -356,6 +356,31 @@
       state.moods.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
       emit('mood', { date: date, level: level }, { now: true });
     },
+    /* Budget */
+    budget: function () {
+      if (!state.budget) state.budget = window.LamiaShared.model.normalizeBudget(null);
+      return state.budget;
+    },
+    addBudget: function (kind, item) {
+      item.id = uid('bud');
+      store.budget()[kind].push(item);
+      emit('budget', { kind: kind }, { now: true });
+      return item;
+    },
+    updateBudget: function (kind, id, patch) {
+      var it = store.budget()[kind].filter(function (x) { return x.id === id; })[0];
+      if (!it) return null;
+      Object.keys(patch).forEach(function (k) { if (patch[k] === undefined || patch[k] === null) delete it[k]; else it[k] = patch[k]; });
+      emit('budget', { kind: kind }, { now: true });
+      return it;
+    },
+    removeBudget: function (kind, id) {
+      var b = store.budget();
+      b[kind] = b[kind].filter(function (x) { return x.id !== id; });
+      if (kind === 'goals') b.deposits = b.deposits.filter(function (x) { return x.goalId !== id; });
+      emit('budget', { kind: kind });
+    },
+
     /* Santé : poids, mensurations, repas, sport */
     health: function () {
       if (!state.health) state.health = window.LamiaShared.model.normalizeHealth(null);

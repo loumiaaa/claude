@@ -10,8 +10,8 @@
   'use strict';
 
   var D = L.dates, S = L.store, U = L.ui, Q = L.q, ST = L.shared.stats, R = L.shared.reminders;
-  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport' };
-  var HEALTH_VIEWS = ['health', 'body', 'food', 'sport'];
+  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport', budget: 'budget', depenses: 'money', factures: 'bills', epargne: 'savings' };
+  var SPACES = { health: 'health', body: 'health', food: 'health', sport: 'health', budget: 'budget', money: 'budget', bills: 'budget', savings: 'budget' };
   var current = null;
   var api = window.lamia;
 
@@ -34,13 +34,40 @@
     var title = U.$('[data-topbar-title]');
     if (title) title.textContent = V ? V.title : '';
     document.documentElement.setAttribute('data-view', view);
-    if (view !== 'settings') document.documentElement.setAttribute('data-space', HEALTH_VIEWS.indexOf(view) >= 0 ? 'health' : 'prod');
+    if (view !== 'settings') { var sp = SPACES[view] || 'prod'; document.documentElement.setAttribute('data-space', sp); openSection(sp); }
+    closeSpaceMenu();
     if (changed && !opts.initial) {
       window.scrollTo(0, 0);
       var h = U.$('#view-' + view + ' h1');
       if (h) h.focus({ preventScroll: true });
       L.charts.hideTip();
     }
+  }
+
+  /* --- Menus déroulants de la barre latérale et choix d'espace (mobile) ------- */
+  // Accordéon : seul le menu de l'espace en cours est ouvert ; les autres s'ouvrent d'un clic
+  var SECTIONS = ['prod', 'health', 'budget'];
+  function setSection(key, open) {
+    var b = U.$('[data-nav-toggle="' + key + '"]'), box = document.getElementById('ns-' + key);
+    if (!b || !box) return;
+    b.setAttribute('aria-expanded', String(open));
+    box.hidden = !open;
+  }
+  function openSection(key) { SECTIONS.forEach(function (k) { setSection(k, k === key); }); }
+  function initSections() {
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-nav-toggle]');
+      if (b) { setSection(b.getAttribute('data-nav-toggle'), b.getAttribute('aria-expanded') !== 'true'); return; }
+      var m = e.target.closest('[data-space-menu]'), menu = document.getElementById('space-menu');
+      if (m && menu) { var show = menu.hidden; menu.hidden = !show; m.setAttribute('aria-expanded', String(show)); if (show) { var first = menu.querySelector('a'); if (first) first.focus(); } return; }
+      if (menu && !menu.hidden && !e.target.closest('#space-menu')) closeSpaceMenu();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSpaceMenu(); });
+  }
+  function closeSpaceMenu() {
+    var menu = document.getElementById('space-menu'), m = U.$('[data-space-menu]');
+    if (menu) menu.hidden = true;
+    if (m) m.setAttribute('aria-expanded', 'false');
   }
 
   /* --- Thème --------------------------------------------------------------- */
@@ -277,6 +304,7 @@
 
     Object.keys(L.views).forEach(function (k) { L.views[k].mount(document.getElementById('view-' + k)); });
 
+    initSections();
     window.addEventListener('hashchange', function () { go(viewFromHash()); });
     go(viewFromHash(), { initial: true });
     L.chrono.render();
