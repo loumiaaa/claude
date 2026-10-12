@@ -103,6 +103,16 @@
     return 'Le poids bouge, c’est normal. La régularité compte plus que les chiffres d’un jour.';
   }
 
+  function healthVoice() {
+    var h = H(), w = h.weights, wk = weekMinutes(D.startOfWeek(D.today())), opts = [];
+    if (w.length > 1 && last(w).kg < w[0].kg - 0.05) opts.push({ lamia: 'Déjà ' + signed(last(w).kg - w[0].kg, 'kg') + ' depuis le début. Je suis fière de nous !', lamiaAnim: 'cheer' });
+    if (wk.minutes > 0) opts.push({ lamia: minutes(wk.minutes) + ' de sport cette semaine : ça bouge, et ça fait du bien !', lamiaAnim: 'cheer' });
+    if (h.goalKg && w.length && last(w).kg > h.goalKg) opts.push({ lamia: 'Encore ' + kg(last(w).kg - h.goalKg) + ' vers l’objectif. Un pas après l’autre.', lamiaAnim: 'wave' });
+    if (h.plan.length) opts.push({ lamia: 'Le plan de la diététicienne est là, juste en dessous. On s’y tient avec douceur.', lamiaAnim: 'typing' });
+    opts.push({ lamia: 'On prend soin de nous aujourd’hui ? Même dix minutes de marche, ça compte.', lamiaAnim: 'wave' });
+    return opts[Math.floor(Math.random() * Math.min(opts.length, 2))];
+  }
+
   /* --- Fabrique de vue ------------------------------------------------------------ */
   function makeView(name, title, render, bind) {
     var el = null;
@@ -158,6 +168,7 @@
         '<a class="btn btn--secondary btn--sm" href="#corps">' + icon('plus') + 'Pesée</a>' +
         '<a class="btn btn--secondary btn--sm" href="#alimentation">' + icon('coffee') + 'Plan alimentaire</a>' +
         '<a class="btn btn--primary btn--sm" href="#sport">' + icon('plus') + 'Séance</a>') +
+      '<div class="mini-slot" data-mini-slot></div>' +
       '<div class="kpi-row kpi-row--4">' + tiles + '</div>' +
       '<div class="health-grid">' +
         card('hd-weight', 'Courbe de poids', h.weights.length ? U.plural(h.weights.length, 'pesée') : 'Ta progression, pesée après pesée', '<div class="chart-host" data-chart="weight"></div>', 'health-grid__wide') +
@@ -165,6 +176,7 @@
         card('hd-meals', 'Plan alimentaire', 'Les indications de ta diététicienne', meals + '<a class="btn btn--ghost btn--sm" href="#alimentation">Mon plan alimentaire' + icon('chevron-right') + '</a>') +
         card('hd-sport', 'Sport', '8 dernières semaines', '<div class="chart-host" data-chart="sport"></div>') +
       '</div>';
+    L.fun.miniScene(el.querySelector('[data-mini-slot]'), 'health', healthVoice());
     L.charts.valueLine(el.querySelector('[data-chart="weight"]'), { points: weightPoints(), unit: 'kg', goal: h.goalKg, uid: 'hdw', hue: 'hue--violet', ariaLabel: 'Courbe de poids' });
     L.charts.bars(el.querySelector('[data-chart="sport"]'), { data: weeksData(8), hue: 'hue--blue', height: 180, ariaLabel: 'Minutes de sport par semaine' });
   }
@@ -223,8 +235,11 @@
       if (kind === 'weight') {
         var v = num(fd.get('kg'));
         if (!(v >= 20 && v <= 400)) { warn('Poids à vérifier', 'Indique un poids en kilos, par exemple 64,5.'); f.querySelector('[name=kg]').focus(); return; }
-        S.addHealth('weights', { date: fd.get('date') || D.today(), kg: Math.round(v * 10) / 10, note: String(fd.get('note') || '').trim() });
+        var before = H().weights.filter(function (x) { return x.date <= (fd.get('date') || D.today()); });
+        var prevKg = before.length ? last(before).kg : null, newKg = Math.round(v * 10) / 10;
+        S.addHealth('weights', { date: fd.get('date') || D.today(), kg: newKg, note: String(fd.get('note') || '').trim() });
         U.announce('Pesée ajoutée');
+        if (prevKg != null && newKg < prevKg) L.fun.celebrate({ title: signed(newKg - prevKg, 'kg') + ', bravo !', text: H().goalKg && newKg <= H().goalKg ? 'Objectif atteint !' : 'Chaque petit pas compte.' });
       } else if (kind === 'goal') {
         var g = num(fd.get('goal'));
         if (String(fd.get('goal') || '').trim() && !(g >= 20 && g <= 400)) { warn('Objectif à vérifier', 'Indique un poids en kilos.'); return; }
@@ -237,6 +252,7 @@
         row = row.row;
         S.addHealth('measures', row);
         U.announce('Mensurations ajoutées');
+        L.fun.celebrate({ title: 'Des centimètres en moins !', text: 'Ton corps te dit merci.' });
       }
     });
     bindDelete(el);
@@ -372,7 +388,7 @@
     var form = '<form class="health-form" data-h-form="sport" novalidate>' +
       field('s-date', 'Date', dateInput('s-date')) +
       field('s-act', 'Activité', '<input class="input" id="s-act" name="activity" list="s-acts" maxlength="60" placeholder="ex. Marche" required><datalist id="s-acts">' + opts + '</datalist>') +
-      field('s-min', 'Durée', '<input class="input" id="s-min" name="minutes" inputmode="numeric" placeholder="45 ou 1h30" required>', 'En minutes, ou 1h30') +
+      field('s-min', 'Durée', '<input class="input" id="s-min" name="minutes" inputmode="numeric" placeholder="45 ou 1h30" required>') +
       field('s-note', 'Note <span class="text-subtle">facultatif</span>', '<input class="input" id="s-note" name="note" maxlength="120" placeholder="Tranquille, intense…">') +
       '<button type="submit" class="btn btn--primary" data-focus-key="s-submit">' + icon('plus') + 'Ajouter</button></form>';
     var hist = h.sports.length ? '<ul class="health-list" role="list">' + h.sports.slice().reverse().slice(0, 40).map(function (x) {
@@ -398,7 +414,7 @@
       if (!act) { warn('Activité manquante', 'Par exemple : Marche, Yoga, Natation…'); f.querySelector('[name=activity]').focus(); return; }
       if (!m) { warn('Durée à vérifier', 'En minutes (45) ou en heures (1h30).'); f.querySelector('[name=minutes]').focus(); return; }
       S.addHealth('sports', { date: fd.get('date') || D.today(), activity: act, minutes: m, note: String(fd.get('note') || '').trim() });
-      U.toast({ icon: 'sparkle', title: act + ' : ' + minutes(m), text: 'Bien joué !', duration: 3000 });
+      L.fun.celebrate({ title: act + ' : ' + minutes(m), text: 'Bien joué, on bouge !' });
     });
     bindDelete(el);
   }

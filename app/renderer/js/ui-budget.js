@@ -246,6 +246,16 @@
     });
   }
 
+  function budgetVoice(s) {
+    var gs = B().goals, opts = [];
+    if (s.rest < 0) opts.push({ lamia: 'Le mois est un peu serré. On regarde ensemble les dépenses par catégorie ?', lamiaAnim: 'typing' });
+    if (s.savings > 0) opts.push({ lamia: eur(s.savings) + ' mis de côté sur la période. Ton futur toi te remercie !', lamiaAnim: 'cheer' });
+    if (s.rest > 0) opts.push({ lamia: 'Il reste ' + eur(s.rest) + ' sur la période. On garde le cap, tranquillement.', lamiaAnim: 'wave' });
+    gs.forEach(function (g) { if (g.target) { var pct = Math.round((BG.goalSaved(B(), g.id) / g.target) * 100); if (pct > 0 && pct < 100) opts.push({ lamia: 'Cagnotte « ' + g.name + ' » : ' + pct + ' % déjà ! On y arrive.', lamiaAnim: 'cheer' }); } });
+    opts.push({ lamia: 'Un budget clair, c’est l’esprit léger. Note une dépense, je fais les calculs.', lamiaAnim: 'wave' });
+    return opts[Math.floor(Math.random() * Math.min(opts.length, 2))];
+  }
+
   /* === 1. Tableau de bord ============================================================ */
   function trend() {
     var rows = [], a = anchor || D.today();
@@ -274,6 +284,7 @@
     el.innerHTML =
       head('Gérer sereinement', 'Budget', 'h-budget', 'Tes entrées, tes dépenses et ce que tu mets de côté, ' + (zoom === 'week' ? 'semaine par semaine.' : 'mois par mois.'),
         '<a class="btn btn--secondary btn--sm" href="#depenses">' + icon('plus') + 'Dépense ou entrée</a><a class="btn btn--primary btn--sm" href="#epargne">' + icon('piggy') + 'Épargner</a>') +
+      '<div class="mini-slot" data-mini-slot></div>' +
       periodBar() +
       '<div class="kpi-row kpi-row--4">' +
         tile('arrow-down', 'Entrées', eur(s.income), '') +
@@ -290,6 +301,7 @@
           '<p class="hint">Mois en cours : ' + esc(BG.budgetMonth(D.today(), B().startDay).label) + '.</p></div></form>') +
         card('bd-goals', 'Cagnottes', 'Où en est ton épargne', goalsSummary() + '<a class="btn btn--ghost btn--sm" href="#epargne">Mes économies' + icon('chevron-right') + '</a>') +
       '</div>';
+    L.fun.miniScene(el.querySelector('[data-mini-slot]'), 'budget', budgetVoice(s));
     var host = el.querySelector('[data-chart="cats"]');
     if (host) L.charts.hbars(host, { rows: s.byCategory.map(function (c) { return { label: c.category, value: c.amount, display: eur(c.amount), hue: 'hue--violet' }; }), ariaLabel: 'Dépenses par catégorie', unit: 'dépensés' });
   }
@@ -395,6 +407,14 @@
   });
   L.views.savings = makeView('savings', 'Économies', renderSavings, function (el) {
     bindSavings(el);
-    bindAdd(el, function (k, v) { U.toast({ icon: 'piggy', title: k === 'goals' ? 'Cagnotte « ' + v.name + ' » créée' : (v.amount < 0 ? 'Retrait de ' + eur(-v.amount) : eur(v.amount) + ' mis de côté'), duration: 3000 }); });
+    bindAdd(el, function (k, v) {
+      if (k === 'deposits' && v.amount > 0) {
+        var g = find('goals', v.goalId), saved = BG.goalSaved(B(), v.goalId);
+        if (g && g.target && saved >= g.target && saved - v.amount < g.target) L.fun.celebrate({ title: 'Objectif « ' + g.name + ' » atteint !', text: eur(saved) + ' de côté. Incroyable !', duration: 4500 });
+        else L.fun.celebrate({ title: eur(v.amount) + ' mis de côté', text: g ? 'Cagnotte « ' + g.name + ' »' : '' });
+        return;
+      }
+      U.toast({ icon: 'piggy', title: k === 'goals' ? 'Cagnotte « ' + v.name + ' » créée' : 'Retrait de ' + eur(-v.amount), duration: 3000 });
+    });
   });
 })(window.Lamia = window.Lamia || {});
