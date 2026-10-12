@@ -356,6 +356,24 @@
       state.moods.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
       emit('mood', { date: date, level: level }, { now: true });
     },
+    /* Profil */
+    profile: function () {
+      if (!state.profile) state.profile = window.LamiaShared.model.normalizeProfile(null);
+      return state.profile;
+    },
+    setProfile: function (patch) { Object.assign(store.profile(), patch); emit('profile', { patch: true }, { now: true }); },
+    addProfileItem: function (kind, item) { item.id = uid(kind.slice(0, 3)); store.profile()[kind].push(item); emit('profile', { kind: kind }, { now: true }); return item; },
+    updateProfileItem: function (kind, id, patch) {
+      var it = store.profile()[kind].filter(function (x) { return x.id === id; })[0];
+      if (it) { Object.assign(it, patch); emit('profile', { kind: kind }, { now: true }); }
+      return it;
+    },
+    removeProfileItem: function (kind, id) {
+      var pr = store.profile();
+      pr[kind] = pr[kind].filter(function (x) { return x.id !== id; });
+      emit('profile', { kind: kind });
+    },
+
     /* Budget */
     budget: function () {
       if (!state.budget) state.budget = window.LamiaShared.model.normalizeBudget(null);

@@ -202,6 +202,7 @@
     d.moods = d.moods.filter(function (m) { return m && typeof m === 'object'; });
     if (d.activeTimer === undefined) d.activeTimer = null;
     if (d.lastTimerTaskId === undefined) d.lastTimerTaskId = null;
+    d.profile = normalizeProfile(d.profile);
     d.budget = normalizeBudget(d.budget);
     d.health = normalizeHealth(d.health);
     d.flags = Object.assign({}, def.flags, d.flags || {});
@@ -244,6 +245,35 @@
       // Cagnottes d'épargne : { id, name, target? } et versements : { id, goalId, date, amount }
       goals: arr(b.goals).filter(function (x) { return typeof x.name === 'string'; }),
       deposits: arr(b.deposits).filter(function (x) { return DATE_RE.test(x.date) && typeof x.goalId === 'string' && typeof x.amount === 'number' && isFinite(x.amount); })
+    };
+  }
+
+  /* --- Profil (facultatif) ------------------------------------------------------ */
+  function normalizeProfile(pr) {
+    var fresh = !(pr && typeof pr === 'object' && !Array.isArray(pr));
+    pr = fresh ? {} : pr;
+    function str(v, d) { return typeof v === 'string' ? v : (d || ''); }
+    function arr(a, test) { return Array.isArray(a) ? a.filter(function (x) { return x != null && (!test || test(x)); }) : []; }
+    function obj(x) { return x && typeof x === 'object'; }
+    var fav = obj(pr.favorites) ? pr.favorites : {};
+    return {
+      photo: typeof pr.photo === 'string' && /^data:image\//.test(pr.photo) ? pr.photo : null,
+      name: str(pr.name, fresh ? 'Lamia' : ''),
+      nickname: str(pr.nickname),
+      jobs: str(pr.jobs, fresh ? 'Graphiste & web designer chez Flow Line Intégration · Freelance (auto-entreprise, Carnet by-pass)' : ''),
+      city: str(pr.city, fresh ? 'Lyon' : ''),
+      astro: str(pr.astro, fresh ? 'Sagittaire ascendant Lion' : ''),
+      word: str(pr.word),
+      values: arr(pr.values, function (x) { return typeof x === 'string'; }),
+      goals: arr(pr.goals, function (x) { return obj(x) && typeof x.title === 'string'; }),
+      bucket: arr(pr.bucket, function (x) { return obj(x) && typeof x.text === 'string'; }),
+      timeline: arr(pr.timeline, function (x) { return obj(x) && typeof x.title === 'string'; }),
+      favorites: { music: str(fav.music), game: str(fav.game), series: str(fav.series), book: str(fav.book) },
+      artists: arr(pr.artists, function (x) { return typeof x === 'string'; }),
+      concerts: arr(pr.concerts, function (x) { return obj(x) && typeof x.artist === 'string'; }),
+      pets: fresh ? [{ id: 'pet-memeow', name: 'Memeow', species: 'Chatte', birth: '', traits: 'Tricolore tigrée (roux, noir, gris, brun), yeux verts. Dort sur le clavier, se lèche la patte et réclame ses croquettes.', photo: null }]
+        : arr(pr.pets, function (x) { return obj(x) && typeof x.name === 'string'; }),
+      gallery: arr(pr.gallery, function (x) { return obj(x) && typeof x.src === 'string' && /^data:image\//.test(x.src); })
     };
   }
 
@@ -307,6 +337,6 @@
     DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
     defaultState: defaultState, defaultSettings: defaultSettings, defaultUI: defaultUI,
     versionOf: versionOf, migrate: migrate, normalize: normalize, validate: validate, summarize: summarize,
-    normalizeHealth: normalizeHealth, normalizeBudget: normalizeBudget, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
+    normalizeHealth: normalizeHealth, normalizeBudget: normalizeBudget, normalizeProfile: normalizeProfile, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
   };
 });

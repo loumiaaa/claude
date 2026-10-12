@@ -10,7 +10,7 @@
   'use strict';
 
   var D = L.dates, S = L.store, U = L.ui, Q = L.q, ST = L.shared.stats, R = L.shared.reminders;
-  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport', budget: 'budget', depenses: 'money', factures: 'bills', epargne: 'savings' };
+  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport', budget: 'budget', depenses: 'money', factures: 'bills', epargne: 'savings', profil: 'profile' };
   var SPACES = { health: 'health', body: 'health', food: 'health', sport: 'health', budget: 'budget', money: 'budget', bills: 'budget', savings: 'budget' };
   var current = null;
   var api = window.lamia;
@@ -40,7 +40,7 @@
     var title = U.$('[data-topbar-title]');
     if (title) title.textContent = V ? V.title : '';
     document.documentElement.setAttribute('data-view', view);
-    if (view !== 'settings') { var sp = SPACES[view] || 'prod'; document.documentElement.setAttribute('data-space', sp); openSection(sp); }
+    if (view !== 'settings' && view !== 'profile') { var sp = SPACES[view] || 'prod'; document.documentElement.setAttribute('data-space', sp); openSection(sp); }
     closeSpaceMenu();
     if (changed && !opts.initial) {
       window.scrollTo(0, 0);
