@@ -105,7 +105,7 @@
 
   function healthVoice() {
     var h = H(), w = h.weights, wk = weekMinutes(D.startOfWeek(D.today())), opts = [];
-    if (w.length > 1 && last(w).kg < w[0].kg - 0.05) opts.push({ lamia: 'Déjà ' + signed(last(w).kg - w[0].kg, 'kg') + ' depuis le début. Je suis fière de nous !', lamiaAnim: 'cheer' });
+    if (w.length > 1 && last(w).kg < w[0].kg - 0.05) opts.push({ lamia: 'Déjà ' + signed(last(w).kg - w[0].kg, 'kg') + ' depuis le début. Je suis ' + (S.me().character === 'garcon' ? 'fier' : 'fière') + ' de nous !', lamiaAnim: 'cheer' });
     if (wk.minutes > 0) opts.push({ lamia: minutes(wk.minutes) + ' de sport cette semaine : ça bouge, et ça fait du bien !', lamiaAnim: 'cheer' });
     if (h.goalKg && w.length && last(w).kg > h.goalKg) opts.push({ lamia: 'Encore ' + kg(last(w).kg - h.goalKg) + ' vers l’objectif. Un pas après l’autre.', lamiaAnim: 'wave' });
     if (h.plan.length) opts.push({ lamia: 'Le plan de la diététicienne est là, juste en dessous. On s’y tient avec douceur.', lamiaAnim: 'typing' });

@@ -205,6 +205,8 @@
     var tasks = buildTasks();
     buildHours(tasks);
     var state = M.defaultState({ nowIso: new Date(nowMs).toISOString(), appVersion: opts.appVersion || null });
+    // La démo est celle de Lamia : déjà configurée, avec son profil par défaut
+    delete state.setup; delete state.profile;
     state.categories = CATEGORIES.map(function (c) { return Object.assign({}, c); });
     state.tasks = tasks;
     state.moods = MOODS.filter(function (m) { return m[1]; }).map(function (m) {

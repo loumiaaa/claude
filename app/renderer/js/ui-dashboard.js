@@ -27,15 +27,15 @@
   }
 
   function sceneHTML() {
-    var narrow = narrowMQ && narrowMQ.matches;
+    var narrow = narrowMQ && narrowMQ.matches, me = S.me(), who = me.name || 'Ton personnage';
     return '<div class="pixel-stage scene">' +
       '<div class="scene__say scene__say--lamia"><p class="pixel-bubble ' + (narrow ? 'pixel-bubble--tail-bottom' : 'pixel-bubble--tail-left') + ' pixel-bubble--pop" data-bubble="lamia" aria-live="polite">' +
-        '<span class="sr-only">Lamia dit : </span><span data-say>' + esc(voice.lamia) + '</span></p></div>' +
-      '<canvas class="scene__sprite scene__sprite--lamia" data-sprite="lamia" aria-label="Lamia, en pixel art"></canvas>' +
+        '<span class="sr-only">' + esc(who) + ' dit : </span><span data-say>' + esc(voice.lamia) + '</span></p></div>' +
+      '<canvas class="scene__sprite scene__sprite--lamia" data-sprite="lamia" aria-label="' + esc(who) + ', en pixel art"></canvas>' +
       '<div class="scene__memeow">' +
         '<div class="scene__say scene__say--memeow"><p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" data-bubble="memeow" aria-live="polite">' +
           '<span class="sr-only">Memeow répond : </span><span data-say>' + memeowSays(voice.memeow.text, voice.memeow.icon) + '</span></p></div>' +
-        '<button type="button" class="scene__cat" data-memeow aria-label="Memeow, la chatte de Lamia. Clique pour qu’elle réagisse">' +
+        '<button type="button" class="scene__cat" data-memeow aria-label="Memeow, la chatte' + (me.generic ? ' mascotte' : ' de Lamia') + '. Clique pour qu’elle réagisse">' +
           '<canvas class="scene__sprite scene__sprite--memeow" data-sprite="memeow" aria-hidden="true"></canvas></button>' +
       '</div>' +
     '</div>';
@@ -48,7 +48,7 @@
     try {
       if (cast.lamia) cast.lamia.destroy();
       if (cast.memeow) cast.memeow.destroy();
-      cast.lamia = window.PixelCast.mount(cl, 'lamia', { scale: narrow ? 3 : 4, animation: 'idle' });
+      cast.lamia = window.PixelCast.mount(cl, S.me().character, { scale: narrow ? 3 : 4, animation: 'idle' });
       cast.memeow = window.PixelCast.mount(cm, 'memeow', { scale: narrow ? 3 : 4, animation: 'idle' });
       cm.setAttribute('aria-hidden', 'true');
       setTimeout(function () {
@@ -127,7 +127,7 @@
         var days = Object.keys(daily).filter(function (d) { return daily[d] > 0; });
         note = days.length
           ? days.map(function (d) { return D.cap(D.DAYS[D.dow(d)]) + ' : ' + D.duration(daily[d]); }).join(' · ')
-          : 'Pas encore d’heures cette semaine. Samedi, c’est ton jour.';
+          : 'Pas encore d’heures cette semaine.' + (persoDayName() ? ' ' + D.cap(persoDayName()) + ', c’est ton jour.' : '');
         hasFree = true;
       }
       if (running) note += ' Chrono en cours inclus.';
@@ -141,7 +141,7 @@
       '<p class="card__subtitle">Chaque catégorie a son compteur, jamais mélangé.</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#recap">Détail' + icon('chevron-right') + '</a></div></div>' +
       '<div class="hours-rows">' + rows + perso + '</div>' +
-      (hasFree && !perso ? '<p class="hours-card__foot">' + icon('heart') + 'Pas d’objectif pour le perso : le samedi reste un plaisir.</p>' : '') + '</section>';
+      (hasFree && !perso ? '<p class="hours-card__foot">' + icon('heart') + 'Pas d’objectif pour le perso : ' + (persoDayName() ? 'le ' + persoDayName() : 'ce temps-là') + ' reste un plaisir.</p>' : '') + '</section>';
   }
 
   // Jauge du pôle auto-entreprise : « Samedi perso : x / 4 h minimum » (jamais additionné à Flow Line)
@@ -158,13 +158,24 @@
     if (m >= goal) note = (past ? D.cap(dayName) + ' : minimum atteint' : 'Minimum atteint') + (m > goal ? ', +' + NB + D.duration(m - goal) + ' en bonus.' : ', bravo !');
     else if (isToday) note = 'Encore ' + D.duration(goal - m) + ' aujourd’hui pour ton minimum perso, à ton rythme.';
     else if (past) note = D.cap(dayName) + ' : ' + D.duration(m) + ' sur ' + D.duration(goal) + '. La semaine prochaine sera la bonne.';
-    else note = 'Rendez-vous ' + dayName + ' : ' + D.duration(goal) + ' minimum pour Carnet by-pass et Auto-entreprise réunis.';
+    else note = 'Rendez-vous ' + dayName + ' : ' + D.duration(goal) + ' minimum pour ' + poleCats() + '.';
     var label = g.label;
     return '<div class="hours-row hours-row--pole">' +
       '<div class="hours-row__head"><span class="chip chip--pole">' + esc(label) + '</span>' +
         '<span class="hours-row__value"><strong class="num">' + D.duration(m) + '</strong><span class="hours-row__goal"> / ' + D.duration(goal) + ' minimum</span></span></div>' +
-      '<span class="progress progress--lg progress--pole" style="--value:' + Math.min(100, Math.round(m / goal * 100)) + '" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + m + '" aria-label="' + esc(label) + ' : ' + D.duration(m) + ' sur ' + D.duration(goal) + ' minimum (pôle auto-entreprise)"></span>' +
+      '<span class="progress progress--lg progress--pole" style="--value:' + Math.min(100, Math.round(m / goal * 100)) + '" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + m + '" aria-label="' + esc(label) + ' : ' + D.duration(m) + ' sur ' + D.duration(goal) + ' minimum (' + esc(S.groupName('auto-entreprise')) + ')"></span>' +
       '<p class="hours-row__note">' + esc(note) + '</p></div>';
+  }
+
+  // Jour(s) du pôle perso, en toutes lettres (« samedi »), et ses catégories réunies
+  function persoDayName() {
+    var days = S.get().settings.schedules['auto-entreprise'].days || [];
+    return days.length === 1 ? D.DAYS[days[0]] : '';
+  }
+  function poleCats() {
+    var names = S.get().categories.filter(function (c) { return c.group === 'auto-entreprise'; }).map(function (c) { return c.name; });
+    if (!names.length) return S.groupName('auto-entreprise');
+    return names.length > 1 ? names.slice(0, -1).join(', ') + ' et ' + names[names.length - 1] + ' réunis' : names[0];
   }
 
   function progressCls(c) {
@@ -320,7 +331,7 @@
       '<div class="dash-grid">' +
         '<section class="glass card hero">' +
           '<div class="hero__text"><p class="eyebrow">' + esc(D.cap(D.long(today))) + ' · semaine ' + D.isoWeek(today) + '</p>' +
-            '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour Lamia</h1>' +
+            '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour' + (S.me().name ? ' ' + esc(S.me().name) : '') + '</h1>' +
             '<p class="hero__lead" data-lead>' + esc(leadText(ctx)) + '</p>' +
             '<div class="hero__actions"><button type="button" class="btn btn--secondary btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button>' +
             '<span class="hero__hint">Clique sur Memeow, elle adore ça.</span></div></div>' +
@@ -423,6 +434,8 @@
     });
 
     S.subscribe(function (type, d) {
+      // Prénom ou personnage changé : tout se redessine (titre, scène)
+      if (type === 'setup' || type === 'profile') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'reset') { voice = null; el.innerHTML = ''; render(); return; }
       if (type === 'mood') { update('mood'); if (d.level) { anotherPhrase(); } return; }

@@ -61,7 +61,8 @@
     });
   }
 
-  /* --- Avatar : la photo, sinon Lamia en pixel art -------------------------------- */
+  /* --- Avatar : la photo, sinon le personnage pixel choisi ------------------------ */
+  var CHARACTERS = [['lamia', 'Cheveux noirs bouclés, lunettes rose gold'], ['garcon', 'Cheveux bruns, raie au milieu, lunettes argent, barbe']];
   function avatarHTML(cls) {
     var ph = P().photo;
     var inner = ph ? '<img class="avatar-img" src="' + ph + '" alt="">' : '<canvas class="avatar-pixel" data-avatar-pixel aria-hidden="true"></canvas>';
@@ -71,7 +72,7 @@
     root.querySelectorAll('[data-avatar-pixel]').forEach(function (c, i) {
       var k = key + i;
       if (avatarCtrl[k]) { try { avatarCtrl[k].destroy(); } catch (e) { /* rien */ } }
-      if (window.PixelCast) avatarCtrl[k] = window.PixelCast.mount(c, 'lamia', { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle' });
+      if (window.PixelCast) avatarCtrl[k] = window.PixelCast.mount(c, S.me().character, { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle' });
     });
   }
   // Pastille de la barre latérale et de la barre du haut
@@ -136,7 +137,7 @@
         '<div class="progress" style="--value:' + p.pct + '" role="progressbar" aria-valuenow="' + p.pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + esc(g.title) + '"></div>' +
         '<p class="hint">' + p.pct + NB + '% · ' + esc(p.label) + (g.link ? ' · ' + esc(linkLabel(g.link)) : '') + '</p></li>';
     }).join('') + '</ul>' : '<p class="hint">Jusqu’à 5 objectifs pour l’année. Relie-les à une catégorie ou à une étiquette de tes tâches : la barre avance toute seule.</p>';
-    var goalAdd = pr.goals.length < 5 ? '<button type="button" class="btn btn--primary btn--sm" data-p-add="goals">' + icon('plus') + 'Ajouter un objectif</button>' : '<p class="hint">5 objectifs, c’est le maximum : on reste concentrée.</p>';
+    var goalAdd = pr.goals.length < 5 ? '<button type="button" class="btn btn--primary btn--sm" data-p-add="goals">' + icon('plus') + 'Ajouter un objectif</button>' : '<p class="hint">5 objectifs, c’est le maximum : on garde le cap.</p>';
 
     var word = '<form class="inline-form" data-p-word novalidate><label class="sr-only" for="p-word">Mot de l’année ou intention</label>' +
       '<input class="input input--word" id="p-word" name="word" maxlength="60" placeholder="ex. Oser, Équilibre, Créer…" value="' + esc(pr.word) + '" data-focus-key="p-word">' +
@@ -291,10 +292,11 @@
         field('i-name', 'Nom', pr.name, { name: 'name' }) + field('i-nick', 'Pseudo', pr.nickname, { name: 'nickname', ph: 'facultatif' }) +
         field('i-jobs', 'Métier(s)', pr.jobs, { name: 'jobs', full: true, max: 200 }) +
         field('i-city', 'Ville', pr.city, { name: 'city' }) + field('i-astro', 'Signe astro', pr.astro, { name: 'astro', ph: 'ex. Sagittaire ascendant Lion' }) +
-        field('i-word', 'Mot de l’année ou intention', pr.word, { name: 'word', full: true, max: 60 }) + '</div>',
+        field('i-word', 'Mot de l’année ou intention', pr.word, { name: 'word', full: true, max: 60 }) +
+        select('i-char', 'Personnage pixel (si pas de photo)', 'character', CHARACTERS, pr.character || 'lamia') + '</div>',
       onConfirm: function (form) {
         var v = fd(form);
-        S.setProfile({ name: v.name, nickname: v.nickname, jobs: v.jobs, city: v.city, astro: v.astro, word: v.word });
+        S.setProfile({ name: v.name, nickname: v.nickname, jobs: v.jobs, city: v.city, astro: v.astro, word: v.word, character: v.character === 'garcon' ? 'garcon' : 'lamia' });
         U.toast({ icon: 'check', title: 'Profil mis à jour', duration: 2500 });
       }
     });
@@ -380,8 +382,8 @@
       }
     });
     S.subscribe(function (type) {
-      if (type !== 'profile' && type !== 'reset' && type.indexOf('task') !== 0) return;
-      if (type === 'profile' || type === 'reset') refreshBrand();
+      if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type.indexOf('task') !== 0) return;
+      if (type === 'profile' || type === 'reset' || type === 'setup') refreshBrand();
       if (L.app.view() !== 'profile') { el.dataset.stale = '1'; return; }
       U.keepFocus(el, render);
     });

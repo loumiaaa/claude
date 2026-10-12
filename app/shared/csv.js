@@ -51,7 +51,8 @@
         return a.t.title.localeCompare(b.t.title, 'fr');
       });
       var sum = 0;
-      var pole = POLE[c.group] || c.group;
+      var names = state.settings && state.settings.groupNames || {};
+      var pole = names[c.group] || POLE[c.group] || c.group;
       list.forEach(function (r) {
         sum += r.e.minutes;
         out.push([D.numeric(r.e.date), text(c.name), pole, text(r.t.client), text(r.t.title),

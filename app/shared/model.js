@@ -21,6 +21,7 @@
   var STATUSES = ['todo', 'doing', 'review', 'done'];
   var PRIORITIES = ['low', 'normal', 'high', 'urgent'];
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  var CHARACTERS = ['lamia', 'garcon'];
 
   var DEFAULT_CATEGORIES = [
     { id: 'flowline', name: 'Flow Line', color: 'flowline', group: 'flowline' },
@@ -54,6 +55,10 @@
       },
       // Rappel dans l'app activé ; les intégrations Windows sont des options par PC (désactivées)
       reminders: { hour: 9, inApp: true },
+      // Noms affichés des deux pôles d'heures (travail principal, projets à côté)
+      groupNames: { flowline: 'Flow Line', 'auto-entreprise': 'Auto-entreprise' },
+      // Espaces visibles dans le menu
+      spaces: { health: true, budget: true },
       ui: defaultUI()
     };
   }
@@ -77,7 +82,11 @@
       activeTimer: null,
       lastTimerTaskId: null,
       flags: { lastOpenedOn: null, moodPromptedOn: null, remindersShownOn: null },
-      reminderLog: {}
+      reminderLog: {},
+      // Nouveau compte : l'accueil (prénom, personnage, travail, espaces) reste à faire
+      // et le profil part vide. Un document sans `setup` est celui de Lamia (déjà configuré).
+      setup: { done: false },
+      profile: {}
     };
   }
 
@@ -160,6 +169,11 @@
     s.schedules = s.schedules || {};
     GROUPS.forEach(function (g) { s.schedules[g] = Object.assign({}, ds.schedules[g], s.schedules[g] || {}); });
     s.reminders = Object.assign({}, ds.reminders, s.reminders || {});
+    var gn = s.groupNames && typeof s.groupNames === 'object' ? s.groupNames : {};
+    s.groupNames = {};
+    GROUPS.forEach(function (g) { s.groupNames[g] = typeof gn[g] === 'string' && gn[g].trim() ? gn[g] : ds.groupNames[g]; });
+    var sp = s.spaces && typeof s.spaces === 'object' ? s.spaces : {};
+    s.spaces = { health: sp.health !== false, budget: sp.budget !== false };
     var ui = Object.assign(defaultUI(), s.ui || {});
     ui.filters = Object.assign(defaultUI().filters, ui.filters || {});
     ui.sort = Object.assign(defaultUI().sort, ui.sort || {});
@@ -202,6 +216,7 @@
     d.moods = d.moods.filter(function (m) { return m && typeof m === 'object'; });
     if (d.activeTimer === undefined) d.activeTimer = null;
     if (d.lastTimerTaskId === undefined) d.lastTimerTaskId = null;
+    d.setup = d.setup && typeof d.setup === 'object' && !Array.isArray(d.setup) ? { done: d.setup.done !== false, generic: !!d.setup.generic } : { done: true, generic: false };
     d.profile = normalizeProfile(d.profile);
     d.budget = normalizeBudget(d.budget);
     d.health = normalizeHealth(d.health);
@@ -258,6 +273,8 @@
     var fav = obj(pr.favorites) ? pr.favorites : {};
     return {
       photo: typeof pr.photo === 'string' && /^data:image\//.test(pr.photo) ? pr.photo : null,
+      // Personnage pixel : 'lamia' (cheveux bouclés noirs) ou 'garcon' (cheveux bruns, barbe)
+      character: CHARACTERS.indexOf(pr.character) >= 0 ? pr.character : 'lamia',
       name: str(pr.name, fresh ? 'Lamia' : ''),
       nickname: str(pr.nickname),
       jobs: str(pr.jobs, fresh ? 'Graphiste & web designer chez Flow Line Intégration · Freelance (auto-entreprise, Carnet by-pass)' : ''),

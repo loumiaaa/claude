@@ -48,7 +48,7 @@ html = html.replace('</title>', `</title>
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Lamia">`);
+  <meta name="apple-mobile-web-app-title" content="Suivi">`);
 html = html.replace('<script src="js/bridge.js"></script>',
   '<script src="shared/demo.js"></script>\n  <script src="config.js"></script>\n  <script src="js/web-bridge.js"></script>\n  <script src="js/bridge.js"></script>');
 if (!html.includes('js/web-bridge.js')) throw new Error('index.html : point d’insertion du pont web introuvable');

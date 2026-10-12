@@ -47,7 +47,7 @@
     var m = voice.memeow || meow();
     host.innerHTML =
       '<div class="glass mini-scene">' +
-        '<canvas class="mini-scene__lamia" data-mini="lamia" aria-label="Lamia, en pixel art"></canvas>' +
+        '<canvas class="mini-scene__lamia" data-mini="lamia" aria-label="' + esc(L.store.me().name || 'Ton personnage') + ', en pixel art"></canvas>' +
         '<p class="pixel-bubble ' + (narrow ? 'pixel-bubble--tail-bottom' : 'pixel-bubble--tail-left') + ' pixel-bubble--pop mini-scene__say" aria-live="polite">' + esc(voice.lamia) + '</p>' +
         '<div class="mini-scene__cat">' +
           '<p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" data-mini-meow aria-live="polite"><span class="sr-only">Memeow répond : </span><span data-say>' + meowHTML(m) + '</span></p>' +
@@ -55,7 +55,7 @@
         '</div>' +
       '</div>';
     var scale = narrow ? 2 : 3;
-    mount(key + ':lamia', host.querySelector('[data-mini="lamia"]'), 'lamia', voice.lamiaAnim || 'wave', scale);
+    mount(key + ':lamia', host.querySelector('[data-mini="lamia"]'), L.store.me().character, voice.lamiaAnim || 'wave', scale);
     mount(key + ':memeow', host.querySelector('[data-mini="memeow"]'), 'memeow', m.anim, scale);
     var last = m.text;
     host.querySelector('[data-mini-memeow]').addEventListener('click', function () {
@@ -88,7 +88,7 @@
         '<span class="celebrate__meow">' + meowHTML(m) + '</span></div>' +
       '<canvas data-cel="memeow" aria-hidden="true"></canvas>';
     celebrateEl.classList.remove('is-in'); void celebrateEl.offsetWidth; celebrateEl.classList.add('is-in');
-    mount('cel:lamia', celebrateEl.querySelector('[data-cel="lamia"]'), 'lamia', 'cheer', 2);
+    mount('cel:lamia', celebrateEl.querySelector('[data-cel="lamia"]'), L.store.me().character, 'cheer', 2);
     mount('cel:memeow', celebrateEl.querySelector('[data-cel="memeow"]'), 'memeow', 'meow', 2);
     celebrateTimer = setTimeout(function () {
       celebrateEl.classList.remove('is-in');

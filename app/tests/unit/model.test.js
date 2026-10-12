@@ -113,3 +113,38 @@ test('QA-02 : statut invalide → refusé (rien n’est remplacé)', () => {
   const r = M.migrate({ version: 1, categories: [], moods: [], tasks: [{ id: 'x', title: 'X', status: 'n’importe quoi' }] });
   assert.equal(M.validate(r.doc).ok, false);
 });
+
+test('nouveau compte : accueil à faire, profil vide, sans Memeow', () => {
+  const d = M.normalize(M.defaultState());
+  assert.equal(d.setup.done, false);
+  assert.equal(d.profile.name, '');
+  assert.equal(d.profile.pets.length, 0);
+  assert.deepEqual(d.settings.spaces, { health: true, budget: true });
+});
+
+test('document de Lamia (sans setup) : déjà configuré, profil et noms par défaut', () => {
+  const s = M.defaultState();
+  delete s.setup; delete s.profile; delete s.settings.groupNames; delete s.settings.spaces;
+  const d = M.normalize(s);
+  assert.deepEqual(d.setup, { done: true, generic: false });
+  assert.equal(d.profile.name, 'Lamia');
+  assert.equal(d.profile.character, 'lamia');
+  assert.equal(d.profile.pets[0].name, 'Memeow');
+  assert.deepEqual(d.settings.groupNames, { flowline: 'Flow Line', 'auto-entreprise': 'Auto-entreprise' });
+  assert.deepEqual(d.settings.spaces, { health: true, budget: true });
+});
+
+test('personnalisation : noms de pôles, espaces et personnage normalisés', () => {
+  const s = M.defaultState();
+  s.setup = { done: true, generic: true };
+  s.settings.groupNames = { flowline: 'Studio Nova', 'auto-entreprise': '  ' };
+  s.settings.spaces = { health: false };
+  s.profile = { name: 'Lucas', character: 'garcon' };
+  const d = M.normalize(s);
+  assert.deepEqual(d.setup, { done: true, generic: true });
+  assert.equal(d.settings.groupNames.flowline, 'Studio Nova');
+  assert.equal(d.settings.groupNames['auto-entreprise'], 'Auto-entreprise');
+  assert.deepEqual(d.settings.spaces, { health: false, budget: true });
+  assert.equal(d.profile.character, 'garcon');
+  assert.equal(M.normalize(Object.assign(M.defaultState(), { profile: { character: 'dragon' } })).profile.character, 'lamia');
+});

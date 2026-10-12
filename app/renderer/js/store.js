@@ -157,6 +157,32 @@
     setUI: function (patch) { Object.assign(state.settings.ui, patch); emit('ui', patch); },
     setSettings: function (patch) { Object.assign(state.settings, patch); emit('settings', patch); },
     setSchedule: function (group, patch) { Object.assign(state.settings.schedules[group], patch); emit('settings'); },
+    // Personnalisation (plusieurs comptes) : nom et personnage, noms des pôles, espaces visibles
+    me: function () {
+      var pr = store.profile();
+      return { name: pr.name || '', character: pr.character || 'lamia', generic: !!(state.setup && state.setup.generic) };
+    },
+    groupName: function (g) { return (state.settings.groupNames || {})[g] || g; },
+    setGroupName: function (g, name) { state.settings.groupNames[g] = name; emit('settings'); },
+    space: function (k) { return !state.settings.spaces || state.settings.spaces[k] !== false; },
+    setSpace: function (k, on) { state.settings.spaces[k] = !!on; emit('settings', { spaces: true }, { now: true }); },
+    // Fin de l'accueil d'un nouveau compte
+    finishSetup: function (o) {
+      var cats = [{ id: 'travail', name: o.workName, color: 'flowline', group: 'flowline' }];
+      if (o.side) cats.push({ id: 'perso', name: o.sideName, color: 'carnet', group: 'auto-entreprise' });
+      var used = {};
+      state.tasks.forEach(function (t) { used[t.categoryId] = true; });
+      state.categories = cats.concat(state.categories.filter(function (c) { return used[c.id] && !cats.some(function (x) { return x.id === c.id; }); }));
+      state.settings.groupNames = { flowline: o.workName, 'auto-entreprise': o.side ? o.sideName : 'Projets perso' };
+      state.settings.schedules.flowline = { days: o.workDays, weeklyHours: o.weeklyHours };
+      state.settings.schedules['auto-entreprise'] = { days: o.side ? o.sideDays : [], weeklyHours: null, minDailyHours: o.side ? o.sideMin : null };
+      state.settings.spaces = { health: !!o.health, budget: !!o.budget };
+      if (!state.budget) state.budget = window.LamiaShared.model.normalizeBudget(null);
+      state.budget.startDay = o.startDay;
+      Object.assign(store.profile(), { name: o.name, nickname: o.nickname || '', jobs: o.jobs || '', city: o.city || '', character: o.character });
+      state.setup = { done: true, generic: true };
+      emit('setup', null, { now: true });
+    },
     setReminders: function (patch) { state.settings.reminders = Object.assign({}, state.settings.reminders, patch); emit('settings', { reminders: true }); },
 
     /* Rappels : inscrits une fois par tâche et par jour */
@@ -489,7 +515,11 @@
       moodYesterday: my ? my.level : undefined,
       moodToday: mt ? mt.level : undefined,
       firstLoginToday: !!L.firstLoginToday,
-      daysAway: L.daysAway || 0
+      daysAway: L.daysAway || 0,
+      // Compte autre que celui de Lamia : phrases sans Flow Line, Carnet by-pass ni graphisme
+      generic: !!(state.setup && state.setup.generic),
+      weeklyGoal: state.settings.schedules.flowline.weeklyHours || 0,
+      persoSaturday: (state.settings.schedules['auto-entreprise'].days || []).indexOf(6) >= 0
     };
   }
 

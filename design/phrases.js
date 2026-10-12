@@ -507,7 +507,11 @@
       moodYesterday: moodLevel(ctx.moodYesterday),
       moodToday: moodLevel(ctx.moodToday),
       firstLoginToday: ctx.firstLoginToday === true,
-      daysAway: away
+      daysAway: away,
+      // Autre compte que celui de Lamia : pas de phrases sur Flow Line, Carnet by-pass, le graphisme
+      generic: ctx.generic === true,
+      weeklyGoal: ctx.weeklyGoal > 0 ? Number(ctx.weeklyGoal) : (ctx.generic === true ? 0 : 35),
+      persoSaturday: ctx.persoSaturday !== false
     };
   }
 
@@ -537,7 +541,7 @@
     }
 
     // 3. Règles pondérées (les contextuelles pèsent plus que le fond général)
-    if (c.hoursFlowlineWeek >= 35) add('objectif', 6);
+    if (c.weeklyGoal > 0 && c.hoursFlowlineWeek >= c.weeklyGoal && (!c.generic || c.weeklyGoal === 35)) add('objectif', 6);
     if (c.doneToday > 0) add('termine', 5, c.doneToday);
 
     var highToday = c.moodToday !== null && c.moodToday >= 4;
@@ -546,7 +550,7 @@
     else if (highYesterday) add('humeurHaute', 2);
 
     if (sunday) add('dimanche', 8);
-    if (saturday) add('samedi', 5);
+    if (saturday && c.persoSaturday) add('samedi', 5);
     if (c.day === 1 && !late) add('lundi', 4);
     if (c.day === 5) add('vendredi', 4, c.doneThisWeek);
 
@@ -586,10 +590,23 @@
     return sample(fresh.length ? fresh : pool);
   }
 
-  function lamiaPool(rule) {
+  // Phrases propres à Lamia, écartées pour les autres comptes
+  var PERSONAL = new RegExp([
+    // son travail et ses projets
+    'Flow Line', 'Carnet', 'graphiste', 'graphisme', 'Lamia', 'client', 'brief', 'fichiers?', 'Ctrl', 'm[ée]tier',
+    // le vocabulaire du design
+    'typograph', 'Pantone', 'maquette', 'logo', 'calque', 'pixel', 'PSD', 'PNG', 'JPEG', 'Figma', 'kerning', 'vectoriel',
+    'opacit', 'flou', 'Comic Sans', 'Lorem', 'goutti', 'moodboard', 'palette', 'saturation', 'niveaux de gris', 'ancrage',
+    'plume', 'grille', 'ombre port', 'd[ée]finition', 'r[ée]solution', 'livrable', 'rendus?\\b', 'modif', 'V2', 'export',
+    'cahier des charges', 'page blanche', 'couleur', 'zoome',
+    // accords au féminin
+    'fi[èe]re', 'pr[êe]te', 'fatigu[ée]e', 'motiv[ée]e', 'contente', 'heureuse', 'douce avec', 'reposée', 'inspirée', 'concentrée', 'seule\\b', 'reine'
+  ].join('|'), 'i');
+  function lamiaPool(rule, generic) {
     var pool = [];
     rule.sources.forEach(function (name) {
       (lamia[name] || []).forEach(function (template) {
+        if (generic && PERSONAL.test(template)) return;
         if (rule.n > 0 || template.indexOf('{n}') === -1) pool.push(template);
       });
     });
@@ -617,10 +634,11 @@
     var last = readJSON(KEY_LAST) || {};
 
     var rule = weightedPick(rules(c));
-    var pool = lamiaPool(rule);
+    var pool = lamiaPool(rule, c.generic);
     if (!pool.length) {
       rule = { category: 'general', weight: 1, n: 0, sources: ['general'] };
-      pool = lamia.general.slice();
+      pool = lamiaPool(rule, c.generic);
+      if (!pool.length) pool = lamia.general.slice();
     }
     var template = pickAvoiding(pool, last.lamia, function (t) { return t; });
 

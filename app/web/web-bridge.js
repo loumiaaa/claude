@@ -6,7 +6,7 @@
      (table lamia_data), révision optimiste ; sauvegarde quotidienne distante
      (table lamia_backups, 30 jours). Conflit : la version distante l'emporte,
      la version de l'appareil est gardée dans « Restaurer… ».
-   - Sans configuration Supabase, ou si Lamia choisit « sans synchro » :
+   - Sans configuration Supabase, ou si on choisit « sans synchro » :
      tout reste sur l'appareil.
    ========================================================================== */
 (function () {
@@ -21,7 +21,9 @@
 
   var K = {
     doc: 'lamia:doc', base: 'lamia:base', session: 'lamia:session', mode: 'lamia:mode',
-    backups: 'lamia:backups', notif: 'lamia:notif', device: 'lamia:device', lastBackup: 'lamia:lastRemoteBackup'
+    backups: 'lamia:backups', notif: 'lamia:notif', device: 'lamia:device', lastBackup: 'lamia:lastRemoteBackup',
+    // Compte à qui appartient la copie locale (identifiant Supabase, ou « local » sans synchro)
+    owner: 'lamia:owner'
   };
   var LS = {
     get: function (k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
@@ -135,7 +137,7 @@
   }
   function dropSession() { session = null; LS.del(K.session); }
   function accessToken() {
-    if (!session) return Promise.reject(httpError(401, { message: 'Non connectée.' }));
+    if (!session) return Promise.reject(httpError(401, { message: 'Session expirée.' }));
     if (session.expires_at - 60 > Date.now() / 1000) return Promise.resolve(session.access_token);
     return authCall('token?grant_type=refresh_token', { refresh_token: session.refresh_token })
       .then(function (j) { return keepSession(j).access_token; }, function (e) { if (e.status === 400 || e.status === 401) dropSession(); throw e; });
@@ -274,7 +276,7 @@
       ov.innerHTML =
         '<div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="wa-title" aria-describedby="wa-desc">' +
           '<form class="dialog-form" novalidate>' +
-            '<div class="modal__header"><div><h2 class="modal__title" id="wa-title">Bonjour Lamia</h2>' +
+            '<div class="modal__header"><div><h2 class="modal__title" id="wa-title">Bonjour !</h2>' +
               '<p class="modal__desc" id="wa-desc">Connecte-toi pour retrouver tes tâches sur ton Mac, ton PC et ton téléphone.</p></div></div>' +
             '<div class="modal__body">' +
               '<div class="field"><label class="label" for="wa-email">E-mail</label><input class="input" id="wa-email" type="email" autocomplete="username" required></div>' +
@@ -328,12 +330,21 @@
   /* --- Démarrage ------------------------------------------------------------- */
   function startLocal(local) {
     mode = 'local';
+    if (!LS.get(K.owner)) LS.set(K.owner, 'local');
     current = local || fresh();
     writeLocal(current);
     return current;
   }
   function startCloud(local) {
     mode = 'cloud';
+    // Appareil partagé : la copie locale d'un autre compte n'est jamais reprise (ni envoyée)
+    var owner = LS.get(K.owner);
+    if (owner && owner !== 'local' && owner !== uid()) {
+      local = null; current = null;
+      LS.del(K.doc); LS.del(K.base); LS.del(K.backups); LS.del(K.lastBackup);
+      base = null;
+    }
+    LS.set(K.owner, uid());
     var known = storedBase();
     setSync('syncing');
     return fetchRemote().then(function (row) {
@@ -489,7 +500,7 @@
       },
       testNotification: function () {
         if (!notifOn()) return Promise.resolve({ shown: false });
-        try { new Notification('Les rappels sont prêts', { body: 'Tu recevras ici les rappels d’échéance. À très vite, Lamia !', icon: 'icons/icon-192.png' }); return Promise.resolve({ shown: true }); }
+        try { new Notification('Les rappels sont prêts', { body: 'Tu recevras ici les rappels d’échéance. À très vite !', icon: 'icons/icon-192.png' }); return Promise.resolve({ shown: true }); }
         catch (e) { return Promise.resolve({ shown: false }); }
       }
     },
@@ -573,12 +584,19 @@
           });
         });
       },
+      // Déconnexion : tout est d'abord envoyé, puis la copie de l'appareil est effacée
+      // (une autre personne peut ensuite se connecter ici sans voir ces données).
       logout: function () {
         return push().then(function () {
+          if (pending()) {
+            toast({ kind: 'warning', icon: 'alert', title: 'Déconnexion impossible pour l’instant', text: 'Des modifications ne sont pas encore envoyées. Reconnecte-toi à Internet, puis réessaie.', duration: 7000 });
+            return info();
+          }
           dropSession();
-          LS.set(K.mode, 'local');
+          [K.doc, K.base, K.backups, K.lastBackup, K.owner, K.mode].forEach(function (k) { LS.del(k); });
           mode = 'local';
           setSync('signed-out');
+          setTimeout(function () { location.reload(); }, 50);
           return info();
         });
       }

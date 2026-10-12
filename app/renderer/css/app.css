@@ -2044,3 +2044,37 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
 }
 .profile-hero__jobs { flex-wrap: nowrap; align-items: flex-start; text-align: left; }
 .profile-hero__jobs .icon { flex: none; margin-top: 3px; }
+
+/* ==========================================================================
+   Accueil d'un nouveau compte
+   ========================================================================== */
+.overlay--setup { z-index: calc(var(--z-modal) + 1); }
+.setup .modal__header { align-items: center; }
+.setup .modal__body { display: grid; gap: var(--space-4); }
+.setup__lead { margin: 0; color: var(--color-text-muted); }
+.setup__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); }
+.setup__grid .field { min-width: 0; }
+.setup__grid .field--full { grid-column: 1 / -1; }
+.setup__grid .input { width: 100%; min-width: 0; }
+.setup__dots { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; flex: none; }
+.setup__dots li { width: 10px; height: 10px; border-radius: 3px; background: var(--color-track); }
+.setup__dots li.is-done { background: var(--accent); opacity: .5; }
+.setup__dots li.is-current { width: 22px; background-image: var(--accent-gradient); }
+.setup__chars { margin: 0; padding: 0; border: 0; min-width: 0; }
+.setup__chars legend { margin-bottom: var(--space-2); }
+.setup__char-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.setup__char {
+  display: grid; justify-items: center; gap: var(--space-2);
+  padding: var(--space-4) var(--space-3); border: 2px solid transparent; border-radius: var(--radius-lg);
+  font: inherit; font-size: var(--fs-sm); color: var(--color-text-muted); text-align: center; cursor: pointer;
+  transition: border-color var(--dur-fast) ease, transform var(--dur-fast) ease;
+}
+.setup__char:hover { transform: translateY(-2px); }
+.setup__char[aria-pressed="true"] { border-color: var(--accent); color: var(--color-text); box-shadow: var(--accent-shadow); }
+.setup__char canvas { image-rendering: pixelated; }
+.setup__payday { max-width: 260px; }
+@media (max-width: 720px) {
+  .setup__grid { grid-template-columns: minmax(0, 1fr); }
+  .setup__char canvas { width: 64px !important; height: 96px !important; }
+  .setup .modal__header { padding-left: var(--space-5); }
+}

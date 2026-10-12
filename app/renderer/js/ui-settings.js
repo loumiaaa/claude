@@ -13,7 +13,14 @@
   var esc = U.esc, icon = U.icon, NB = D.NBSP;
   var el = null;
   var api = window.lamia;
-  var GROUPS = [['flowline', 'Flow Line (salariée)'], ['auto-entreprise', 'Auto-entreprise']];
+  function groups() { return [['flowline', S.groupName('flowline')], ['auto-entreprise', S.groupName('auto-entreprise')]]; }
+  function poleCats() {
+    var names = S.get().categories.filter(function (c) { return c.group === 'auto-entreprise'; }).map(function (c) { return c.name; });
+    return names.length > 1 ? names.slice(0, -1).join(', ') + ' et ' + names[names.length - 1] + ' réunis' : (names[0] || S.groupName('auto-entreprise'));
+  }
+  function groupNameField(g, label) {
+    return '<div class="field"><label class="label" for="gn-' + g + '">' + label + '</label><input class="input" id="gn-' + g + '" data-group-name="' + g + '" data-focus-key="gn-' + g + '" maxlength="40" value="' + esc(S.groupName(g)) + '"></div>';
+  }
   var KIND = { quotidienne: 'Sauvegarde du jour', demo: 'Avant le chargement de la démo', import: 'Avant un import', restauration: 'Avant une restauration', 'migration-v1': 'Avant la mise à jour du format' };
 
   function info() { return L.info || {}; }
@@ -34,7 +41,7 @@
         '<div class="field cat-row__name"><label class="sr-only" for="cn-' + c.id + '">Nom de la catégorie</label>' +
           '<input class="input" id="cn-' + c.id + '" data-cat-name data-focus-key="cn-' + c.id + '" value="' + esc(c.name) + '" autocomplete="off"></div>' +
         '<div class="field cat-row__group"><label class="sr-only" for="cg-' + c.id + '">Groupe</label><select class="select" id="cg-' + c.id + '" data-cat-group data-focus-key="cg-' + c.id + '">' +
-          GROUPS.map(function (g) { return '<option value="' + g[0] + '"' + (g[0] === c.group ? ' selected' : '') + '>' + g[1] + '</option>'; }).join('') + '</select></div>' +
+          groups().map(function (g) { return '<option value="' + g[0] + '"' + (g[0] === c.group ? ' selected' : '') + '>' + g[1] + '</option>'; }).join('') + '</select></div>' +
         '<div class="palette" role="group" aria-label="Couleur de « ' + esc(c.name) + ' »">' + U.PALETTE.map(function (p) {
           return '<button type="button" class="palette__swatch hue--' + p.id + '" data-color="' + p.id + '" data-focus-key="pc-' + c.id + p.id + '" aria-pressed="' + (c.color === p.id) + '" title="' + esc(p.label) + '"><span class="sr-only">' + esc(p.label) + '</span></button>';
         }).join('') + '</div>' +
@@ -56,20 +63,32 @@
     var persoDays = a.days.map(function (d) { return D.DAYS[d]; }).join(', ');
     return '<section class="glass card" aria-labelledby="st-goal"><div class="card__header"><div><h2 class="card__title" id="st-goal">Objectifs d’heures</h2>' +
       '<p class="card__subtitle">Comparés aux heures de chaque groupe, jamais additionnés entre eux.</p></div></div>' +
-      '<div class="goal-block"><div class="goal-block__head">' + U.catDot({ color: 'flowline' }) + '<h3 class="goal-block__title">Flow Line</h3><span class="text-sm text-muted">salariée</span></div>' +
+      '<div class="goal-block"><div class="goal-block__head">' + U.catDot({ color: 'flowline' }) + '<h3 class="goal-block__title">' + esc(S.groupName('flowline')) + '</h3><span class="text-sm text-muted">travail principal</span></div>' +
+        groupNameField('flowline', 'Nom affiché') +
         '<div class="goal-grid"><div class="field"><label class="label" for="g-fw">Heures par semaine</label>' +
           '<div class="input-suffix"><input class="input" type="number" min="1" max="60" step="0.5" id="g-fw" data-goal="flowline" data-focus-key="g-fw" value="' + f.weeklyHours + '"><span>h</span></div></div>' +
           '<div class="field"><span class="label">Jours travaillés</span>' + dayToggles('flowline', f.days) + '</div></div>' +
         '<p class="hint">Soit ' + perDay + ' par jour travaillé. Au-delà, l’affichage reste neutre : « + 2 h », jamais d’alerte.</p></div>' +
-      '<div class="goal-block"><div class="goal-block__head">' + U.catDot({ color: 'auto' }) + '<h3 class="goal-block__title">Auto-entreprise</h3><span class="text-sm text-muted">Carnet by-pass inclus</span></div>' +
+      '<div class="goal-block"><div class="goal-block__head">' + U.catDot({ color: 'auto' }) + '<h3 class="goal-block__title">' + esc(S.groupName('auto-entreprise')) + '</h3><span class="text-sm text-muted">projets perso</span></div>' +
+        groupNameField('auto-entreprise', 'Nom affiché') +
         '<div class="goal-grid goal-grid--stack"><div class="field"><span class="label">Jours perso</span>' + dayToggles('auto-entreprise', a.days) + '</div>' +
           '<div class="goal-inline"><label class="switch"><input class="switch__input" type="checkbox" role="switch" data-goal-min-on data-focus-key="g-mon"' + (minOn ? ' checked' : '') + '>' +
             '<span class="switch__track" aria-hidden="true"></span><span class="switch__label">Minimum par jour perso</span></label>' +
-            '<div class="input-suffix"><label class="sr-only" for="g-am">Heures minimum par jour perso (pôle auto-entreprise)</label><input class="input" type="number" min="0.5" max="16" step="0.5" id="g-am" data-goal-min data-focus-key="g-am" value="' + (a.minDailyHours || 4) + '"' + (minOn ? '' : ' disabled') + '><span>h min.</span></div></div></div>' +
+            '<div class="input-suffix"><label class="sr-only" for="g-am">Heures minimum par jour perso (pôle perso)</label><input class="input" type="number" min="0.5" max="16" step="0.5" id="g-am" data-goal-min data-focus-key="g-am" value="' + (a.minDailyHours || 4) + '"' + (minOn ? '' : ' disabled') + '><span>h min.</span></div></div></div>' +
         '<p class="hint">' + (minOn
-          ? 'Objectif du pôle : ' + D.duration(Math.round(a.minDailyHours * 60)) + ' minimum ' + (a.days.length === 1 ? 'le ' : 'chaque ') + esc(persoDays) + ', Carnet by-pass et Auto-entreprise réunis. Jamais additionné à Flow Line.'
-          : 'Pas de minimum : le ' + esc(persoDays || 'samedi') + ' reste un plaisir.') + '</p></div>' +
+          ? 'Objectif du pôle : ' + D.duration(Math.round(a.minDailyHours * 60)) + ' minimum ' + (a.days.length === 1 ? 'le ' : 'chaque ') + esc(persoDays) + ', ' + esc(poleCats()) + '. Jamais additionné à ' + esc(S.groupName('flowline')) + '.'
+          : 'Pas de minimum : ' + (persoDays ? 'le ' + esc(persoDays) : 'le perso') + ' reste un plaisir.') + '</p></div>' +
     '</section>';
+  }
+
+  // Espaces visibles dans le menu (Productivité reste toujours là)
+  function spacesCard() {
+    return '<section class="glass card" aria-labelledby="st-spaces"><div class="card__header"><div><h2 class="card__title" id="st-spaces">Espaces</h2>' +
+      '<p class="card__subtitle">Affiche seulement ce qui te sert. Rien n’est effacé quand tu masques un espace.</p></div></div>' +
+      '<ul class="option-list" role="list">' +
+        sw('data-space-toggle="health"', S.space('health'), 'Santé', 'Poids, mensurations, alimentation et sport.') +
+        sw('data-space-toggle="budget"', S.space('budget'), 'Budget', 'Entrées, dépenses, factures et économies.') +
+      '</ul></section>';
   }
 
   function themeCard() {
@@ -80,7 +99,7 @@
         [['light', 'sun', 'Clair'], ['dark', 'moon', 'Sombre'], ['system', 'settings', 'Système']].map(function (o) {
           return '<button type="button" class="segmented__item" data-theme-set="' + o[0] + '" data-focus-key="th-' + o[0] + '" aria-pressed="' + (th === o[0]) + '">' + icon(o[1]) + o[2] + '</button>';
         }).join('') + '</div>' +
-      '<p class="hint">Les animations de Lamia et Memeow s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
+      '<p class="hint">Les animations des personnages et de Memeow s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
   }
 
   function sw(attr, on, label, hint, disabled) {
@@ -133,10 +152,10 @@
       : !cloud ? icon('info') + 'Sans synchro : tes données restent sur cet appareil.'
       : s.status === 'offline' ? icon('alert') + 'Hors ligne : tes changements partiront au retour de la connexion.'
       : s.status === 'error' ? icon('alert') + 'Synchronisation en échec : ' + esc(s.error || '')
-      : s.status === 'signed-out' ? icon('alert') + esc(s.error || 'Déconnectée.')
+      : s.status === 'signed-out' ? icon('alert') + esc(s.error || 'Pas de session ouverte.')
       : s.status === 'syncing' ? icon('refresh') + 'Synchronisation en cours…'
       : icon('check') + 'Synchronisé' + (hhmm ? ' à ' + hhmm : '');
-    var account = cloud && s.email ? esc(s.email) : (s.cloud ? 'Pas connectée' : 'Cet appareil uniquement');
+    var account = cloud && s.email ? esc(s.email) : (s.cloud ? 'Compte non connecté' : 'Cet appareil uniquement');
     return '<section class="glass card" aria-labelledby="st-data" id="st-data-card"><div class="card__header"><div><h2 class="card__title" id="st-data">Synchronisation</h2>' +
       '<p class="card__subtitle">Tes tâches, tes heures et tes humeurs, les mêmes sur ton Mac, ton PC et ton téléphone.</p></div></div>' +
       '<div class="folder"><span class="folder__icon">' + icon('user') + '</span><div class="folder__text"><span class="folder__path">' + account + '</span>' +
@@ -182,6 +201,11 @@
   }
 
   function demoCard() {
+    // La démo est celle de Lamia : on ne la propose pas aux autres comptes
+    if (S.me().generic) {
+      return '<section class="glass glass--tint-blue card" aria-labelledby="st-demo" id="st-demo-card"><div class="card__header"><div><h2 class="card__title" id="st-demo">Humeur du matin</h2></div></div>' +
+        '<div class="btn-row"><button type="button" class="btn btn--secondary btn--sm" data-demo="replay">' + icon('mood') + 'Rejouer la question d’humeur du matin</button></div></section>';
+    }
     return '<section class="glass glass--tint-blue card" aria-labelledby="st-demo" id="st-demo-card"><div class="card__header"><div><h2 class="card__title" id="st-demo">Découvrir l’application</h2>' +
       '<p class="card__subtitle">Des données fictives pour explorer, datées autour d’aujourd’hui.</p></div></div>' +
       '<div class="btn-row">' +
@@ -194,7 +218,7 @@
     if (!el) return;
     var html = '<header class="page-head"><div class="page-head__text"><p class="eyebrow">Ton espace, tes règles</p><h1 class="h1" id="h-settings" tabindex="-1">Réglages</h1></div></header>' +
       '<div class="settings-grid"><div class="settings-col">' + categoriesCard() + goalsCard() + '</div>' +
-      '<div class="settings-col">' + themeCard() + remindersCard() + dataCard() + demoCard() + '</div></div>';
+      '<div class="settings-col">' + spacesCard() + themeCard() + remindersCard() + dataCard() + demoCard() + '</div></div>';
     U.keepFocus(el, function () { el.innerHTML = html; });
     U.typo(el);
   }
@@ -333,6 +357,11 @@
     el.addEventListener('change', function (e) {
       var t = e.target;
       if (t.hasAttribute('data-cat-group')) S.updateCategory(t.closest('[data-cat]').getAttribute('data-cat'), { group: t.value });
+      else if (t.hasAttribute('data-space-toggle')) S.setSpace(t.getAttribute('data-space-toggle'), t.checked);
+      else if (t.hasAttribute('data-group-name')) {
+        var gname = t.value.trim();
+        if (gname) S.setGroupName(t.getAttribute('data-group-name'), gname); else t.value = S.groupName(t.getAttribute('data-group-name'));
+      }
       else if (t.getAttribute('data-goal') === 'flowline') { var v = parseFloat(t.value); if (v > 0) S.setSchedule('flowline', { weeklyHours: v }); }
       else if (t.hasAttribute('data-goal-min')) { var w = parseFloat(String(t.value).replace(',', '.')); if (w > 0) S.setSchedule('auto-entreprise', { minDailyHours: w }); }
       else if (t.hasAttribute('data-goal-min-on')) S.setSchedule('auto-entreprise', { minDailyHours: t.checked ? (parseFloat(el.querySelector('#g-am').value) || 4) : 0 });

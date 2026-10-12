@@ -1,7 +1,7 @@
 {
-  "name": "Plateforme de suivi - Lamia",
-  "short_name": "Lamia",
-  "description": "Tâches, heures, échéances et humeur de Lamia, avec Memeow.",
+  "name": "Plateforme de suivi",
+  "short_name": "Suivi",
+  "description": "Tâches, heures, échéances, humeur, santé et budget, avec Memeow.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

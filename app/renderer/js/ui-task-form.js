@@ -13,8 +13,12 @@
     var cats = S.get().categories;
     var w = D.dow(D.today());
     var weekend = w === 0 || w === 6;
-    var pick = cats.filter(function (c) { return weekend ? c.group === 'auto-entreprise' && c.id === 'auto' : c.group === 'flowline'; })[0] ||
-      cats.filter(function (c) { return c.group === (weekend ? 'auto-entreprise' : 'flowline'); })[0];
+    // Jour de travail principal : sa catégorie ; jour perso : le pôle perso
+    var sch = S.get().settings.schedules, persoDay = (sch['auto-entreprise'].days || []).indexOf(w) >= 0;
+    var workDay = (sch.flowline.days || []).indexOf(w) >= 0;
+    var perso = persoDay || (weekend && !workDay);
+    var pick = cats.filter(function (c) { return perso ? c.group === 'auto-entreprise' && c.id === 'auto' : c.group === 'flowline'; })[0] ||
+      cats.filter(function (c) { return c.group === (perso ? 'auto-entreprise' : 'flowline'); })[0];
     return (pick || cats[0]).id;
   }
 
@@ -25,7 +29,8 @@
     var catId = opts.categoryId || defaultCategory();
     var status = opts.status || 'todo';
     var prio = 'normal';
-    var dayHint = D.dow(D.today()) === 6 || D.dow(D.today()) === 0 ? 'C’est le week-end : Auto-entreprise est proposée.' : 'En semaine, Flow Line est proposée. Tu peux changer.';
+    var proposed = S.category(catId);
+    var dayHint = proposed ? '« ' + proposed.name + ' » est proposée pour aujourd’hui. Tu peux changer.' : '';
 
     ov.innerHTML =
       '<div class="modal modal--new" role="dialog" aria-modal="true" aria-labelledby="new-title">' +

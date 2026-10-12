@@ -17,7 +17,28 @@
 
   function viewFromHash() {
     var h = (location.hash || '').replace('#', '');
-    return ROUTES[h] || 'dashboard';
+    var v = ROUTES[h] || 'dashboard';
+    // Espace masqué dans les Réglages : retour au dashboard
+    if (SPACES[v] && !S.space(SPACES[v])) v = 'dashboard';
+    return v;
+  }
+
+  /* --- Compte : prénom, titre, espaces visibles ------------------------------- */
+  function applyPersona() {
+    var me = S.me();
+    document.title = 'Plateforme de suivi' + (me.name ? ' - ' + me.name : '');
+    var side = U.$('.sidebar .brand__sub'), top = U.$('.topbar .brand__sub');
+    if (side) side.textContent = me.name || 'Mon espace';
+    if (top) top.textContent = document.title;
+    var shown = 0;
+    ['health', 'budget'].forEach(function (k) {
+      var on = S.space(k);
+      if (on) shown += 1;
+      U.$$('[data-section="' + k + '"], .tabbar [data-space="' + k + '"], [data-space-go="' + k + '"]').forEach(function (n) { n.hidden = !on; });
+    });
+    var sw = U.$('[data-space-menu]');
+    if (sw) sw.hidden = !shown;
+    document.documentElement.classList.toggle('is-single-space', !shown);
   }
 
   function go(view, opts) {
@@ -311,6 +332,7 @@
     Object.keys(L.views).forEach(function (k) { L.views[k].mount(document.getElementById('view-' + k)); });
 
     initSections();
+    applyPersona();
     L.fun.sidebarCat();
     S.subscribe(function (type, d) {
       var done = (type === 'task:move' && d.status === 'done' && d.prevStatus !== 'done') ||
@@ -327,6 +349,11 @@
       if (type === 'timer' || type.indexOf('task') === 0 || type === 'reset') { L.chrono.render(); counts(); }
       if (type === 'reset') { applyTheme(); U.$$('.view').forEach(function (v) { v.dataset.stale = '1'; }); go(current); }
       if (type === 'save-error') renderBanners();
+      if (type === 'profile' || type === 'settings' || type === 'setup' || type === 'reset') {
+        applyPersona();
+        if (SPACES[current] && !S.space(SPACES[current])) location.hash = 'dashboard';
+      }
+      if (type === 'setup') { U.$$('.view').forEach(function (v) { v.dataset.stale = '1'; }); go(current); }
       if (type === 'read-only') U.toast({ icon: 'eye', title: 'Lecture seule', text: 'Cette modification n’est pas enregistrée : l’application est ouverte sur un autre PC.', duration: 6000 });
     });
     var lastOk = true;
@@ -382,7 +409,9 @@
       }
     }, 60000);
 
-    morning(false);
+    // Nouveau compte : l'accueil d'abord, l'humeur du jour ensuite
+    if (st.setup && st.setup.done === false && L.setup) L.setup.open(function () { morning(false); });
+    else morning(false);
     api.app.ready({ view: current, tasks: st.tasks.length, firstLaunch: info.loadStatus === 'created' });
   }
 

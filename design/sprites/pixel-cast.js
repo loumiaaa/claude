@@ -3,7 +3,7 @@
  * Script classique (pas de module ES, aucune requête réseau) : fonctionne en file://.
  * Expose window.PixelCast, cf. docs/00-cahier-des-charges.md §8 :
  *
- *   const ctrl = PixelCast.mount(canvas, 'lamia' | 'memeow', { scale: 4, animation: 'idle' });
+ *   const ctrl = PixelCast.mount(canvas, 'lamia' | 'garcon' | 'memeow', { scale: 4, animation: 'idle' });
  *   ctrl.play('wave'); ctrl.stop(); ctrl.destroy();
  *   PixelCast.animations            // { lamia: [...], memeow: [...] }
  *   PixelCast.size('lamia')         // { width, height } en pixels « art »
@@ -729,6 +729,97 @@
     }
   };
 
+  /* ---------------------------------------------------------------------
+     GARÇON · 32 × 48 — cheveux bruns (coupe coréenne : raie au milieu, frange
+     rideau, un peu de longueur derrière les oreilles), lunettes argent, yeux verts, barbe
+     courte (joues, moustache, menton), tee-shirt blanc, jean large, baskets.
+     Même squelette que Lamia : bras, torse et animations sont partagés,
+     seuls la palette, la tête, les jambes et la bouche changent.
+     --------------------------------------------------------------------- */
+  var EMPTY_PART = { y: 0, rows: ['................................'] };
+  CAST.garcon = {
+    width: 32,
+    height: 48,
+    palette: Object.assign({}, CAST.lamia.palette, {
+      O: '#24170F', // contour des cheveux
+      A: '#3B2518', // cheveux, ombre
+      a: '#59392A', // cheveux, base (brun)
+      b: '#7C5338', // cheveux, reflet
+      c: '#A87A52', // cheveux, brillance
+      s: '#F6D6C1', // peau
+      S: '#E2AF95', // peau, ombre
+      e: '#2E7A47', // yeux verts
+      g: '#9AA3B2', // lunettes argent
+      G: '#EEF1F6', // lunettes, reflet
+      B: '#5C3E2C', // barbe courte
+      K: '#805B44', // barbe, plus claire
+      m: '#9A4B4E', // bouche
+      t: '#FCFCFF', // tee-shirt blanc
+      T: '#D5D9E8', // tee-shirt, ombre
+      u: '#FFFFFF', // tee-shirt, lumière
+      j: '#4E6DAA', // jean large
+      J: '#35508A', // jean, ombre
+      i: '#7E9AD2', // jean, lumière
+      W: '#FFFFFF', // baskets
+      x: '#C3C8DA', // baskets, ombre
+      z: '#8A90A8'  // baskets, semelle
+    }),
+    parts: Object.assign({}, CAST.lamia.parts, {
+      hairBack: EMPTY_PART,
+      curl: EMPTY_PART,
+      head: { y: 0, rows: [
+        '................................',
+        '...........OOOOOOOOOO...........',
+        '.........OaabbbAAbbbaaO.........',
+        '........OaabbccAAccbbaaO........',
+        '.......OaabbccbAAbccbbaaO.......',
+        '......OaaabbbbaAAabbbbaaaO......',
+        '.....OaaaabbaaaAAaaabbaaaaO.....',
+        '.....OaaabaaaaAssAaaaabaaaO.....',
+        '.....OaaAaaaAssssssAaaaAaaO.....',
+        '.....OaaaaaAssssssssAaaaaaO.....',
+        '.....OaaAaGgggssssGgggaAaaO.....',
+        '.....OaosgseesggggseesgsoaO.....',
+        '.....OaoSgswesgssgswesgSoaO.....',
+        '.....OaosgseesgssgseesgsoaO.....',
+        '......OoBsggggssssggggsBoO......',
+        '.......oBBssssBBBBssssBBo.......',
+        '.......oBBBsssBmmBsssBBBo.......',
+        '........oBBKBBBBBBBBKBBo........',
+        '..........oBBBBBBBBBBo..........'
+      ]},
+      legs: { y: 30, rows: [
+        '.........oijjjjjJjjjjJo.........',
+        '.........oijjjjjJjjjjJo.........',
+        '.........oijjjjjJjjjjJo.........',
+        '.........oijjjJooijjjJo.........',
+        '.........oijjjJooijjjJo.........',
+        '.........oijjjJooijjjJo.........',
+        '........oijjjjJooijjjjJo........',
+        '........oijjjjJooijjjjJo........',
+        '........oiijjjJooiijjjJo........',
+        '........oijjjjJooijjjjJo........',
+        '........oijjjjJooijjjjJo........',
+        '........oJJJJJJooJJJJJJo........',
+        '........oWxWWWWooWWWWxWo........',
+        '.......oWWWxWWWooWWWxWWWo.......',
+        '.......oxxxxxxxooxxxxxxxo.......',
+        '.......oWWWWWWWooWWWWWWWo.......',
+        '.......ozzzzzzzoozzzzzzzo.......',
+        '........ooooooo..ooooooo........'
+      ]},
+      mouthFocus: { y: 16, rows: [
+        '...............mm...............',
+        '................K...............'
+      ]},
+      mouthOpen: { y: 16, rows: [
+        '..............mmmm..............',
+        '...............mm...............'
+      ]}
+    }),
+    animations: CAST.lamia.animations
+  };
+
   /* =======================================================================
      2. LES ICÔNES · 16 × 16
      ======================================================================= */
@@ -1194,7 +1285,7 @@
     return function () {};
   }
 
-  var LABELS = { lamia: 'Lamia', memeow: 'Memeow, la chatte de Lamia' };
+  var LABELS = { lamia: 'Lamia', memeow: 'Memeow, la chatte de Lamia', garcon: 'Personnage en pixel art' };
   var mounted = typeof WeakMap === 'function' ? new WeakMap() : null;
 
   function mount(canvas, id, options) {

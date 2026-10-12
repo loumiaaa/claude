@@ -92,7 +92,7 @@
     } else {
       var pg = Q.persoGoal(p.start, p.start, false);
       goalNote = c.group === 'auto-entreprise'
-        ? (pg.enabled ? 'Compte dans le minimum perso du pôle (voir « ' + pg.label + ' »).' : 'Sans objectif : le perso se fait surtout le samedi.')
+        ? (pg.enabled ? 'Compte dans le minimum perso du pôle (voir « ' + pg.label + ' »).' : 'Sans objectif d’heures pour le perso.')
         : 'Sans objectif d’heures.';
     }
     var body;
@@ -141,8 +141,8 @@
       ? (g.days[0].reached ? 'Minimum atteint' + (mins > goal ? ' : +' + NB + D.duration(mins - goal) + ' en bonus.' : ', bravo !')
         : g.days[0].future ? 'Rendez-vous ' + D.dayMonthLong(g.days[0].date) + ', à ton rythme.'
         : g.days[0].today ? 'Encore ' + D.duration(goal - mins) + ' aujourd’hui pour ton minimum perso.'
-        : 'Un samedi plus léger : ça arrive, et c’est très bien aussi.')
-      : (counted.length ? reached + ' sur ' + counted.length + ' déjà passé' + (counted.length > 1 ? 's' : '') + '. Chaque samedi compte pour lui-même.' : 'Le mois commence : les samedis arrivent.');
+        : 'Un ' + D.DAYS[D.dow(g.days[0].date)] + ' plus léger : ça arrive, et c’est très bien aussi.')
+      : (counted.length ? reached + ' sur ' + counted.length + ' déjà passé' + (counted.length > 1 ? 's' : '') + '. Chaque jour perso compte pour lui-même.' : 'Le mois commence : les jours perso arrivent.');
     var days = g.days.map(function (x) {
       return '<div class="perso-day' + (x.future ? ' is-future' : '') + '"><span class="perso-day__label">' + esc(D.cap(D.dayMonthLong(x.date))) + '</span>' +
         '<span class="perso-day__value num">' + D.duration(x.minutes) + ' / ' + D.duration(goal) + '</span>' +
@@ -153,8 +153,15 @@
       '<p class="hcard__value">' + value + '</p>' +
       '<p class="hcard__note">' + esc(note) + '</p>' +
       '<div class="hcard__days">' + days + '</div>' +
-      '<p class="chart-legend">Pôle auto-entreprise : Carnet by-pass et Auto-entreprise réunis, jamais additionnés à Flow Line.</p>' +
+      '<p class="chart-legend">' + esc(poleLegend()) + '</p>' +
     '</section>';
+  }
+
+  // « Pôle Auto-entreprise : Carnet by-pass et Auto-entreprise réunis, jamais additionnés à Flow Line. »
+  function poleLegend() {
+    var names = S.get().categories.filter(function (c) { return c.group === 'auto-entreprise'; }).map(function (c) { return c.name; });
+    var joined = names.length > 1 ? names.slice(0, -1).join(', ') + ' et ' + names[names.length - 1] + ' réunis' : (names[0] && names[0] !== S.groupName('auto-entreprise') ? names[0] : '');
+    return 'Pôle ' + S.groupName('auto-entreprise') + (joined ? ' : ' + joined : '') + ', jamais additionné' + (names.length > 1 ? 's' : '') + ' à ' + S.groupName('flowline') + '.';
   }
 
   // Le chrono en cours compte dans le total du jour : on l'affiche aussi dans la liste
@@ -256,7 +263,7 @@
     return '<div class="insight">' +
       '<div class="insight__fig"><span class="insight__num num">' + fmt(mean) + '</span><span class="insight__label">humeur moyenne sur ' + U.plural(noted.length, 'jour noté', 'jours notés') + '</span></div>' +
       '<div class="insight__split">' +
-        '<div><span class="insight__num insight__num--sm num">' + fmt(ah) + '</span><span class="insight__label">jours à 7' + NB + 'h 30 ou plus de Flow Line</span></div>' +
+        '<div><span class="insight__num insight__num--sm num">' + fmt(ah) + '</span><span class="insight__label">jours à 7' + NB + 'h 30 ou plus de ' + esc(S.groupName('flowline')) + '</span></div>' +
         '<div><span class="insight__num insight__num--sm num">' + fmt(al) + '</span><span class="insight__label">journées plus légères</span></div>' +
       '</div><p class="insight__msg">' + esc(msg) + '</p></div>';
   }

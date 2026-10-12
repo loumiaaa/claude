@@ -11,7 +11,12 @@
   var esc = U.esc, icon = U.icon, NB = U.NB;
 
   var EXPENSE_CATS = ['Logement', 'Courses', 'Transport', 'Santé', 'Abonnements', 'Restaurants', 'Loisirs', 'Shopping', 'Beauté', 'Matériel pro', 'Cadeaux', 'Autre'];
-  var INCOME_CATS = ['Salaire Flow Line', 'Auto-entreprise', 'Carnet by-pass', 'Remboursement', 'Autre'];
+  // Entrées : le salaire du travail principal, puis les projets du pôle perso (catégories du compte)
+  function incomeCats() {
+    var st = S.get(), out = ['Salaire ' + S.groupName('flowline')];
+    st.categories.forEach(function (c) { if (c.group === 'auto-entreprise' && out.indexOf(c.name) < 0) out.push(c.name); });
+    return out.concat(['Remboursement', 'Autre']);
+  }
   var BILL_CATS = ['Logement', 'Énergie', 'Téléphone & internet', 'Assurances', 'Abonnements', 'Transport', 'Crédit', 'Autre'];
   var MONTHS = D.MONTHS;
   var EUR = (function () { try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }); } catch (e) { return null; } })();
@@ -94,7 +99,7 @@
       }).join('') + '</select>';
     } else if (def.t === 'cat') {
       input = '<input class="input" id="' + id + '" name="' + def.k + '" list="' + id + '-l" maxlength="40" placeholder="' + (def.ph || 'Catégorie') + '" value="' + esc(v) + '" data-focus-key="' + id + '"><datalist id="' + id + '-l">' +
-        def.opts.map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>';
+        (typeof def.opts === 'function' ? def.opts() : def.opts).map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>';
     } else input = '<input class="input" id="' + id + '" name="' + def.k + '" maxlength="' + (def.max || 60) + '" placeholder="' + esc(def.ph || '') + '" value="' + esc(v) + '" data-focus-key="' + id + '">';
     return '<div class="field"><label class="label" for="' + id + '">' + def.label + '</label>' + input + (def.hint ? '<p class="hint">' + def.hint + '</p>' : '') + '</div>';
   }
@@ -129,7 +134,7 @@
       { k: 'date', t: 'date', label: 'Date' },
       { k: 'label', t: 'text', label: 'Libellé', ph: 'ex. Courses, salaire…', req: true },
       { k: 'amount', t: 'money', label: 'Montant (€)', req: true },
-      { k: 'category', t: 'cat', label: 'Catégorie', opts: EXPENSE_CATS.concat(INCOME_CATS.filter(function (c) { return c !== 'Autre'; })) }
+      { k: 'category', t: 'cat', label: 'Catégorie', opts: function () { return EXPENSE_CATS.concat(incomeCats().filter(function (c) { return c !== 'Autre'; })); } }
     ],
     bills: [
       { k: 'label', t: 'text', label: 'Facture', ph: 'ex. Loyer, électricité…', req: true },
