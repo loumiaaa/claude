@@ -233,6 +233,8 @@
     function arr(a) { return Array.isArray(a) ? a.filter(function (x) { return x && typeof x === 'object'; }) : []; }
     function amount(x) { return typeof x.amount === 'number' && isFinite(x.amount) && x.amount >= 0; }
     return {
+      // Jour où commence le mois budgétaire (jour de paie), 1 à 28
+      startDay: b.startDay >= 1 && b.startDay <= 28 ? Math.round(b.startDay) : 27,
       // Entrées et dépenses datées : { id, date, type: 'income'|'expense', label, amount, category }
       entries: arr(b.entries).filter(function (x) { return DATE_RE.test(x.date) && (x.type === 'income' || x.type === 'expense') && amount(x); }),
       // Factures récurrentes : { id, label, amount, day (1-31), every: 'month'|'year', month (1-12, si annuel), since: 'YYYY-MM-DD', until?, category }

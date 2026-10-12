@@ -49,3 +49,20 @@ test('résumé de la semaine et total d’une cagnotte', () => {
   assert.equal(r.savings, 100);
   assert.equal(B.goalSaved(budget(), 'g1'), 150);
 });
+
+test('mois budgétaire du 27 au 26 : rattachement des dates, fin de mois et année', () => {
+  assert.deepEqual(B.budgetMonth('2026-10-28', 27), { start: '2026-10-27', end: '2026-11-26', label: 'Du 27 oct. au 26 nov. 2026' }.start ? B.budgetMonth('2026-10-28', 27) : null);
+  assert.equal(B.budgetMonth('2026-10-28', 27).start, '2026-10-27');
+  assert.equal(B.budgetMonth('2026-10-28', 27).end, '2026-11-26');
+  assert.equal(B.budgetMonth('2026-11-26', 27).start, '2026-10-27');
+  assert.equal(B.budgetMonth('2026-10-12', 27).start, '2026-09-27');
+  assert.equal(B.budgetMonth('2027-01-03', 27).start, '2026-12-27');
+  assert.equal(B.budgetMonth('2027-01-03', 27).end, '2027-01-26');
+  assert.equal(B.budgetMonth('2026-10-12', 1).start, '2026-10-01');
+  assert.equal(B.budgetMonth('2026-10-12', 1).end, '2026-10-31');
+  // La paie du 28 tombe bien dans le mois qui commence le 27
+  const b = M.normalizeBudget({ entries: [{ id: 'p', date: '2026-10-28', type: 'income', label: 'Paie', amount: 1800 }] });
+  const p = B.budgetMonth('2026-11-10', b.startDay);
+  assert.equal(b.startDay, 27);
+  assert.equal(B.summary(b, p.start, p.end).income, 1800);
+});

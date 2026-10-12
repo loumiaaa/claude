@@ -66,9 +66,20 @@
     return { income: cents(income), expenses: cents(expenses), savings: cents(savings), rest: cents(income - expenses - savings), byCategory: cats, items: items };
   }
 
+  // Mois budgétaire commençant le jour `startDay` (ex. 27 : du 27 au 26 du mois suivant)
+  function budgetMonth(anchor, startDay) {
+    var sd = Math.max(1, Math.min(28, Math.round(startDay || 1)));
+    var a = D.parse(anchor), y = a.getFullYear(), m = a.getMonth() + 1;
+    if (a.getDate() < sd) { m--; if (m < 1) { m = 12; y--; } }
+    var start = y + '-' + D.pad(m) + '-' + D.pad(sd);
+    var end = D.addDays(D.addMonths(start, 1), -1);
+    var label = sd === 1 ? D.cap(D.monthYear(start)) : 'Du ' + D.dayMonth(start) + ' au ' + D.dayMonth(end) + ' ' + end.slice(0, 4);
+    return { start: start, end: end, label: label };
+  }
+
   function goalSaved(b, goalId) {
     return cents(b.deposits.reduce(function (a, x) { return x.goalId === goalId ? a + x.amount : a; }, 0));
   }
 
-  return { cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved };
+  return { budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved };
 });

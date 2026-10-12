@@ -43,7 +43,12 @@
 
   /* --- Période : semaine ou mois (partagée par les vues) ------------------------- */
   var zoom = 'month', anchor = null;
-  function period() { return D.period(zoom, anchor || D.today()); }
+  function periodAt(a) { return zoom === 'month' ? BG.budgetMonth(a, B().startDay) : D.period('week', a); }
+  function period() { return periodAt(anchor || D.today()); }
+  function shiftAnchor(a, delta) {
+    if (zoom === 'week') return D.shift('week', a, delta);
+    return D.addMonths(BG.budgetMonth(a, B().startDay).start, delta);
+  }
   function periodBar() {
     var p = period(), isNow = D.between(D.today(), p.start, p.end), w = zoom === 'week';
     return '<div class="period-bar"><div class="segmented" role="group" aria-label="Vue">' +
@@ -59,7 +64,7 @@
     el.addEventListener('click', function (e) {
       var b;
       if ((b = e.target.closest('[data-b-zoom]'))) { zoom = b.getAttribute('data-b-zoom'); redrawAll(); return; }
-      if ((b = e.target.closest('[data-b-nav]'))) { anchor = D.shift(zoom, anchor || D.today(), +b.getAttribute('data-b-nav')); redrawAll(); return; }
+      if ((b = e.target.closest('[data-b-nav]'))) { anchor = shiftAnchor(anchor || D.today(), +b.getAttribute('data-b-nav')); redrawAll(); return; }
       if (e.target.closest('[data-b-today]')) { anchor = null; redrawAll(); }
     });
   }
@@ -245,8 +250,8 @@
   function trend() {
     var rows = [], a = anchor || D.today();
     for (var i = 5; i >= 0; i--) {
-      var p = D.period(zoom, D.shift(zoom, a, -i)), s = BG.summary(B(), p.start, p.end);
-      rows.push('<tr' + (i === 0 ? ' class="is-current"' : '') + '><th scope="row">' + esc(zoom === 'week' ? 'Sem. ' + D.isoWeek(p.start) : D.cap(MONTHS[D.parse(p.start).getMonth()]).slice(0, 4) + '. ' + p.start.slice(2, 4)) + '</th>' +
+      var p = periodAt(shiftAnchor(a, -i)), s = BG.summary(B(), p.start, p.end);
+      rows.push('<tr' + (i === 0 ? ' class="is-current"' : '') + '><th scope="row">' + esc(zoom === 'week' ? 'Sem. ' + D.isoWeek(p.start) : (B().startDay === 1 ? D.cap(MONTHS[D.parse(p.start).getMonth()]).slice(0, 4) + '. ' + p.start.slice(2, 4) : D.dayMonth(p.start) + ' → ' + D.dayMonth(p.end))) + '</th>' +
         '<td>' + eur(s.income) + '</td><td>' + eur(s.expenses) + '</td><td>' + eur(s.savings) + '</td><td class="' + (s.rest < 0 ? 'is-neg' : 'is-pos') + '">' + eur(s.rest) + '</td></tr>');
     }
     return '<div class="table-wrap"><table class="health-table budget-table"><thead><tr><th scope="col">' + (zoom === 'week' ? 'Semaine' : 'Mois') + '</th><th scope="col">Entrées</th><th scope="col">Dépenses</th><th scope="col">Économies</th><th scope="col">Reste</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
@@ -280,6 +285,9 @@
         card('bd-cat', 'Dépenses par catégorie', esc(p.label), s.byCategory.length ? '<div class="chart-host" data-chart="cats"></div>' : empty('Aucune dépense sur cette période.')) +
         card('bd-due', 'Factures et échéances', 'Prélèvements et paiements en plusieurs fois de la période', dueList) +
         card('bd-trend', 'Évolution', zoom === 'week' ? '6 dernières semaines' : '6 derniers mois', trend()) +
+        card('bd-start', 'Mois budgétaire', 'Ton mois commence le jour de ta paie', '<form class="health-form start-form" data-b-start novalidate><div class="field"><label class="label" for="b-start">Le mois commence le</label>' +
+          '<select class="select" id="b-start" name="day" data-focus-key="b-start">' + Array.apply(null, Array(28)).map(function (_, i) { var d = i + 1; return '<option value="' + d + '"' + (d === B().startDay ? ' selected' : '') + '>' + (d === 1 ? '1er' : d) + '</option>'; }).join('') + '</select>' +
+          '<p class="hint">Mois en cours : ' + esc(BG.budgetMonth(D.today(), B().startDay).label) + '.</p></div></form>') +
         card('bd-goals', 'Cagnottes', 'Où en est ton épargne', goalsSummary() + '<a class="btn btn--ghost btn--sm" href="#epargne">Mes économies' + icon('chevron-right') + '</a>') +
       '</div>';
     var host = el.querySelector('[data-chart="cats"]');
@@ -352,6 +360,17 @@
       card('sv-add', 'Nouvelle cagnotte', '', addForm('goals', 'g', 'Créer')) +
       (goals || empty('Pas encore de cagnotte. Crée la première ci-dessus.'));
   }
+  function bindStart(el) {
+    el.addEventListener('change', function (e) {
+      if (!e.target.closest('[data-b-start]')) return;
+      B().startDay = +e.target.value;
+      anchor = null;
+      S.emit('budget', { startDay: true }, { now: true });
+      U.toast({ icon: 'calendar', title: 'Le mois budgétaire commence le ' + (e.target.value === '1' ? '1er' : e.target.value), duration: 3000 });
+      redrawAll();
+    });
+  }
+
   function bindSavings(el) {
     // « Retirer » : on mémorise le bouton utilisé pour l'envoi
     el.addEventListener('click', function (e) {
@@ -367,7 +386,7 @@
   }
 
   L.views = L.views || {};
-  L.views.budget = makeView('budget', 'Budget', renderDash);
+  L.views.budget = makeView('budget', 'Budget', renderDash, bindStart);
   L.views.money = makeView('money', 'Entrées & dépenses', renderMoney, function (el) {
     bindAdd(el, function (k, v) { U.toast({ icon: 'check', title: (v.type === 'income' ? 'Entrée' : 'Dépense') + ' ajoutée', text: v.label + ' : ' + eur(v.amount), duration: 3000 }); });
   });
