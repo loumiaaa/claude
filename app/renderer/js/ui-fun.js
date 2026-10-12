@@ -152,9 +152,9 @@
           if (!en.isIntersecting) return;
           var n = en.target;
           io.unobserve(n);
-          n.style.transitionDelay = Math.min(ioBatch++, 5) * 70 + 'ms';
+          n.style.transitionDelay = Math.min(ioBatch++, 5) * 90 + 'ms';
           n.classList.add('is-revealed');
-          setTimeout(function () { n.classList.remove('reveal', 'is-revealed'); n.style.transitionDelay = ''; }, 1100);
+          setTimeout(function () { n.classList.remove('reveal', 'is-revealed'); n.style.transitionDelay = ''; }, 1700);
         });
         clearTimeout(ioTimer); ioTimer = setTimeout(function () { ioBatch = 0; }, 120);
       }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
@@ -192,5 +192,46 @@
     update();
   }
 
-  L.fun = { miniScene: miniScene, celebrate: celebrate, countUp: countUp, meow: meow, sidebarCat: sidebarCat, reveal: reveal, watchScroll: watchScroll };
+  /* --- Molette avec inertie (ordinateur) -----------------------------------------------
+     La molette donne une destination ; la page y glisse et ralentit en douceur.
+     Le tactile (téléphone), le clavier, la barre de défilement, les zones qui défilent
+     elles-mêmes (Kanban, Planning, fenêtres) gardent le défilement natif. */
+  function smoothWheel() {
+    if (reduced() || !window.requestAnimationFrame) return;
+    var root = document.documentElement, target = window.scrollY, pos = window.scrollY, raf = null, last = 0;
+    var EASE = 0.085;          // part du chemin parcourue à chaque image (plus petit = plus doux)
+    function max() { return root.scrollHeight - window.innerHeight; }
+    function step(t) {
+      var dt = last ? Math.min(3, (t - last) / 16.7) : 1;   // même vitesse à 60 Hz et 120 Hz
+      last = t;
+      pos += (target - pos) * (1 - Math.pow(1 - EASE, dt));
+      if (Math.abs(target - pos) < 0.4) { pos = target; raf = null; last = 0; }
+      window.scrollTo({ top: pos, left: 0, behavior: 'instant' });
+      if (raf) raf = requestAnimationFrame(step);
+    }
+    function scrollsItself(n, dy) {
+      for (; n && n !== document.body && n !== root; n = n.parentElement) {
+        var cs = getComputedStyle(n);
+        if (/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) {
+          if ((dy < 0 && n.scrollTop > 0) || (dy > 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1)) return true;
+        }
+      }
+      return false;
+    }
+    window.addEventListener('wheel', function (e) {
+      if (e.defaultPrevented || e.ctrlKey || e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      if (root.classList.contains('has-layer') || scrollsItself(e.target, e.deltaY)) return;
+      var dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? window.innerHeight : 1);
+      e.preventDefault();
+      if (!raf) { pos = window.scrollY; target = pos; }
+      target = Math.max(0, Math.min(max(), target + dy));
+      if (!raf) raf = requestAnimationFrame(step);
+    }, { passive: false });
+    // Tout autre défilement (clavier, barre, ancre, retour en haut) reprend la main
+    function cancel() { if (raf) { cancelAnimationFrame(raf); raf = null; last = 0; } }
+    ['keydown', 'mousedown', 'touchstart'].forEach(function (k) { window.addEventListener(k, cancel, { passive: true }); });
+    window.addEventListener('hashchange', cancel);
+  }
+
+  L.fun = { miniScene: miniScene, celebrate: celebrate, countUp: countUp, meow: meow, sidebarCat: sidebarCat, reveal: reveal, watchScroll: watchScroll, smoothWheel: smoothWheel };
 })(window.Lamia = window.Lamia || {});

@@ -335,6 +335,7 @@
     initSections();
     applyPersona();
     L.fun.watchScroll();
+    L.fun.smoothWheel();
     L.fun.sidebarCat();
     S.subscribe(function (type, d) {
       var done = (type === 'task:move' && d.status === 'done' && d.prevStatus !== 'done') ||
