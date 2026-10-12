@@ -586,6 +586,22 @@
   };
   // Application installable et hors ligne
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* hors ligne indisponible */ }); });
+    var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
+        // Cherche une nouvelle version à chaque retour sur l'app
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') reg.update().catch(function () {}); });
+      }).catch(function () { /* hors ligne indisponible */ });
+    });
+    // Nouvelle version installée : on recharge une fois (après avoir tout enregistré)
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloaded) { hadController = true; return; }
+      reloaded = true;
+      try { if (current) writeLocal(current); } catch (e) { /* rien */ }
+      var go = function () { push().then(function () { location.reload(); }, function () { location.reload(); }); };
+      var U = window.Lamia && window.Lamia.ui;
+      if (U && U.topLayer && U.topLayer()) U.toast({ icon: 'sparkle', title: 'Nouvelle version disponible', text: 'Elle s’affichera à la prochaine ouverture.', duration: 6000 });
+      else go();
+    });
   }
 })();

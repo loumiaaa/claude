@@ -16,10 +16,15 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  // Page et code de l'app : réseau d'abord (nouvelle version dès qu'elle existe), cache si hors ligne
+  var fresh = req.mode === 'navigate' || /\.(html|js|css|webmanifest)$/.test(new URL(req.url).pathname);
   e.respondWith(caches.open(CACHE).then(function (c) {
+    if (fresh) {
+      return fetch(req, { cache: 'no-cache' }).then(function (res) { if (res && res.ok) c.put(req, res.clone()); return res; })
+        .catch(function () { return c.match(req, { ignoreSearch: true }).then(function (hit) { return hit || c.match('./'); }); });
+    }
     return c.match(req, { ignoreSearch: true }).then(function (hit) {
-      var net = fetch(req).then(function (res) { if (res && res.ok) c.put(req, res.clone()); return res; }).catch(function () { return hit; });
-      return hit || net;
+      return hit || fetch(req).then(function (res) { if (res && res.ok) c.put(req, res.clone()); return res; });
     });
   }));
 });
