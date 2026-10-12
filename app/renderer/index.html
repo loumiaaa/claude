@@ -27,10 +27,16 @@
       <button type="button" class="btn btn--primary btn--block" data-action="new-task"><span data-icon="plus"></span>Nouvelle tâche</button>
 
       <nav class="sidebar__nav" aria-label="Navigation principale">
+        <p class="nav-group" aria-hidden="true">Productivité</p>
         <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
         <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
         <a class="nav-item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
         <a class="nav-item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
+        <p class="nav-group" aria-hidden="true">Santé</p>
+        <a class="nav-item" href="#sante" data-nav="health"><span data-icon="heart"></span><span class="nav-item__label">Tableau de bord</span></a>
+        <a class="nav-item" href="#corps" data-nav="body"><span data-icon="trend"></span><span class="nav-item__label">Poids &amp; mensurations</span></a>
+        <a class="nav-item" href="#alimentation" data-nav="food"><span data-icon="coffee"></span><span class="nav-item__label">Alimentation</span></a>
+        <a class="nav-item" href="#sport" data-nav="sport"><span data-icon="timer"></span><span class="nav-item__label">Sport</span></a>
         <span class="sidebar__sep" role="presentation"></span>
         <a class="nav-item" href="#reglages" data-nav="settings"><span data-icon="settings"></span><span class="nav-item__label">Réglages</span></a>
       </nav>
@@ -51,6 +57,7 @@
         <span class="brand__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
         <span class="brand__text"><span class="brand__name" data-topbar-title>Dashboard</span><span class="brand__sub">Plateforme de suivi - Lamia</span></span>
       </a>
+      <a class="btn btn--ghost btn--icon topbar__settings" href="#reglages" aria-label="Réglages"><span data-icon="settings"></span></a>
       <button type="button" class="btn btn--ghost btn--icon" data-action="cycle-theme" aria-label="Changer de thème"><span data-icon="moon"></span></button>
       <button type="button" class="btn btn--primary btn--icon" data-action="new-task" aria-label="Nouvelle tâche"><span data-icon="plus"></span></button>
     </header>
@@ -61,6 +68,10 @@
       <section class="view" id="view-tasks" data-view="tasks" aria-labelledby="h-tasks" hidden></section>
       <section class="view" id="view-planning" data-view="planning" aria-labelledby="h-planning" hidden></section>
       <section class="view" id="view-recap" data-view="recap" aria-labelledby="h-recap" hidden></section>
+      <section class="view" id="view-health" data-view="health" aria-labelledby="h-health" hidden></section>
+      <section class="view" id="view-body" data-view="body" aria-labelledby="h-body" hidden></section>
+      <section class="view" id="view-food" data-view="food" aria-labelledby="h-food" hidden></section>
+      <section class="view" id="view-sport" data-view="sport" aria-labelledby="h-sport" hidden></section>
       <section class="view" id="view-settings" data-view="settings" aria-labelledby="h-settings" hidden></section>
     </main>
   </div>
@@ -69,11 +80,16 @@
   <div class="dock" data-inert-root>
     <section class="glass glass--strong chrono-pill" data-chrono-pill aria-label="Chrono" hidden></section>
     <nav class="glass glass--strong tabbar" aria-label="Navigation principale">
-      <a class="tabbar__item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span>Accueil</span></a>
-      <a class="tabbar__item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span>Tâches</span></a>
-      <a class="tabbar__item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span>Planning</span></a>
-      <a class="tabbar__item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span>Récap</span></a>
-      <a class="tabbar__item" href="#reglages" data-nav="settings"><span data-icon="settings"></span><span>Réglages</span></a>
+      <a class="tabbar__item" href="#dashboard" data-nav="dashboard" data-space="prod"><span data-icon="dashboard"></span><span>Accueil</span></a>
+      <a class="tabbar__item" href="#taches" data-nav="tasks" data-space="prod"><span data-icon="tasks"></span><span>Tâches</span></a>
+      <a class="tabbar__item" href="#planning" data-nav="planning" data-space="prod"><span data-icon="planning"></span><span>Planning</span></a>
+      <a class="tabbar__item" href="#recap" data-nav="recap" data-space="prod"><span data-icon="recap"></span><span>Récap</span></a>
+      <a class="tabbar__item tabbar__item--switch" href="#sante" data-space="prod"><span data-icon="heart"></span><span>Santé</span></a>
+      <a class="tabbar__item" href="#sante" data-nav="health" data-space="health"><span data-icon="heart"></span><span>Santé</span></a>
+      <a class="tabbar__item" href="#corps" data-nav="body" data-space="health"><span data-icon="trend"></span><span>Corps</span></a>
+      <a class="tabbar__item" href="#alimentation" data-nav="food" data-space="health"><span data-icon="coffee"></span><span>Repas</span></a>
+      <a class="tabbar__item" href="#sport" data-nav="sport" data-space="health"><span data-icon="timer"></span><span>Sport</span></a>
+      <a class="tabbar__item tabbar__item--switch" href="#dashboard" data-space="health"><span data-icon="dashboard"></span><span>Productivité</span></a>
     </nav>
   </div>
 
@@ -106,6 +122,7 @@
   <script src="js/ui-planning.js"></script>
   <script src="js/ui-recap.js"></script>
   <script src="js/ui-settings.js"></script>
+  <script src="js/ui-health.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

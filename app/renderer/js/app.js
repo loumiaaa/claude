@@ -10,7 +10,8 @@
   'use strict';
 
   var D = L.dates, S = L.store, U = L.ui, Q = L.q, ST = L.shared.stats, R = L.shared.reminders;
-  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings' };
+  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport' };
+  var HEALTH_VIEWS = ['health', 'body', 'food', 'sport'];
   var current = null;
   var api = window.lamia;
 
@@ -33,6 +34,7 @@
     var title = U.$('[data-topbar-title]');
     if (title) title.textContent = V ? V.title : '';
     document.documentElement.setAttribute('data-view', view);
+    if (view !== 'settings') document.documentElement.setAttribute('data-space', HEALTH_VIEWS.indexOf(view) >= 0 ? 'health' : 'prod');
     if (changed && !opts.initial) {
       window.scrollTo(0, 0);
       var h = U.$('#view-' + view + ' h1');

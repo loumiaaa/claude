@@ -356,6 +356,33 @@
       state.moods.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
       emit('mood', { date: date, level: level }, { now: true });
     },
+    /* Santé : poids, mensurations, repas, sport */
+    health: function () {
+      if (!state.health) state.health = window.LamiaShared.model.normalizeHealth(null);
+      return state.health;
+    },
+    addHealth: function (kind, item) {
+      var h = store.health();
+      item.id = uid(kind.slice(0, 3));
+      h[kind].push(item);
+      h[kind].sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+      emit('health', { kind: kind }, { now: true });
+      return item;
+    },
+    removeHealth: function (kind, id) {
+      var h = store.health();
+      h[kind] = h[kind].filter(function (x) { return x.id !== id; });
+      emit('health', { kind: kind });
+    },
+    setHealthGoal: function (kg) { store.health().goalKg = kg > 0 ? kg : null; emit('health', { goal: true }); },
+    copyMeals: function (from, to) {
+      var h = store.health();
+      var src = h.meals.filter(function (m) { return m.date === from; });
+      src.forEach(function (m) { h.meals.push({ id: uid('mea'), date: to, slot: m.slot, name: m.name, qty: m.qty, unit: m.unit }); });
+      emit('health', { kind: 'meals' }, { now: true });
+      return src.length;
+    },
+
     setMoodNote: function (date, note) {
       var m = state.moods.filter(function (x) { return x.date === date; })[0];
       if (m) { m.note = note; emit('mood', { date: date, note: true }); }

@@ -282,7 +282,77 @@
     });
   }
 
+  /* --- Courbe de valeurs datées (poids, mensurations) ----------------------- */
+  // o = { points: [{ date, value, note }], unit, decimals, goal, ariaLabel, height, hue, uid }
+  function valueLine(host, o) {
+    var W = Math.max(200, Math.floor(host.clientWidth || 320));
+    var H = o.height || 200;
+    var pad = { l: 44, r: 14, t: 16, b: 28 };
+    var iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    var pts = o.points.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var n = pts.length;
+    var dec = o.decimals == null ? 1 : o.decimals;
+    function fmt(v) { return v.toFixed(dec).replace('.', ',') + D.NBSP + o.unit; }
+    if (!n) { host.innerHTML = '<p class="hint chart-empty">Ajoute une première valeur pour voir ta courbe.</p>'; return; }
+    var t0 = D.parse(pts[0].date).getTime(), t1 = D.parse(pts[n - 1].date).getTime();
+    var vals = pts.map(function (p) { return p.value; });
+    if (o.goal) vals.push(o.goal);
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var span = Math.max(hi - lo, Math.max(1, hi * 0.02));
+    lo -= span * 0.15; hi += span * 0.15;
+    var x = function (i) { return n === 1 || t1 === t0 ? pad.l + iw / 2 : pad.l + ((D.parse(pts[i].date).getTime() - t0) / (t1 - t0)) * iw; };
+    var y = function (v) { return pad.t + ih - ((v - lo) / (hi - lo)) * ih; };
+    var gid = 'wash-' + (o.uid || 'v');
+    var s = '<svg xmlns="' + NS + '" class="chart chart--value ' + (o.hue || '') + '" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" tabindex="0" role="img" aria-label="' + esc(o.ariaLabel || '') + '">';
+    s += '<defs><linearGradient id="' + gid + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" class="chart__wash-stop" stop-opacity=".22"/><stop offset="1" class="chart__wash-stop" stop-opacity="0"/></linearGradient></defs>';
+    for (var g = 0; g <= 3; g++) {
+      var gv = lo + ((hi - lo) * g) / 3;
+      s += '<line class="chart__grid' + (g === 0 ? ' chart__grid--base' : '') + '" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(gv) + '" y2="' + y(gv) + '"/>';
+      s += text(pad.l - 8, y(gv) + 4, gv.toFixed(hi - lo < 6 ? 1 : 0).replace('.', ','), 'chart__tick', 'end');
+    }
+    if (o.goal) {
+      s += '<line class="chart__target" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(o.goal) + '" y2="' + y(o.goal) + '"/>';
+      s += text(W - pad.r, y(o.goal) - 6, 'Objectif ' + fmt(o.goal), 'chart__tick chart__tick--goal', 'end');
+    }
+    if (n > 1) {
+      var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.value).toFixed(1); }).join('');
+      s += '<path class="chart__area" style="fill:url(#' + gid + ')" d="' + d + 'L' + x(n - 1).toFixed(1) + ',' + (pad.t + ih) + 'L' + x(0).toFixed(1) + ',' + (pad.t + ih) + 'Z"/>';
+      s += '<path class="chart__line" d="' + d + '"/>';
+    }
+    s += text(x(0), H - 8, D.dayMonth(pts[0].date), 'chart__tick', n > 1 ? 'start' : 'middle');
+    if (n > 1) s += text(x(n - 1), H - 8, D.dayMonth(pts[n - 1].date), 'chart__tick', 'end');
+    s += '<line class="chart__cross" x1="0" x2="0" y1="' + pad.t + '" y2="' + (pad.t + ih) + '" hidden/>';
+    pts.forEach(function (p, i) { s += '<circle class="chart__dot chart__dot--value" cx="' + x(i) + '" cy="' + y(p.value) + '" r="4.5"/>'; });
+    s += '</svg>';
+    host.innerHTML = s;
+    var svg = host.firstChild, cross = svg.querySelector('.chart__cross'), idx = n - 1;
+    function show(i, cx, cy) {
+      idx = Math.max(0, Math.min(n - 1, i));
+      var p = pts[idx];
+      cross.removeAttribute('hidden'); cross.setAttribute('x1', x(idx)); cross.setAttribute('x2', x(idx));
+      var html = '<div class="chart-tip__title">' + esc(D.cap(D.dayMonthLong(p.date))) + '</div>' + tipRow(fmt(p.value), '', o.hue);
+      if (idx > 0) { var dv = p.value - pts[idx - 1].value; html += '<div class="chart-tip__note">' + (dv === 0 ? 'Stable depuis la mesure précédente' : (dv > 0 ? '+' : '−') + D.NBSP + fmt(Math.abs(dv)) + ' depuis la mesure précédente') + '</div>'; }
+      if (p.note) html += '<div class="chart-tip__note">« ' + esc(p.note) + ' »</div>';
+      var r = svg.getBoundingClientRect();
+      showTip(html, cx != null ? cx : r.left + x(idx), cy != null ? cy : r.top + y(p.value));
+      var live = document.getElementById('sr-live');
+      if (cx == null && live) live.textContent = D.dayMonthLong(p.date) + ' : ' + fmt(p.value);
+    }
+    svg.addEventListener('pointermove', function (e) {
+      var r = svg.getBoundingClientRect(), px = e.clientX - r.left, best = 0;
+      pts.forEach(function (p, i) { if (Math.abs(x(i) - px) < Math.abs(x(best) - px)) best = i; });
+      show(best, e.clientX, e.clientY);
+    });
+    svg.addEventListener('pointerleave', function () { cross.setAttribute('hidden', ''); hideTip(); });
+    svg.addEventListener('focus', function () { show(idx); });
+    svg.addEventListener('blur', function () { cross.setAttribute('hidden', ''); hideTip(); });
+    svg.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); show(idx - 1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); show(idx + 1); }
+    });
+  }
+
   window.addEventListener('scroll', hideTipOnScroll, true);
 
-  L.charts = { bars: bars, hbars: hbars, moodLine: moodLine, hideTip: hideTip };
+  L.charts = { bars: bars, hbars: hbars, moodLine: moodLine, valueLine: valueLine, hideTip: hideTip };
 })(window.Lamia = window.Lamia || {});

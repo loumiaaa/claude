@@ -202,12 +202,28 @@
     d.moods = d.moods.filter(function (m) { return m && typeof m === 'object'; });
     if (d.activeTimer === undefined) d.activeTimer = null;
     if (d.lastTimerTaskId === undefined) d.lastTimerTaskId = null;
+    d.health = normalizeHealth(d.health);
     d.flags = Object.assign({}, def.flags, d.flags || {});
     d.reminderLog = d.reminderLog && typeof d.reminderLog === 'object' && !Array.isArray(d.reminderLog) ? d.reminderLog : {};
     return d;
   }
 
   /* --- Validation (structure indispensable) -------------------------------- */
+  /* --- Santé (facultatif) : poids, mensurations, repas, sport -------------- */
+  var MEAL_SLOTS = ['matin', 'midi', 'soir', 'collation'];
+  var MEASURES = ['fesses', 'jambes', 'bras', 'ventre'];
+  function normalizeHealth(h) {
+    h = h && typeof h === 'object' && !Array.isArray(h) ? h : {};
+    function list(a) { return Array.isArray(a) ? a.filter(function (x) { return x && typeof x === 'object' && DATE_RE.test(x.date); }) : []; }
+    return {
+      goalKg: typeof h.goalKg === 'number' && h.goalKg > 0 ? h.goalKg : null,
+      weights: list(h.weights).filter(function (w) { return typeof w.kg === 'number' && w.kg > 0; }),
+      measures: list(h.measures),
+      meals: list(h.meals).filter(function (m) { return MEAL_SLOTS.indexOf(m.slot) >= 0 && typeof m.name === 'string'; }),
+      sports: list(h.sports).filter(function (x) { return typeof x.minutes === 'number' && x.minutes >= 0; })
+    };
+  }
+
   function validate(doc) {
     var errors = [];
     function err(msg) { if (errors.length < 20) errors.push(msg); }
@@ -241,6 +257,14 @@
       if (!m || !DATE_RE.test(m.date) || !(m.level >= 1 && m.level <= 5)) err('moods[' + i + '] invalide.');
     });
     if (!doc.settings || typeof doc.settings !== 'object') err('settings manquant.');
+    var h = doc.health;
+    if (h != null) {
+      if (typeof h !== 'object' || Array.isArray(h)) err('health : objet attendu.');
+      else ['weights', 'measures', 'meals', 'sports'].forEach(function (k) {
+        if (h[k] != null && !Array.isArray(h[k])) err('health.' + k + ' : liste attendue.');
+        else (h[k] || []).forEach(function (x, i) { if (!x || !DATE_RE.test(x.date)) err('health.' + k + '[' + i + '].date invalide.'); });
+      });
+    }
     var tm = doc.activeTimer;
     if (tm != null && (typeof tm !== 'object' || typeof tm.taskId !== 'string' || isNaN(Date.parse(tm.startedAt)))) err('activeTimer invalide.');
     return { ok: !errors.length, errors: errors };
@@ -258,6 +282,7 @@
     SCHEMA_VERSION: SCHEMA_VERSION, GROUPS: GROUPS, STATUSES: STATUSES, PRIORITIES: PRIORITIES,
     DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
     defaultState: defaultState, defaultSettings: defaultSettings, defaultUI: defaultUI,
-    versionOf: versionOf, migrate: migrate, normalize: normalize, validate: validate, summarize: summarize
+    versionOf: versionOf, migrate: migrate, normalize: normalize, validate: validate, summarize: summarize,
+    normalizeHealth: normalizeHealth, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
   };
 });
