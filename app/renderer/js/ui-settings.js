@@ -21,7 +21,12 @@
   function groupNameField(g, label) {
     return '<div class="field"><label class="label" for="gn-' + g + '">' + label + '</label><input class="input" id="gn-' + g + '" data-group-name="' + g + '" data-focus-key="gn-' + g + '" maxlength="40" value="' + esc(S.groupName(g)) + '"></div>';
   }
-  var KIND = { quotidienne: 'Sauvegarde du jour', demo: 'Avant le chargement de la démo', import: 'Avant un import', restauration: 'Avant une restauration', 'migration-v1': 'Avant la mise à jour du format' };
+  var KIND = {
+    quotidienne: 'Sauvegarde du jour', demo: 'Juste avant le chargement de la démo', 'avant-demo': 'Juste avant le chargement de la démo',
+    import: 'Juste avant un import', 'avant-import': 'Juste avant un import', restauration: 'Juste avant une restauration', 'avant-restauration': 'Juste avant une restauration',
+    conflit: 'Version de cet appareil, gardée lors d’une synchro', 'avant-synchro': 'Données de cet appareil avant la première synchro',
+    illisible: 'Copie illisible mise de côté', 'migration-v1': 'Avant la mise à jour du format'
+  };
 
   function info() { return L.info || {}; }
   function machine() { return info().machine || {}; }
@@ -263,6 +268,7 @@
   }
 
   function summaryText(s) {
+    if (!s) return 'contenu non détaillé';
     return U.plural(s.tasks, 'tâche') + ', ' + U.plural(s.entries, 'entrée') + ' d’heures, ' + U.plural(s.moods, 'humeur');
   }
 

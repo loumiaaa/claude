@@ -518,10 +518,15 @@
     },
     backup: {
       list: function () {
-        var local = (readJSON(K.backups) || []).map(function (b) { return { id: b.id, date: b.date, time: b.time, kind: b.kind }; });
+        // Copies de cet appareil (avant la démo, un import, une restauration…), puis sauvegardes quotidiennes en ligne
+        var local = (readJSON(K.backups) || []).map(function (b) { return { id: b.id, date: b.date, time: b.time, kind: b.kind, readable: !!b.doc, summary: b.doc ? M.summarize(b.doc) : null }; });
         if (mode !== 'cloud') return Promise.resolve(local);
-        return rest('GET', 'lamia_backups?select=day,created_at&user_id=eq.' + uid() + '&order=day.desc&limit=30').then(function (rows) {
-          return local.concat((rows || []).map(function (r) { return { id: 'r' + r.day, date: r.day, time: null, kind: 'quotidienne' }; }));
+        return rest('GET', 'lamia_backups?select=day,created_at,tasks:doc->tasks,moods:doc->moods&user_id=eq.' + uid() + '&order=day.desc&limit=30').then(function (rows) {
+          return local.concat((rows || []).map(function (r) {
+            var t = r.created_at ? new Date(r.created_at) : null;
+            return { id: 'r' + r.day, date: r.day, time: t && !isNaN(t) ? ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) : null, kind: 'quotidienne', readable: true,
+              summary: r.tasks ? M.summarize({ tasks: r.tasks || [], moods: r.moods || [] }) : null };
+          }));
         }, function () { return local; });
       },
       restore: function (id) {
