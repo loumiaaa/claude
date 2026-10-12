@@ -269,7 +269,7 @@
         MEAS.map(function (m) { return field('e-' + m.k, m.label + ' (cm perdus)', '<input class="input" id="e-' + m.k + '" name="' + m.k + '" inputmode="decimal" value="' + (it.loss && typeof it[m.k] === 'number' ? fmt(it[m.k]) : '') + '">'); }).join('') + '</div>';
     }
     U.dialog({
-      title: kind === 'weights' ? 'Modifier la pesée' : 'Modifier les mensurations', body: body, confirmLabel: 'Enregistrer', returnTo: btn, fallbackFocus: document.getElementById('h-body'),
+      title: kind === 'weights' ? 'Modifier la pesée' : 'Modifier les mensurations', body: body, confirmLabel: 'Enregistrer', returnTo: btn, fallbackFocus: function () { return document.getElementById('h-body'); },
       onConfirm: function (form) {
         var fd = new FormData(form);
         if (kind === 'weights') {
