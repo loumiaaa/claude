@@ -1851,3 +1851,30 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
   }
   @keyframes ambient { from { transform: translate3d(-3%, -2%, 0) rotate(0deg); } to { transform: translate3d(3%, 2%, 0) rotate(8deg); } }
 }
+
+/* Cartes alignées en haut : elles grandissent vers le bas selon leur contenu */
+.goal-grid, .meal-grid, .measure-grid { align-items: start; }
+
+/* Les listes s'adaptent à la largeur de LEUR carte (et non de l'écran) */
+#view-health .card, #view-body .card, #view-food .card, #view-sport .card,
+#view-budget .card, #view-money .card, #view-bills .card, #view-savings .card { container-type: inline-size; }
+@container (max-width: 600px) {
+  .health-list:not(.health-list--plan) li { grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--space-3); align-items: center; }
+  .health-list:not(.health-list--plan) li > * { grid-column: 1; min-width: 0; }
+  .health-list:not(.health-list--plan) li .health-list__date { grid-row: 1; }
+  .health-list:not(.health-list--plan) li strong { grid-row: 2; overflow-wrap: anywhere; }
+  .health-list:not(.health-list--plan) li .text-subtle { grid-row: 3; }
+  .health-list:not(.health-list--plan) li .text-subtle:empty { display: none; }
+  .health-list:not(.health-list--plan) li .budget-amount { grid-column: 2; grid-row: 1; align-self: center; text-align: right; }
+  .health-list:not(.health-list--plan) li .health-list__actions,
+  .health-list:not(.health-list--plan) li > .btn { grid-column: 2; grid-row: 2 / span 2; justify-self: end; align-self: center; }
+  .health-list:not(.health-list--plan) li:not(:has(.budget-amount)) .health-list__actions,
+  .health-list:not(.health-list--plan) li:not(:has(.budget-amount)) > .btn { grid-row: 1 / span 3; }
+  .deposit-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.deposit-form .btn--ghost { justify-self: start; }
+.health-list__date, .health-list strong { min-width: 0; }
+@media (max-width: 720px) { .kpi-row--4 .stat__value, .kpi-row--3 .stat__value { font-size: clamp(20px, 6.4vw, 28px); overflow-wrap: anywhere; } }
+
+.deposit-form .input, .health-form .input, .budget-form .input { min-width: 0; width: 100%; }
+.deposit-form .field, .health-form .field { min-width: 0; }
