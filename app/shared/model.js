@@ -210,7 +210,7 @@
 
   /* --- Validation (structure indispensable) -------------------------------- */
   /* --- Santé (facultatif) : poids, mensurations, repas, sport -------------- */
-  var MEAL_SLOTS = ['matin', 'midi', 'soir', 'collation'];
+  var MEAL_SLOTS = ['matin', 'midi', 'soir', 'collation', 'journee'];
   var MEASURES = ['fesses', 'jambes', 'bras', 'ventre'];
   function normalizeHealth(h) {
     h = h && typeof h === 'object' && !Array.isArray(h) ? h : {};
@@ -220,7 +220,9 @@
       weights: list(h.weights).filter(function (w) { return typeof w.kg === 'number' && w.kg > 0; }),
       measures: list(h.measures),
       meals: list(h.meals).filter(function (m) { return MEAL_SLOTS.indexOf(m.slot) >= 0 && typeof m.name === 'string'; }),
-      sports: list(h.sports).filter(function (x) { return typeof x.minutes === 'number' && x.minutes >= 0; })
+      sports: list(h.sports).filter(function (x) { return typeof x.minutes === 'number' && x.minutes >= 0; }),
+      // Plan alimentaire (indications de la diététicienne) : sans date, un ou plusieurs moments
+      plan: (Array.isArray(h.plan) ? h.plan : []).filter(function (x) { return x && typeof x.text === 'string' && Array.isArray(x.slots); })
     };
   }
 

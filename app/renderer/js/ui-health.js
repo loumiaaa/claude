@@ -21,7 +21,8 @@
     { k: 'matin', label: 'Matin', icon: 'coffee' },
     { k: 'midi', label: 'Midi', icon: 'sun' },
     { k: 'soir', label: 'Soir', icon: 'moon' },
-    { k: 'collation', label: 'Collation', icon: 'sparkle' }
+    { k: 'collation', label: 'Collation', icon: 'sparkle' },
+    { k: 'journee', label: 'Toute la journée', icon: 'heart' }
   ];
   var UNITS = ['g', 'kg', 'ml', 'cl', 'L', 'pièce(s)', 'portion(s)', 'tranche(s)', 'c. à soupe', 'c. à café', 'verre(s)', 'bol(s)'];
   var SPORTS = ['Marche', 'Course à pied', 'Vélo', 'Natation', 'Yoga', 'Pilates', 'Musculation', 'Danse', 'Fitness', 'Randonnée', 'Corde à sauter', 'Étirements'];
@@ -135,35 +136,33 @@
   function renderDash(el) {
     var h = H(), w = last(h.weights), first = h.weights[0];
     var today = D.today(), wk = weekMinutes(D.startOfWeek(today));
-    var mealsToday = SLOTS.filter(function (s) { return h.meals.some(function (m) { return m.date === today && m.slot === s.k; }); }).length;
     var goal = h.goalKg;
     var tiles =
       tile('heart', 'Poids actuel', w ? esc(fmt(w.kg)) + '<span class="stat__unit">kg</span>' : '—', w && first && h.weights.length > 1 ? esc(signed(w.kg - first.kg, 'kg')) + ' depuis le début' : (w ? 'Pesée du ' + esc(D.dayMonth(w.date)) : 'Aucune pesée')) +
       tile('target', 'Objectif', goal ? esc(fmt(goal)) + '<span class="stat__unit">kg</span>' : '—', goal && w ? (w.kg <= goal ? 'Objectif atteint, bravo !' : 'Encore ' + esc(kg(w.kg - goal))) : 'À définir') +
       tile('timer', 'Sport cette semaine', esc(minutes(wk.minutes)), U.plural(wk.count, 'séance')) +
-      tile('coffee', 'Repas notés aujourd’hui', mealsToday + '<span class="stat__unit">/ 3</span>', mealsToday >= 3 ? 'Journée bien notée' : 'Matin, midi, soir');
+      tile('coffee', 'Plan alimentaire', h.plan.length + '<span class="stat__unit">' + (h.plan.length > 1 ? 'indications' : 'indication') + '</span>', h.plan.length ? 'De ta diététicienne' : 'À compléter');
 
     var measures = lossEntries().length ? '<ul class="measure-list" role="list">' + MEAS.map(function (m) {
       var t = totalLost(m.k);
       return '<li><span>' + m.label + '</span><strong>' + (t == null ? '<span class="text-subtle">—</span>' : esc(lost(t))) + '</strong><span class="text-subtle"></span></li>';
     }).join('') + '</ul>' : empty('Pas encore de centimètres perdus notés.');
 
-    var meals = '<ul class="meal-summary" role="list">' + SLOTS.map(function (s) {
-      var items = h.meals.filter(function (m) { return m.date === today && m.slot === s.k; });
-      return '<li><span class="meal-summary__slot">' + icon(s.icon) + s.label + '</span><span class="meal-summary__items">' +
-        (items.length ? esc(items.map(function (m) { return m.name; }).join(', ')) : '<span class="text-subtle">Rien de noté</span>') + '</span></li>';
-    }).join('') + '</ul>';
-
+    var meals = h.plan.length ? '<ul class="meal-summary" role="list">' + SLOTS.map(function (sl) {
+      var items = planFor(sl.k);
+      if (!items.length) return '';
+      return '<li><span class="meal-summary__slot">' + icon(sl.icon) + sl.label + '</span><span class="meal-summary__items">' + esc(items.map(function (x) { return x.text; }).join(' · ')) + '</span></li>';
+    }).join('') + '</ul>' : empty('Ajoute les indications de ta diététicienne.');
     el.innerHTML =
       head('Prendre soin de toi, à ton rythme', 'Santé', 'h-health', esc(cheer()),
         '<a class="btn btn--secondary btn--sm" href="#corps">' + icon('plus') + 'Pesée</a>' +
-        '<a class="btn btn--secondary btn--sm" href="#alimentation">' + icon('plus') + 'Repas</a>' +
+        '<a class="btn btn--secondary btn--sm" href="#alimentation">' + icon('coffee') + 'Plan alimentaire</a>' +
         '<a class="btn btn--primary btn--sm" href="#sport">' + icon('plus') + 'Séance</a>') +
       '<div class="kpi-row kpi-row--4">' + tiles + '</div>' +
       '<div class="health-grid">' +
         card('hd-weight', 'Courbe de poids', h.weights.length ? U.plural(h.weights.length, 'pesée') : 'Ta progression, pesée après pesée', '<div class="chart-host" data-chart="weight"></div>', 'health-grid__wide') +
         card('hd-meas', 'Mensurations', 'Centimètres perdus depuis le début', measures + '<a class="btn btn--ghost btn--sm" href="#corps">Voir les courbes' + icon('chevron-right') + '</a>') +
-        card('hd-meals', 'Repas du jour', esc(D.cap(D.dayMonthLong(today))), meals + '<a class="btn btn--ghost btn--sm" href="#alimentation">Mon plan alimentaire' + icon('chevron-right') + '</a>') +
+        card('hd-meals', 'Plan alimentaire', 'Les indications de ta diététicienne', meals + '<a class="btn btn--ghost btn--sm" href="#alimentation">Mon plan alimentaire' + icon('chevron-right') + '</a>') +
         card('hd-sport', 'Sport', '8 dernières semaines', '<div class="chart-host" data-chart="sport"></div>') +
       '</div>';
     L.charts.valueLine(el.querySelector('[data-chart="weight"]'), { points: weightPoints(), unit: 'kg', goal: h.goalKg, uid: 'hdw', hue: 'hue--violet', ariaLabel: 'Courbe de poids' });
@@ -259,6 +258,20 @@
     var it = H()[kind].filter(function (x) { return x.id === id; })[0];
     if (!it) return;
     var body;
+    if (kind === 'plan') {
+      U.dialog({
+        title: 'Modifier l’indication', confirmLabel: 'Enregistrer', returnTo: btn, fallbackFocus: function () { return document.getElementById('h-food'); },
+        body: '<div class="plan-form plan-form--dialog">' + field('e-text', 'Indication', '<input class="input" id="e-text" name="text" maxlength="160" value="' + esc(it.text) + '">') + slotChecks('e', it.slots) + '</div>',
+        onConfirm: function (form) {
+          var r = readPlan(form);
+          if (!r.text) { warn('Indication manquante'); return false; }
+          if (!r.slots.length) { warn('Pour quel moment ?', 'Coche au moins un moment.'); return false; }
+          S.updateHealth('plan', id, { text: r.text, slots: r.slots });
+          U.toast({ icon: 'check', title: 'Modification enregistrée', duration: 2500 });
+        }
+      });
+      return;
+    }
     if (kind === 'weights') {
       body = '<div class="health-form">' + field('e-date', 'Date', dateInput('e-date', it.date)) +
         field('e-kg', 'Poids (kg)', '<input class="input" id="e-kg" name="kg" inputmode="decimal" value="' + fmt(it.kg) + '">') +
@@ -298,61 +311,53 @@
       var b = e.target.closest('[data-h-del]');
       if (!b) return;
       var kind = b.getAttribute('data-h-del');
-      removeWithUndo(kind, b.getAttribute('data-id'), { weights: 'Pesée', measures: 'Mensuration', meals: 'Aliment', sports: 'Séance' }[kind] || 'Élément');
+      removeWithUndo(kind, b.getAttribute('data-id'), { weights: 'Pesée', measures: 'Mensuration', meals: 'Aliment', sports: 'Séance', plan: 'Indication' }[kind] || 'Élément');
     });
   }
 
-  /* === 3. Alimentation =============================================================== */
-  var foodDate = null;
+  /* === 3. Alimentation : plan de la diététicienne =================================== */
+  function planFor(slot) { return H().plan.filter(function (x) { return x.slots.indexOf(slot) >= 0; }); }
+  function slotChecks(prefix, selected) {
+    return '<fieldset class="slot-checks"><legend class="label">Pour</legend>' + SLOTS.map(function (sl) {
+      return '<label class="slot-check"><input type="checkbox" name="slots" value="' + sl.k + '"' + (selected.indexOf(sl.k) >= 0 ? ' checked' : '') + '><span>' + sl.label + '</span></label>';
+    }).join('') + '</fieldset>';
+  }
+  function slotsLabel(slots) {
+    return SLOTS.filter(function (sl) { return slots.indexOf(sl.k) >= 0; }).map(function (sl) { return sl.label.toLowerCase(); }).join(', ');
+  }
   function renderFood(el) {
-    var h = H(), day = foodDate || D.today(), isToday = day === D.today();
-    var prev = D.addDays(day, -1);
-    var prevCount = h.meals.filter(function (m) { return m.date === prev; }).length;
-    var dayCount = h.meals.filter(function (m) { return m.date === day; }).length;
-    var unitOpts = UNITS.map(function (u) { return '<option value="' + esc(u) + '">' + esc(u) + '</option>'; }).join('');
-    var slots = SLOTS.map(function (s) {
-      var items = h.meals.filter(function (m) { return m.date === day && m.slot === s.k; });
-      var list = items.length ? '<ul class="health-list health-list--meal" role="list">' + items.map(function (m) {
-        return '<li><strong>' + esc(m.name) + '</strong><span class="text-subtle">' + (m.qty ? esc(fmt(m.qty, m.qty % 1 ? 1 : 0)) + NB + esc(m.unit || '') : '') + '</span>' + delBtn('meals', m.id, m.name) + '</li>';
-      }).join('') + '</ul>' : empty('Rien de noté pour l’instant.');
-      return '<section class="glass card meal-card" aria-labelledby="f-' + s.k + '"><div class="card__header"><div><h2 class="card__title" id="f-' + s.k + '">' + icon(s.icon) + s.label + '</h2></div></div>' + list +
-        '<form class="meal-form" data-h-form="meal" data-slot="' + s.k + '" novalidate>' +
-          '<label class="sr-only" for="fn-' + s.k + '">Aliment (' + s.label + ')</label><input class="input" id="fn-' + s.k + '" name="name" placeholder="Aliment" maxlength="80" data-focus-key="fn-' + s.k + '">' +
-          '<label class="sr-only" for="fq-' + s.k + '">Quantité</label><input class="input meal-form__qty" id="fq-' + s.k + '" name="qty" inputmode="decimal" placeholder="Qté">' +
-          '<label class="sr-only" for="fu-' + s.k + '">Unité</label><select class="select meal-form__unit" id="fu-' + s.k + '" name="unit">' + unitOpts + '</select>' +
-          '<button type="submit" class="btn btn--secondary btn--icon" data-focus-key="fb-' + s.k + '" aria-label="Ajouter au repas ' + s.label.toLowerCase() + '">' + icon('plus') + '</button>' +
-        '</form></section>';
+    var plan = H().plan;
+    var form = '<form class="plan-form" data-h-form="plan" novalidate>' +
+      field('p-text', 'Indication', '<input class="input" id="p-text" name="text" maxlength="160" placeholder="ex. 160 g de protéines" data-focus-key="p-text" required>') +
+      slotChecks('p', []) +
+      '<button type="submit" class="btn btn--primary" data-focus-key="p-submit">' + icon('plus') + 'Ajouter</button></form>';
+    var cards = SLOTS.map(function (sl) {
+      var items = planFor(sl.k);
+      var list = items.length ? '<ul class="health-list health-list--plan" role="list">' + items.map(function (x) {
+        return '<li><strong>' + esc(x.text) + '</strong><span class="health-list__actions">' + editBtn('plan', x.id, x.text) + delBtn('plan', x.id, x.text) + '</span></li>';
+      }).join('') + '</ul>' : empty('Aucune indication.');
+      return '<section class="glass card meal-card" aria-labelledby="f-' + sl.k + '"><div class="card__header"><div><h2 class="card__title" id="f-' + sl.k + '">' + icon(sl.icon) + sl.label + '</h2></div></div>' + list + '</section>';
     }).join('');
     el.innerHTML =
-      head('Santé', 'Alimentation', 'h-food', 'Ton plan alimentaire, repas par repas, avec les quantités.') +
-      '<div class="period-bar"><div class="period-nav">' +
-        '<button type="button" class="btn btn--secondary btn--icon btn--sm" data-food-nav="-1" data-focus-key="fd-prev" aria-label="Jour précédent">' + icon('chevron-left') + '</button>' +
-        '<button type="button" class="btn btn--secondary btn--sm" data-food-today data-focus-key="fd-today"' + (isToday ? ' aria-disabled="true"' : '') + '>Aujourd’hui</button>' +
-        '<button type="button" class="btn btn--secondary btn--icon btn--sm" data-food-nav="1" data-focus-key="fd-next" aria-label="Jour suivant">' + icon('chevron-right') + '</button>' +
-      '</div><h2 class="period-bar__label" aria-live="polite">' + esc(D.cap(D.long(day))) + '</h2>' +
-      (!dayCount && prevCount ? '<button type="button" class="btn btn--ghost btn--sm" data-food-copy>' + icon('copy') + 'Reprendre les repas de la veille (' + prevCount + ')</button>' : '') +
-      '</div>' +
-      '<div class="meal-grid">' + slots + '</div>';
+      head('Santé', 'Alimentation', 'h-food', 'Les indications de ta diététicienne, rangées par moment de la journée. Une même indication peut valoir pour plusieurs repas.') +
+      card('p-add', 'Ajouter une indication', 'Coche les moments concernés, par exemple midi et soir.', form) +
+      (plan.length ? '' : '') +
+      '<div class="meal-grid">' + cards + '</div>';
+  }
+  function readPlan(form) {
+    var fd = new FormData(form);
+    return { text: String(fd.get('text') || '').trim(), slots: fd.getAll('slots') };
   }
   function bindFood(el) {
     el.addEventListener('submit', function (e) {
-      var f = e.target.closest('[data-h-form="meal"]');
+      var f = e.target.closest('[data-h-form="plan"]');
       if (!f) return;
       e.preventDefault();
-      var fd = new FormData(f), name = String(fd.get('name') || '').trim(), rawQ = String(fd.get('qty') || '').trim(), q = num(rawQ);
-      if (!name) { warn('Aliment manquant', 'Écris ce que tu as mangé ou prévu.'); f.querySelector('[name=name]').focus(); return; }
-      if (rawQ && !(q > 0)) { warn('Quantité à vérifier', 'Par exemple 150 (g) ou 1,5 (kg).'); return; }
-      S.addHealth('meals', { date: foodDate || D.today(), slot: f.getAttribute('data-slot'), name: name, qty: rawQ ? q : null, unit: rawQ ? fd.get('unit') : '' });
-      U.announce(name + ' ajouté');
-    });
-    el.addEventListener('click', function (e) {
-      var b;
-      if ((b = e.target.closest('[data-food-nav]'))) { foodDate = D.addDays(foodDate || D.today(), +b.getAttribute('data-food-nav')); L.views.food.render(); return; }
-      if (e.target.closest('[data-food-today]')) { foodDate = null; L.views.food.render(); return; }
-      if (e.target.closest('[data-food-copy]')) {
-        var day = foodDate || D.today(), n = S.copyMeals(D.addDays(day, -1), day);
-        U.toast({ icon: 'copy', title: U.plural(n, 'aliment') + ' repris de la veille', duration: 3500 });
-      }
+      var r = readPlan(f);
+      if (!r.text) { warn('Indication manquante', 'Par exemple : 160 g de protéines.'); f.querySelector('[name=text]').focus(); return; }
+      if (!r.slots.length) { warn('Pour quel moment ?', 'Coche au moins un moment : matin, midi, soir…'); return; }
+      S.addHealth('plan', { text: r.text, slots: r.slots });
+      U.toast({ icon: 'check', title: 'Indication ajoutée', text: r.text + ' (' + slotsLabel(r.slots) + ')', duration: 3000 });
     });
     bindDelete(el);
   }

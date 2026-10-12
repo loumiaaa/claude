@@ -1663,3 +1663,20 @@ html[data-space="health"] .tabbar__item[data-space="prod"] { display: none; }
 .health-list li { grid-template-columns: minmax(130px, auto) auto 1fr auto; }
 .health-list__actions, .health-table__actions { display: inline-flex; gap: 2px; justify-content: flex-end; }
 @media (max-width: 720px) { .health-list li .health-list__actions { grid-column: 2; grid-row: 1 / span 3; } }
+.plan-form { display: grid; gap: var(--space-4); }
+.plan-form > .btn { justify-self: start; }
+.slot-checks { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; border: 0; }
+.slot-checks legend { width: 100%; margin-bottom: var(--space-2); }
+.slot-check { position: relative; display: inline-flex; }
+.slot-check input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.slot-check span {
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill);
+  border: 1px solid var(--control-border, var(--color-border-strong)); background: var(--color-surface);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--color-text-muted); min-height: 40px; display: inline-flex; align-items: center;
+}
+.slot-check input:checked + span { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.slot-check input:focus-visible + span { box-shadow: var(--focus-ring); }
+.health-list--plan li { grid-template-columns: 1fr auto; }
+#view-food > .card { margin-bottom: var(--space-6); }
+.meal-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+@media (max-width: 720px) { .health-list--plan li strong { grid-row: 1; } .health-list--plan li .health-list__actions { grid-row: 1; } }
