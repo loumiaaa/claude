@@ -1660,3 +1660,6 @@ html[data-space="health"] .tabbar__item[data-space="prod"] { display: none; }
 }
 .table-wrap { min-width: 0; width: 100%; } #view-body .card > * { min-width: 0; }
 .table-wrap { position: relative; }
+.health-list li { grid-template-columns: minmax(130px, auto) auto 1fr auto; }
+.health-list__actions, .health-table__actions { display: inline-flex; gap: 2px; justify-content: flex-end; }
+@media (max-width: 720px) { .health-list li .health-list__actions { grid-column: 2; grid-row: 1 / span 3; } }

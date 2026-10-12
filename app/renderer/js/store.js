@@ -374,6 +374,14 @@
       h[kind] = h[kind].filter(function (x) { return x.id !== id; });
       emit('health', { kind: kind });
     },
+    updateHealth: function (kind, id, patch) {
+      var h = store.health(), it = h[kind].filter(function (x) { return x.id === id; })[0];
+      if (!it) return null;
+      Object.keys(patch).forEach(function (k) { if (patch[k] === undefined) delete it[k]; else it[k] = patch[k]; });
+      h[kind].sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+      emit('health', { kind: kind }, { now: true });
+      return it;
+    },
     setHealthGoal: function (kg) { store.health().goalKg = kg > 0 ? kg : null; emit('health', { goal: true }); },
     copyMeals: function (from, to) {
       var h = store.health();

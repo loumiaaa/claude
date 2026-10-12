@@ -65,6 +65,9 @@
   function delBtn(kind, id, label) {
     return '<button type="button" class="btn btn--ghost btn--icon btn--sm" data-h-del="' + kind + '" data-id="' + id + '" aria-label="Supprimer ' + esc(label) + '">' + icon('trash') + '</button>';
   }
+  function editBtn(kind, id, label) {
+    return '<button type="button" class="btn btn--ghost btn--icon btn--sm" data-h-edit="' + kind + '" data-id="' + id + '" aria-label="Modifier ' + esc(label) + '">' + icon('edit') + '</button>';
+  }
   function empty(text) { return '<p class="hint health-empty">' + text + '</p>'; }
 
   function weekMinutes(start) {
@@ -81,9 +84,16 @@
     return out;
   }
   function weightPoints() { return H().weights.map(function (w) { return { date: w.date, value: w.kg, note: w.note }; }); }
+  // Mensurations notées en « centimètres perdus » : courbe du total perdu, entrée après entrée
+  function lossEntries() { return H().measures.filter(function (m) { return m.loss; }); }
   function measurePoints(k) {
-    return H().measures.filter(function (m) { return typeof m[k] === 'number'; }).map(function (m) { return { date: m.date, value: m[k] }; });
+    var total = 0, out = [];
+    lossEntries().forEach(function (m) { if (typeof m[k] === 'number') { total += m[k]; out.push({ date: m.date, value: Math.round(total * 10) / 10 }); } });
+    return out;
   }
+  function totalLost(k) { var pts = measurePoints(k); return pts.length ? last(pts).value : null; }
+  function lost(v) { return Math.abs(v) < 0.05 ? '0' + NB + 'cm' : '−' + NB + cm(v); }
+
   function cheer() {
     var w = H().weights;
     if (w.length < 2) return 'Une première pesée, et la courbe se dessine. On avance à ton rythme.';
@@ -133,12 +143,10 @@
       tile('timer', 'Sport cette semaine', esc(minutes(wk.minutes)), U.plural(wk.count, 'séance')) +
       tile('coffee', 'Repas notés aujourd’hui', mealsToday + '<span class="stat__unit">/ 3</span>', mealsToday >= 3 ? 'Journée bien notée' : 'Matin, midi, soir');
 
-    var measures = h.measures.length ? '<ul class="measure-list" role="list">' + MEAS.map(function (m) {
-      var pts = measurePoints(m.k);
-      if (!pts.length) return '<li><span>' + m.label + '</span><span class="text-subtle">—</span></li>';
-      var cur = last(pts).value, d = pts.length > 1 ? cur - pts[0].value : null;
-      return '<li><span>' + m.label + '</span><strong>' + esc(cm(cur)) + '</strong><span class="text-subtle">' + (d == null ? '' : esc(signed(d, 'cm'))) + '</span></li>';
-    }).join('') + '</ul>' : empty('Pas encore de mensurations.');
+    var measures = lossEntries().length ? '<ul class="measure-list" role="list">' + MEAS.map(function (m) {
+      var t = totalLost(m.k);
+      return '<li><span>' + m.label + '</span><strong>' + (t == null ? '<span class="text-subtle">—</span>' : esc(lost(t))) + '</strong><span class="text-subtle"></span></li>';
+    }).join('') + '</ul>' : empty('Pas encore de centimètres perdus notés.');
 
     var meals = '<ul class="meal-summary" role="list">' + SLOTS.map(function (s) {
       var items = h.meals.filter(function (m) { return m.date === today && m.slot === s.k; });
@@ -154,7 +162,7 @@
       '<div class="kpi-row kpi-row--4">' + tiles + '</div>' +
       '<div class="health-grid">' +
         card('hd-weight', 'Courbe de poids', h.weights.length ? U.plural(h.weights.length, 'pesée') : 'Ta progression, pesée après pesée', '<div class="chart-host" data-chart="weight"></div>', 'health-grid__wide') +
-        card('hd-meas', 'Mensurations', 'Dernière mesure et évolution depuis la première', measures + '<a class="btn btn--ghost btn--sm" href="#corps">Voir les courbes' + icon('chevron-right') + '</a>') +
+        card('hd-meas', 'Mensurations', 'Centimètres perdus depuis le début', measures + '<a class="btn btn--ghost btn--sm" href="#corps">Voir les courbes' + icon('chevron-right') + '</a>') +
         card('hd-meals', 'Repas du jour', esc(D.cap(D.dayMonthLong(today))), meals + '<a class="btn btn--ghost btn--sm" href="#alimentation">Mon plan alimentaire' + icon('chevron-right') + '</a>') +
         card('hd-sport', 'Sport', '8 dernières semaines', '<div class="chart-host" data-chart="sport"></div>') +
       '</div>';
@@ -179,30 +187,31 @@
     var wHist = h.weights.length ? '<ul class="health-list" role="list">' + h.weights.slice().reverse().map(function (w, i, arr) {
       var prev = arr[i + 1];
       return '<li><span class="health-list__date">' + esc(D.cap(D.dayMonthLong(w.date))) + '</span><strong>' + esc(kg(w.kg)) + '</strong>' +
-        '<span class="text-subtle">' + (prev ? esc(signed(w.kg - prev.kg, 'kg')) : 'première pesée') + (w.note ? ' · ' + esc(w.note) : '') + '</span>' + delBtn('weights', w.id, 'la pesée du ' + D.dayMonth(w.date)) + '</li>';
+        '<span class="text-subtle">' + (prev ? esc(signed(w.kg - prev.kg, 'kg')) : 'première pesée') + (w.note ? ' · ' + esc(w.note) : '') + '</span>' + '<span class="health-list__actions">' + editBtn('weights', w.id, 'la pesée du ' + D.dayMonth(w.date)) + delBtn('weights', w.id, 'la pesée du ' + D.dayMonth(w.date)) + '</span></li>';
     }).join('') + '</ul>' : empty('Ajoute ton poids de départ (même une ancienne pesée, avec sa date), puis les suivants : la courbe se dessine toute seule.');
 
     var mForm = '<form class="health-form" data-h-form="measure" novalidate>' + field('m-date', 'Date', dateInput('m-date')) +
-      MEAS.map(function (m) { return field('m-' + m.k, m.label + ' (cm)', numInput('m-' + m.k, m.k, 'cm')); }).join('') +
+      MEAS.map(function (m) { return field('m-' + m.k, m.label + ' (cm perdus)', numInput('m-' + m.k, m.k, 'ex. 1,5')); }).join('') +
       '<button type="submit" class="btn btn--primary" data-focus-key="m-submit">' + icon('plus') + 'Ajouter</button></form>';
     var minis = '<div class="measure-grid">' + MEAS.map(function (m) {
-      var pts = measurePoints(m.k), cur = last(pts);
-      return '<div class="glass glass--nested measure-card"><div class="measure-card__head"><span>' + m.label + '</span><strong>' + (cur ? esc(cm(cur.value)) : '—') + '</strong>' +
-        (pts.length > 1 ? '<span class="text-subtle">' + esc(signed(cur.value - pts[0].value, 'cm')) + '</span>' : '') + '</div><div class="chart-host" data-chart="m-' + m.k + '"></div></div>';
+      var t = totalLost(m.k);
+      return '<div class="glass glass--nested measure-card"><div class="measure-card__head"><span>' + m.label + '</span><strong>' + (t == null ? '—' : esc(lost(t))) + '</strong>' +
+        '<span class="text-subtle">au total</span></div><div class="chart-host" data-chart="m-' + m.k + '"></div></div>';
     }).join('') + '</div>';
     var mHist = h.measures.length ? '<div class="table-wrap"><table class="health-table"><thead><tr><th scope="col">Date</th>' + MEAS.map(function (m) { return '<th scope="col">' + m.label + '</th>'; }).join('') + '<th><span class="sr-only">Actions</span></th></tr></thead><tbody>' +
       h.measures.slice().reverse().map(function (r) {
-        return '<tr><th scope="row">' + esc(D.dayMonth(r.date)) + ' ' + r.date.slice(0, 4) + '</th>' + MEAS.map(function (m) { return '<td>' + (typeof r[m.k] === 'number' ? esc(fmt(r[m.k])) : '—') + '</td>'; }).join('') +
-          '<td>' + delBtn('measures', r.id, 'les mensurations du ' + D.dayMonth(r.date)) + '</td></tr>';
-      }).join('') + '</tbody></table></div>' : empty('Note tes mensurations (une ou plusieurs à la fois) pour suivre leur évolution.');
+        return '<tr><th scope="row">' + esc(D.dayMonth(r.date)) + ' ' + r.date.slice(0, 4) + (r.loss ? '' : '<br><span class="text-subtle">valeur mesurée</span>') + '</th>' +
+          MEAS.map(function (m) { return '<td>' + (typeof r[m.k] === 'number' ? esc((r.loss ? '−' + NB : '') + fmt(r[m.k])) : '—') + '</td>'; }).join('') +
+          '<td class="health-table__actions">' + editBtn('measures', r.id, 'les mensurations du ' + D.dayMonth(r.date)) + delBtn('measures', r.id, 'les mensurations du ' + D.dayMonth(r.date)) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : empty('Note les centimètres perdus (sur une ou plusieurs zones) à chaque fois que tu mesures : le total se calcule tout seul.');
 
     el.innerHTML =
-      head('Santé', 'Poids & mensurations', 'h-body', 'Une ancienne valeur ? Choisis simplement sa date : elle se range au bon endroit sur la courbe.') +
+      head('Santé', 'Poids & mensurations', 'h-body', 'Une ancienne valeur ? Choisis simplement sa date : elle se range au bon endroit sur la courbe. Chaque ligne peut être modifiée avec le crayon.') +
       card('b-weight', 'Poids', h.goalKg ? 'Objectif : ' + esc(kg(h.goalKg)) : 'Pesée après pesée', weightForm + '<div class="chart-host chart-host--tall" data-chart="weight"></div>' + wHist) +
-      card('b-meas', 'Mensurations', 'Fesses, jambes, bras et ventre, en centimètres', mForm + minis + mHist);
+      card('b-meas', 'Mensurations', 'Centimètres perdus : fesses, jambes, bras et ventre', mForm + minis + mHist);
     L.charts.valueLine(el.querySelector('[data-chart="weight"]'), { points: weightPoints(), unit: 'kg', goal: h.goalKg, uid: 'bw', hue: 'hue--violet', height: 230, ariaLabel: 'Courbe de poids' });
     MEAS.forEach(function (m) {
-      L.charts.valueLine(el.querySelector('[data-chart="m-' + m.k + '"]'), { points: measurePoints(m.k), unit: 'cm', uid: 'm' + m.k, hue: 'hue--blue', height: 150, ariaLabel: 'Courbe ' + m.label });
+      L.charts.valueLine(el.querySelector('[data-chart="m-' + m.k + '"]'), { points: measurePoints(m.k), unit: 'cm perdus', uid: 'm' + m.k, hue: 'hue--blue', height: 150, ariaLabel: 'Centimètres perdus, ' + m.label });
     });
   }
 
@@ -223,15 +232,10 @@
         S.setHealthGoal(isNaN(g) ? null : Math.round(g * 10) / 10);
         U.toast({ icon: 'target', title: isNaN(g) ? 'Objectif retiré' : 'Objectif : ' + kg(g), duration: 3000 });
       } else if (kind === 'measure') {
-        var row = { date: fd.get('date') || D.today() }, any = false, bad = false;
-        MEAS.forEach(function (m) {
-          var raw = String(fd.get(m.k) || '').trim();
-          if (!raw) return;
-          var x = num(raw);
-          if (!(x > 0 && x < 300)) bad = true; else { row[m.k] = Math.round(x * 10) / 10; any = true; }
-        });
-        if (bad) { warn('Valeur à vérifier', 'Les mensurations se notent en centimètres, par exemple 92,5.'); return; }
-        if (!any) { warn('Rien à enregistrer', 'Remplis au moins une mensuration.'); return; }
+        var row = readMeasures(fd);
+        if (row.bad) { warn('Valeur à vérifier', 'Indique les centimètres perdus, par exemple 1,5.'); return; }
+        if (!row.any) { warn('Rien à enregistrer', 'Remplis au moins une zone.'); return; }
+        row = row.row;
         S.addHealth('measures', row);
         U.announce('Mensurations ajoutées');
       }
@@ -239,7 +243,57 @@
     bindDelete(el);
   }
 
+  function readMeasures(fd) {
+    var row = { date: fd.get('date') || D.today(), loss: true }, any = false, bad = false;
+    MEAS.forEach(function (m) {
+      var raw = String(fd.get(m.k) || '').trim();
+      if (!raw) return;
+      var x = Math.abs(num(raw));
+      if (!(x >= 0 && x < 100)) bad = true; else { row[m.k] = Math.round(x * 10) / 10; any = true; }
+    });
+    return { row: row, any: any, bad: bad };
+  }
+
+  // Modifier une pesée ou des mensurations
+  function editEntry(kind, id, btn) {
+    var it = H()[kind].filter(function (x) { return x.id === id; })[0];
+    if (!it) return;
+    var body;
+    if (kind === 'weights') {
+      body = '<div class="health-form">' + field('e-date', 'Date', dateInput('e-date', it.date)) +
+        field('e-kg', 'Poids (kg)', '<input class="input" id="e-kg" name="kg" inputmode="decimal" value="' + fmt(it.kg) + '">') +
+        field('e-note', 'Note', '<input class="input" id="e-note" name="note" maxlength="120" value="' + esc(it.note || '') + '">') + '</div>';
+    } else {
+      body = (it.loss ? '' : '<p class="hint">Cette ligne contient des valeurs mesurées. En l’enregistrant, elle passera en « centimètres perdus ».</p>') +
+        '<div class="health-form">' + field('e-date', 'Date', dateInput('e-date', it.date)) +
+        MEAS.map(function (m) { return field('e-' + m.k, m.label + ' (cm perdus)', '<input class="input" id="e-' + m.k + '" name="' + m.k + '" inputmode="decimal" value="' + (it.loss && typeof it[m.k] === 'number' ? fmt(it[m.k]) : '') + '">'); }).join('') + '</div>';
+    }
+    U.dialog({
+      title: kind === 'weights' ? 'Modifier la pesée' : 'Modifier les mensurations', body: body, confirmLabel: 'Enregistrer', returnTo: btn, fallbackFocus: document.getElementById('h-body'),
+      onConfirm: function (form) {
+        var fd = new FormData(form);
+        if (kind === 'weights') {
+          var v = num(fd.get('kg'));
+          if (!(v >= 20 && v <= 400)) { warn('Poids à vérifier', 'Indique un poids en kilos, par exemple 64,5.'); return false; }
+          S.updateHealth('weights', id, { date: fd.get('date') || it.date, kg: Math.round(v * 10) / 10, note: String(fd.get('note') || '').trim() });
+        } else {
+          var r = readMeasures(fd);
+          if (r.bad) { warn('Valeur à vérifier', 'Indique les centimètres perdus, par exemple 1,5.'); return false; }
+          if (!r.any) { warn('Rien à enregistrer', 'Remplis au moins une zone, ou supprime la ligne.'); return false; }
+          var patch = { date: r.row.date, loss: true };
+          MEAS.forEach(function (m) { patch[m.k] = r.row[m.k]; });
+          S.updateHealth('measures', id, patch);
+        }
+        U.toast({ icon: 'check', title: 'Modification enregistrée', duration: 2500 });
+      }
+    });
+  }
+
   function bindDelete(el) {
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-h-edit]');
+      if (b) editEntry(b.getAttribute('data-h-edit'), b.getAttribute('data-id'), b);
+    });
     el.addEventListener('click', function (e) {
       var b = e.target.closest('[data-h-del]');
       if (!b) return;
