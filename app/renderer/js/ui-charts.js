@@ -300,6 +300,14 @@
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
     var span = Math.max(hi - lo, Math.max(1, hi * 0.02));
     lo -= span * 0.15; hi += span * 0.15;
+    // Graduations « rondes » (pas de 0,1 · 0,2 · 0,5 · 1 · 2 · 5…) : jamais deux fois la même étiquette
+    var raw = (hi - lo) / 3, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), step = mag;
+    [1, 2, 2.5, 5, 10].some(function (k) { step = k * mag; return step >= raw - 1e-9; });
+    lo = Math.floor(lo / step + 1e-9) * step;
+    if (lo + 3 * step < hi - 1e-9) { step = step * 2; lo = Math.floor(lo / step + 1e-9) * step; }
+    hi = lo + 3 * step;
+    var tickDec = [0, 1, 2].filter(function (d) { var k = Math.pow(10, d); return Math.abs(step * k - Math.round(step * k)) < 1e-6 && Math.abs(lo * k - Math.round(lo * k)) < 1e-6; })[0];
+    if (tickDec == null) tickDec = 2;
     var x = function (i) { return n === 1 || t1 === t0 ? pad.l + iw / 2 : pad.l + ((D.parse(pts[i].date).getTime() - t0) / (t1 - t0)) * iw; };
     var y = function (v) { return pad.t + ih - ((v - lo) / (hi - lo)) * ih; };
     var gid = 'wash-' + (o.uid || 'v');
@@ -308,7 +316,7 @@
     for (var g = 0; g <= 3; g++) {
       var gv = lo + ((hi - lo) * g) / 3;
       s += '<line class="chart__grid' + (g === 0 ? ' chart__grid--base' : '') + '" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(gv) + '" y2="' + y(gv) + '"/>';
-      s += text(pad.l - 8, y(gv) + 4, gv.toFixed(hi - lo < 6 ? 1 : 0).replace('.', ','), 'chart__tick', 'end');
+      s += text(pad.l - 8, y(gv) + 4, gv.toFixed(tickDec).replace('.', ','), 'chart__tick', 'end');
     }
     if (o.goal) {
       s += '<line class="chart__target" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(o.goal) + '" y2="' + y(o.goal) + '"/>';

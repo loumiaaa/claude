@@ -111,7 +111,7 @@
   function render() {
     if (!el) return;
     var pr = P();
-    var idLine = [pr.city && icon('planning') + '<span>' + esc(pr.city) + '</span>', pr.astro && icon('sparkle') + '<span>' + esc(pr.astro) + '</span>'].filter(Boolean).join('<span aria-hidden="true">·</span>');
+    var idLine = [pr.city && '<span class="profile-hero__meta-item">' + icon('planning') + esc(pr.city) + '</span>', pr.astro && '<span class="profile-hero__meta-item">' + icon('sparkle') + esc(pr.astro) + '</span>'].filter(Boolean).join('<span aria-hidden="true">·</span>');
 
     var header =
       '<section class="glass profile-hero" aria-labelledby="h-profile">' +

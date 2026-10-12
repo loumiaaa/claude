@@ -29,7 +29,7 @@
     document.title = 'Plateforme de suivi' + (me.name ? ' - ' + me.name : '');
     var side = U.$('.sidebar .brand__sub'), top = U.$('.topbar .brand__sub');
     if (side) side.textContent = me.name || 'Mon espace';
-    if (top) top.textContent = document.title;
+    if (top) top.textContent = me.name || 'Plateforme de suivi';
     var shown = 0;
     ['health', 'budget'].forEach(function (k) {
       var on = S.space(k);

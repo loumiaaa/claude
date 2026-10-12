@@ -1727,7 +1727,7 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
 .budget-table tr.is-current th { color: var(--accent); }
 .goal-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; gap: var(--space-4); }
 .goal-list__head { display: flex; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
-.goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-6); }
+.goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: var(--space-6); }
 .goal-card { min-width: 0; }
 .goal-card .card__header { display: flex; justify-content: space-between; gap: var(--space-3); align-items: flex-start; }
 .goal-card .card__title { display: inline-flex; align-items: center; gap: var(--space-2); }
@@ -2078,3 +2078,47 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
   .setup__char canvas { width: 64px !important; height: 96px !important; }
   .setup .modal__header { padding-left: var(--space-5); }
 }
+
+/* ==========================================================================
+   Responsive mobile — corrections de chevauchements
+   ========================================================================== */
+@media (max-width: 720px) {
+  /* Une fenêtre est ouverte : les notifications passent en haut pour ne rien cacher */
+  .has-layer .toast-region { top: calc(var(--space-3) + env(safe-area-inset-top, 0px)); bottom: auto; }
+  .has-layer .celebrate { top: calc(var(--space-3) + env(safe-area-inset-top, 0px)); bottom: auto; }
+}
+/* Réglages : la grille des objectifs d'heures ne doit pas hériter de celle des cagnottes */
+.goal-block .goal-grid { grid-template-columns: 180px minmax(0, 1fr); gap: var(--space-4); }
+.goal-block .goal-grid--stack { grid-template-columns: minmax(0, 1fr); }
+.goal-block, .goal-block .field { min-width: 0; }
+.goal-block .input-suffix { max-width: 100%; }
+
+/* Pastilles sous les chiffres : sur deux lignes si besoin, sans superposition */
+.stat__delta { height: auto; min-height: 24px; padding-top: 3px; padding-bottom: 3px; line-height: 1.3; white-space: normal; max-width: 100%; }
+.stat__label { overflow-wrap: break-word; hyphens: auto; }
+
+/* Barre d'onglets : libellés jamais collés entre eux */
+.tabbar__item { min-width: 0; padding: 0 2px; }
+.tabbar__item > span:not(.icon) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 720px) {
+  /* Montants : la taille s'adapte à la largeur de la carte */
+  .stat { container-type: inline-size; min-width: 0; }
+  .stat__value { font-size: clamp(18px, 15cqi, var(--fs-3xl)); overflow-wrap: anywhere; }
+  .kpi-row--4 .stat__value, .kpi-row--3 .stat__value { font-size: clamp(18px, 15cqi, 28px); }
+  .tabbar__item { font-size: 11px; letter-spacing: -0.01em; }
+  .goal-block .goal-grid { grid-template-columns: minmax(0, 1fr); }
+  /* Cartes chiffres à deux colonnes : icône plus petite, libellé lisible */
+  .stat__label { font-size: 13px; }
+  .stat .stat__icon { width: 30px; height: 30px; flex: none; }
+  .stat .stat__icon .icon { width: 16px; height: 16px; }
+
+  /* Profil : lieu et signe astro restent groupés avec leur icône */
+  .profile-hero__meta { gap: var(--space-1) var(--space-3); }
+  .profile-hero__meta > span[aria-hidden] { display: none; }
+  /* Fiche animal : la photo au-dessus, le nom sur toute la largeur */
+  .pet-card { grid-template-columns: minmax(0, 1fr); }
+  .pet-card__pic { width: 96px; height: 96px; }
+  .pet-card__head strong { overflow-wrap: normal; word-break: normal; }
+}
+.profile-hero__meta-item { display: inline-flex; align-items: center; gap: var(--space-1); }
