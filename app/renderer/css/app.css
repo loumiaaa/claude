@@ -2140,3 +2140,9 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
 .is-scrolled .topbar { box-shadow: var(--glass-shadow), 0 10px 28px -12px rgba(43, 33, 80, .35); }
 /* Les ancres et retours sur un bloc ne se cachent pas sous la barre du haut (mobile) */
 @media (max-width: 1100px) { html { scroll-padding-top: 96px; scroll-padding-bottom: 170px; } }
+
+/* Scène du dashboard : la bulle de Lamia garde toujours une largeur lisible
+   (avant, une longue réplique de Memeow pouvait l'écraser en colonne) */
+.scene { grid-template-columns: auto minmax(min(180px, 45%), 1fr) minmax(0, max-content); }
+.scene__say--lamia { min-width: min(180px, 100%); }
+.scene__say--memeow .pixel-bubble { white-space: normal; max-width: 150px; }
