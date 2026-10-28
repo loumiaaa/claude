@@ -66,3 +66,19 @@ test('mois budgétaire du 27 au 26 : rattachement des dates, fin de mois et ann�
   assert.equal(b.startDay, 27);
   assert.equal(B.summary(b, p.start, p.end).income, 1800);
 });
+
+test('paiements cochés : facture et échéances marquées « passées » à la main', () => {
+  const b = { entries: [], deposits: [], goals: [], bills: [{ id: 'b1', label: 'Loyer', amount: 600, day: 5, every: 'month', since: '2026-01-01' }],
+    installments: [{ id: 'i1', label: 'MacBook', total: 1200, count: 4, first: '2026-09-15' }], paid: ['bill:b1:2026-10-05', 'inst:i1:2026-09-15'] };
+  const items = B.expenseItems(b, '2026-09-27', '2026-10-26');
+  const loyer = items.find((x) => x.source === 'bill'), mac = items.find((x) => x.source === 'installment');
+  assert.equal(loyer.key, 'bill:b1:2026-10-05');
+  assert.equal(loyer.paid, true);
+  assert.equal(mac.key, 'inst:i1:2026-10-15');
+  assert.equal(mac.paid, false);
+  const st = B.installmentStatus(b.installments[0], '2026-10-28', b.paid);
+  assert.equal(st.paidCount, 1);
+  assert.equal(st.next.date, '2026-10-15');            // l'échéance passée mais pas cochée reste à vérifier
+  assert.equal(st.remaining, 900);
+  assert.equal(B.installmentStatus(b.installments[0], '2026-10-28').paidCount, 2);   // sans liste : comportement d'avant
+});

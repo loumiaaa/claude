@@ -2146,3 +2146,57 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
 .scene { grid-template-columns: auto minmax(min(180px, 45%), 1fr) minmax(0, max-content); }
 .scene__say--lamia { min-width: min(180px, 100%); }
 .scene__say--memeow .pixel-bubble { white-space: normal; max-width: 150px; }
+
+/* ==========================================================================
+   Budget — paiements cochés « passés »
+   ========================================================================== */
+.health-list.health-list--due li { grid-template-columns: auto minmax(120px, auto) minmax(0, 1fr) auto auto; align-items: center; }
+.pay-check { flex: none; }
+.pay-state { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: var(--fw-semibold); white-space: nowrap; background: var(--color-track); color: var(--color-text-muted); }
+.pay-state .icon { width: 13px; height: 13px; }
+.due-item.is-paid .pay-state, .bill-pay.is-paid > span:last-child { background: var(--success-soft); color: var(--success); }
+.due-item.is-check .pay-state, .bill-pay.is-check > span:last-child { background: var(--warning-soft); color: var(--warning); }
+.due-item.is-paid strong { text-decoration: line-through; text-decoration-thickness: 1px; color: var(--color-text-muted); }
+.due-item.is-paid .budget-amount, .due-item.is-paid .health-list__date { opacity: .7; }
+.due-item { transition: background-color var(--dur-base, .2s) ease; }
+
+/* Factures : une case par prélèvement du mois budgétaire en cours */
+.health-list--money li .bill-pays { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
+.bill-pay { display: inline-flex; align-items: center; gap: var(--space-2); }
+.bill-pay > span:last-child { padding: 2px 9px; border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: var(--fw-semibold); background: var(--color-track); color: var(--color-text-muted); }
+
+/* Paiements en plusieurs fois : chaque échéance se coche d'un clic */
+.inst-steps li { padding: 0; background: none; }
+.inst-step {
+  display: grid; grid-template-columns: auto auto; column-gap: var(--space-2); align-items: center; text-align: left;
+  padding: var(--space-2) var(--space-3); border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: var(--color-surface-muted); color: var(--color-text-muted); font: inherit; font-size: var(--fs-xs); cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease, transform .15s ease;
+}
+.inst-step > span:not(.inst-step__box) { grid-column: 2; }
+.inst-step__box { grid-row: 1 / span 2; display: grid; place-items: center; width: 18px; height: 18px; border: 1.5px solid var(--control-border); border-radius: 5px; background: var(--input-bg); }
+.inst-step__box .icon { width: 12px; height: 12px; }
+.inst-step:hover { border-color: var(--color-border-strong); transform: translateY(-1px); }
+.inst-step[aria-pressed="true"] { background: var(--success-soft); color: var(--success); }
+.inst-step[aria-pressed="true"] .inst-step__box { border-color: var(--success); background: var(--success); color: var(--color-surface); }
+.inst-steps li.is-check .inst-step { border-color: color-mix(in srgb, var(--warning) 45%, transparent); }
+.inst-steps li.is-paid { background: none; }
+
+@container (max-width: 600px) {
+  .health-list.health-list--due li { grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px var(--space-3); }
+  .health-list.health-list--due li > * { grid-column: 2; min-width: 0; }
+  .health-list.health-list--due li .pay-check { grid-column: 1; grid-row: 1 / span 3; align-self: center; }
+  .health-list.health-list--due li .health-list__date { grid-row: 1; }
+  .health-list.health-list--due li strong { grid-row: 2; overflow-wrap: anywhere; }
+  .health-list.health-list--due li .pay-state { grid-row: 3; justify-self: start; }
+  .health-list.health-list--due li .budget-amount { grid-column: 3; grid-row: 1 / span 3; align-self: center; text-align: right; }
+}
+@media (max-width: 720px) {
+  .health-list.health-list--due li { grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px var(--space-3); }
+  .health-list.health-list--due li > * { grid-column: 2; min-width: 0; }
+  .health-list.health-list--due li .pay-check { grid-column: 1; grid-row: 1 / span 3; align-self: center; }
+  .health-list.health-list--due li .health-list__date { grid-row: 1; }
+  .health-list.health-list--due li strong { grid-row: 2; }
+  .health-list.health-list--due li .pay-state { grid-row: 3; justify-self: start; }
+  .health-list.health-list--due li .budget-amount { grid-column: 3; grid-row: 1 / span 3; align-self: center; text-align: right; }
+}

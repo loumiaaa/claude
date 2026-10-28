@@ -259,7 +259,9 @@
       installments: arr(b.installments).filter(function (x) { return typeof x.label === 'string' && typeof x.total === 'number' && x.total > 0 && x.count >= 2 && DATE_RE.test(x.first); }),
       // Cagnottes d'épargne : { id, name, target? } et versements : { id, goalId, date, amount }
       goals: arr(b.goals).filter(function (x) { return typeof x.name === 'string'; }),
-      deposits: arr(b.deposits).filter(function (x) { return DATE_RE.test(x.date) && typeof x.goalId === 'string' && typeof x.amount === 'number' && isFinite(x.amount); })
+      deposits: arr(b.deposits).filter(function (x) { return DATE_RE.test(x.date) && typeof x.goalId === 'string' && typeof x.amount === 'number' && isFinite(x.amount); }),
+      // Prélèvements et échéances cochés « passés » : « bill:<id>:<date> » / « inst:<id>:<date> »
+      paid: (Array.isArray(b.paid) ? b.paid : []).filter(function (k, i, a) { return typeof k === 'string' && /^(bill|inst):.+:\d{4}-\d{2}-\d{2}$/.test(k) && a.indexOf(k) === i; })
     };
   }
 

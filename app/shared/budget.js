@@ -33,15 +33,23 @@
     return out;
   }
 
+  // Paiements cochés « passés » : clé « bill:<id>:<date> » ou « inst:<id>:<date> »
+  function paidKey(source, id, date) { return (source === 'bill' ? 'bill' : 'inst') + ':' + id + ':' + date; }
+  function isPaid(paid, source, id, date) { return (paid || []).indexOf(paidKey(source, id, date)) >= 0; }
+
   // Échéancier d'un paiement en plusieurs fois (le dernier versement absorbe l'arrondi)
   function schedule(p) {
     var n = Math.max(2, Math.round(p.count)), part = Math.floor((p.total / n) * 100) / 100, out = [];
     for (var k = 0; k < n; k++) out.push({ n: k + 1, of: n, date: D.addMonths(p.first, k), amount: k === n - 1 ? cents(p.total - part * (n - 1)) : part });
     return out;
   }
-  function installmentStatus(p, today) {
-    var sch = schedule(p), paid = sch.filter(function (x) { return x.date <= today; });
-    var next = sch.filter(function (x) { return x.date > today; })[0] || null;
+  // paidList (facultatif) : échéances cochées ; sans liste, une échéance passée compte comme payée
+  function installmentStatus(p, today, paidList) {
+    var sch = schedule(p);
+    var done = function (x) { return paidList ? isPaid(paidList, 'inst', p.id, x.date) : x.date <= today; };
+    sch.forEach(function (x) { x.key = paidKey('inst', p.id, x.date); x.paid = done(x); });
+    var paid = sch.filter(function (x) { return x.paid; });
+    var next = sch.filter(function (x) { return !x.paid; })[0] || null;
     return { schedule: sch, paidCount: paid.length, paidAmount: cents(paid.reduce(function (a, x) { return a + x.amount; }, 0)), remaining: cents(p.total - paid.reduce(function (a, x) { return a + x.amount; }, 0)), next: next, done: !next };
   }
 
@@ -49,9 +57,9 @@
   function expenseItems(b, start, end) {
     var out = [];
     b.entries.forEach(function (x) { if (x.type === 'expense' && within(x.date, start, end)) out.push({ date: x.date, label: x.label, amount: x.amount, category: x.category || 'Autre', source: 'entry', id: x.id }); });
-    b.bills.forEach(function (x) { billDates(x, start, end).forEach(function (d) { out.push({ date: d, label: x.label, amount: x.amount, category: x.category || 'Factures', source: 'bill', id: x.id }); }); });
+    b.bills.forEach(function (x) { billDates(x, start, end).forEach(function (d) { out.push({ date: d, label: x.label, amount: x.amount, category: x.category || 'Factures', source: 'bill', id: x.id, key: paidKey('bill', x.id, d), paid: isPaid(b.paid, 'bill', x.id, d) }); }); });
     b.installments.forEach(function (p) {
-      schedule(p).forEach(function (s) { if (within(s.date, start, end)) out.push({ date: s.date, label: p.label + ' (' + s.n + '/' + s.of + ')', amount: s.amount, category: p.category || 'Paiements en plusieurs fois', source: 'installment', id: p.id }); });
+      schedule(p).forEach(function (s) { if (within(s.date, start, end)) out.push({ date: s.date, label: p.label + ' (' + s.n + '/' + s.of + ')', amount: s.amount, category: p.category || 'Paiements en plusieurs fois', source: 'installment', id: p.id, key: paidKey('inst', p.id, s.date), paid: isPaid(b.paid, 'inst', p.id, s.date) }); });
     });
     return out.sort(function (a, c) { return a.date < c.date ? -1 : a.date > c.date ? 1 : 0; });
   }
@@ -81,5 +89,5 @@
     return cents(b.deposits.reduce(function (a, x) { return x.goalId === goalId ? a + x.amount : a; }, 0));
   }
 
-  return { budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved };
+  return { budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, paidKey: paidKey, isPaid: isPaid, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved };
 });

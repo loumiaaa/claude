@@ -206,6 +206,42 @@
     });
   }
 
+  /* --- Paiements cochés « passés » ------------------------------------------------------ */
+  function payState(x, today) {
+    if (x.paid) return { cls: 'is-paid', label: 'payé' };
+    if (x.date <= today) return { cls: 'is-check', label: 'à vérifier' };
+    return { cls: 'is-future', label: 'à venir' };
+  }
+  function paidBox(key, label, checked) {
+    return '<label class="checkbox pay-check" title="' + (checked ? 'Décocher' : 'Cocher quand le paiement est passé') + '">' +
+      '<input class="checkbox__input" type="checkbox" data-b-paid="' + esc(key) + '" data-focus-key="pay-' + esc(key) + '"' + (checked ? ' checked' : '') + '>' +
+      '<span class="checkbox__box" aria-hidden="true"></span><span class="sr-only">Payé : ' + esc(label) + '</span></label>';
+  }
+  function dueItem(x, today) {
+    var st = payState(x, today);
+    return '<li class="due-item ' + st.cls + '">' + paidBox(x.key, x.label + ', ' + D.dayMonthLong(x.date), x.paid) +
+      '<span class="health-list__date">' + esc(D.cap(D.dayMonthLong(x.date))) + '</span><strong>' + esc(x.label) + '</strong>' +
+      '<span class="pay-state">' + (x.paid ? icon('check') : '') + st.label + '</span><span class="budget-amount">' + eur(x.amount) + '</span></li>';
+  }
+  function bindPaid(el) {
+    function toggle(key, on, label) {
+      S.setBudgetPaid(key, on);
+      if (!on) return;
+      // Dernière échéance d'un paiement en plusieurs fois : on fête ça
+      var m = /^inst:(.+):\d{4}-\d{2}-\d{2}$/.exec(key), p = m && B().installments.filter(function (x) { return x.id === m[1]; })[0];
+      if (p && BG.installmentStatus(p, D.today(), B().paid).done) L.fun.celebrate({ title: 'Paiement terminé !', text: p.label + ' est entièrement payé.' });
+      else U.toast({ icon: 'check', title: 'Paiement coché', text: label || '', duration: 2200 });
+    }
+    el.addEventListener('change', function (e) {
+      var k = e.target.getAttribute && e.target.getAttribute('data-b-paid');
+      if (k && e.target.type === 'checkbox') toggle(k, e.target.checked, (e.target.closest('li') && e.target.closest('li').querySelector('strong') || {}).textContent);
+    });
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-b-paid]');
+      if (b) toggle(b.getAttribute('data-b-paid'), b.getAttribute('aria-pressed') !== 'true', b.getAttribute('data-label'));
+    });
+  }
+
   /* --- Fabrique de vue -------------------------------------------------------------- */
   function makeView(name, title, render, bind) {
     var el = null;
@@ -216,6 +252,7 @@
         el = node;
         bindPeriod(el, draw);
         bindEditDelete(el);
+        bindPaid(el);
         if (bind) bind(el);
         S.subscribe(function (type) {
           if (type !== 'budget' && type !== 'reset' && type !== 'settings') return;
@@ -283,9 +320,8 @@
   function renderDash(el) {
     var p = period(), s = BG.summary(B(), p.start, p.end), today = D.today();
     var due = s.items.filter(function (x) { return x.source !== 'entry'; });
-    var dueList = due.length ? '<ul class="health-list health-list--due" role="list">' + due.map(function (x) {
-      return '<li class="' + (x.date < today ? 'is-past' : '') + '"><span class="health-list__date">' + esc(D.cap(D.dayMonthLong(x.date))) + '</span><strong>' + esc(x.label) + '</strong><span class="text-subtle">' + (x.date < today ? 'payé' : 'à venir') + '</span><span class="budget-amount">' + eur(x.amount) + '</span></li>';
-    }).join('') + '</ul>' : empty('Aucune facture ni échéance sur cette période.');
+    var dueList = due.length ? '<ul class="health-list health-list--due" role="list">' + due.map(function (x) { return dueItem(x, today); }).join('') + '</ul>' +
+      '<p class="hint">Coche chaque paiement quand il est passé sur ton compte.</p>' : empty('Aucune facture ni échéance sur cette période.');
     el.innerHTML =
       head('Gérer sereinement', 'Budget', 'h-budget', 'Tes entrées, tes dépenses et ce que tu mets de côté, ' + (zoom === 'week' ? 'semaine par semaine.' : 'mois par mois.'),
         '<a class="btn btn--secondary btn--sm" href="#depenses">' + icon('plus') + 'Dépense ou entrée</a><a class="btn btn--primary btn--sm" href="#epargne">' + icon('piggy') + 'Épargner</a>') +
@@ -299,7 +335,8 @@
       '</div>' +
       '<div class="health-grid">' +
         card('bd-cat', 'Dépenses par catégorie', esc(p.label), s.byCategory.length ? '<div class="chart-host" data-chart="cats"></div>' : empty('Aucune dépense sur cette période.')) +
-        card('bd-due', 'Factures et échéances', 'Prélèvements et paiements en plusieurs fois de la période', dueList) +
+        card('bd-due', 'Factures et échéances', due.length ? due.filter(function (x) { return x.paid; }).length + ' payé' + (due.filter(function (x) { return x.paid; }).length > 1 ? 's' : '') + ' sur ' + due.length +
+          (due.filter(function (x) { return !x.paid && x.date <= today; }).length ? ' · ' + due.filter(function (x) { return !x.paid && x.date <= today; }).length + ' à vérifier' : '') : 'Prélèvements et paiements en plusieurs fois de la période', dueList) +
         card('bd-trend', 'Évolution', zoom === 'week' ? '6 dernières semaines' : '6 derniers mois', trend()) +
         card('bd-start', 'Mois budgétaire', 'Ton mois commence le jour de ta paie', '<form class="health-form start-form" data-b-start novalidate><div class="field"><label class="label" for="b-start">Le mois commence le</label>' +
           '<select class="select" id="b-start" name="day" data-focus-key="b-start">' + Array.apply(null, Array(28)).map(function (_, i) { var d = i + 1; return '<option value="' + d + '"' + (d === B().startDay ? ' selected' : '') + '>' + (d === 1 ? '1er' : d) + '</option>'; }).join('') + '</select>' +
@@ -331,21 +368,32 @@
   function renderBills(el) {
     var b = B(), today = D.today();
     var monthly = b.bills.reduce(function (a, x) { return a + (x.every === 'year' ? x.amount / 12 : x.amount); }, 0);
+    var bm = BG.budgetMonth(today, b.startDay);
     var bills = b.bills.length ? '<ul class="health-list health-list--money" role="list">' + b.bills.slice().sort(function (a, c) { return a.day - c.day; }).map(function (x) {
       var when = x.every === 'year' ? 'le ' + x.day + ' ' + MONTHS[(x.month || 1) - 1] + ', chaque année' : 'le ' + x.day + ' de chaque mois';
-      return '<li><span class="health-list__date">' + esc(when) + '</span><strong>' + esc(x.label) + '</strong><span class="text-subtle">' + esc(x.category || '') + '</span><span class="budget-amount">' + eur(x.amount) + '</span>' + btns('bills', x.id, x.label) + '</li>';
+      // Ce mois budgétaire : une case par prélèvement
+      var occ = BG.billDates(x, bm.start, bm.end).map(function (d) {
+        var o = { date: d, key: BG.paidKey('bill', x.id, d), paid: BG.isPaid(b.paid, 'bill', x.id, d), label: x.label }, st = payState(o, today);
+        return '<span class="bill-pay ' + st.cls + '">' + paidBox(o.key, x.label + ', ' + D.dayMonthLong(d), o.paid) + '<span>' + esc(D.dayMonth(d)) + ' · ' + st.label + '</span></span>';
+      }).join('');
+      return '<li><span class="health-list__date">' + esc(when) + '</span><strong>' + esc(x.label) + '</strong><span class="text-subtle">' + esc(x.category || '') + '</span><span class="budget-amount">' + eur(x.amount) + '</span>' + btns('bills', x.id, x.label) +
+        (occ ? '<span class="bill-pays">' + occ + '</span>' : '') + '</li>';
     }).join('') + '</ul>' : empty('Ajoute tes factures (loyer, forfait, assurances…) : elles seront comptées chaque mois automatiquement.');
     var inst = b.installments.length ? '<ul class="inst-list" role="list">' + b.installments.map(function (x) {
-      var st = BG.installmentStatus(x, today), pct = Math.round((st.paidCount / st.schedule.length) * 100);
+      var st = BG.installmentStatus(x, today, b.paid), pct = Math.round((st.paidCount / st.schedule.length) * 100);
       return '<li class="glass glass--nested inst-card"><div class="inst-card__head"><strong>' + esc(x.label) + '</strong><span class="budget-amount">' + eur(x.total) + '</span>' + btns('installments', x.id, x.label) + '</div>' +
         '<div class="progress" style="--value:' + pct + '" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Échéances payées"></div>' +
         '<p class="inst-card__meta">' + st.paidCount + '/' + st.schedule.length + ' payées · ' + (st.done ? 'Terminé, bravo !' : 'reste ' + eur(st.remaining) + ' · prochaine le ' + esc(D.dayMonth(st.next.date)) + ' (' + eur(st.next.amount) + ')') + '</p>' +
-        '<ol class="inst-steps">' + st.schedule.map(function (s) { return '<li class="' + (s.date <= today ? 'is-paid' : '') + '"><span>' + esc(D.dayMonth(s.date)) + '</span><span>' + eur(s.amount) + '</span></li>'; }).join('') + '</ol></li>';
+        '<ol class="inst-steps">' + st.schedule.map(function (s) {
+          var cls = s.paid ? 'is-paid' : s.date <= today ? 'is-check' : '';
+          return '<li class="' + cls + '"><button type="button" class="inst-step" data-b-paid="' + esc(s.key) + '" data-label="' + esc(x.label + ' ' + s.n + '/' + s.of) + '" data-focus-key="pay-' + esc(s.key) + '" aria-pressed="' + s.paid + '" aria-label="Échéance ' + s.n + ' sur ' + s.of + ', ' + esc(D.dayMonthLong(s.date)) + ', ' + eur(s.amount) + (s.paid ? ', payée' : ', à cocher') + '">' +
+            '<span class="inst-step__box" aria-hidden="true">' + (s.paid ? icon('check') : '') + '</span><span>' + esc(D.dayMonth(s.date)) + '</span><span>' + eur(s.amount) + '</span></button></li>';
+        }).join('') + '</ol><p class="hint">Touche une échéance pour la cocher quand elle est passée.</p></li>';
     }).join('') + '</ul>' : empty('Ajoute un paiement en 4 fois (ou plus) : chaque échéance apparaîtra dans le mois où elle tombe.');
     el.innerHTML =
       head('Budget', 'Factures & paiements en plusieurs fois', 'h-bills', 'Ce qui revient chaque mois, et ce que tu paies en plusieurs fois.') +
       '<div class="kpi-row kpi-row--2">' + tile('receipt', 'Factures par mois', eur(monthly), U.plural(b.bills.length, 'facture')) +
-        tile('calendar', 'Paiements en cours', String(b.installments.filter(function (x) { return !BG.installmentStatus(x, today).done; }).length), 'reste ' + eur(b.installments.reduce(function (a, x) { return a + BG.installmentStatus(x, today).remaining; }, 0))) + '</div>' +
+        tile('calendar', 'Paiements en cours', String(b.installments.filter(function (x) { return !BG.installmentStatus(x, today, b.paid).done; }).length), 'reste ' + eur(b.installments.reduce(function (a, x) { return a + BG.installmentStatus(x, today, b.paid).remaining; }, 0))) + '</div>' +
       card('bl-add', 'Ajouter une facture', 'Montant prélevé, jour du prélèvement et fréquence', addForm('bills', 'f')) +
       card('bl-list', 'Mes factures', '', bills) +
       card('in-add', 'Ajouter un paiement en plusieurs fois', 'Le montant est réparti en échéances mensuelles', addForm('installments', 'i')) +

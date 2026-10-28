@@ -411,6 +411,16 @@
       emit('budget', { kind: kind }, { now: true });
       return item;
     },
+    // Coche (ou décoche) un prélèvement / une échéance comme passé
+    setBudgetPaid: function (key, on) {
+      var b = store.budget();
+      if (!Array.isArray(b.paid)) b.paid = [];
+      var i = b.paid.indexOf(key);
+      if (on && i < 0) b.paid.push(key);
+      else if (!on && i >= 0) b.paid.splice(i, 1);
+      else return;
+      emit('budget', { kind: 'paid', key: key, on: !!on }, { now: true });
+    },
     updateBudget: function (kind, id, patch) {
       var it = store.budget()[kind].filter(function (x) { return x.id === id; })[0];
       if (!it) return null;
