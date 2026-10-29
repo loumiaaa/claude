@@ -10,8 +10,8 @@
   'use strict';
 
   var D = L.dates, S = L.store, U = L.ui, Q = L.q, ST = L.shared.stats, R = L.shared.reminders;
-  var ROUTES = { dashboard: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport', budget: 'budget', depenses: 'money', factures: 'bills', epargne: 'savings', profil: 'profile' };
-  var SPACES = { health: 'health', body: 'health', food: 'health', sport: 'health', budget: 'budget', money: 'budget', bills: 'budget', savings: 'budget' };
+  var ROUTES = { dashboard: 'dashboard', accueil: 'dashboard', taches: 'tasks', planning: 'planning', recap: 'recap', reglages: 'settings', sante: 'health', corps: 'body', alimentation: 'food', sport: 'sport', budget: 'budget', depenses: 'money', factures: 'bills', epargne: 'savings', profil: 'profile' };
+  var SPACES = { dashboard: 'home', health: 'health', body: 'health', food: 'health', sport: 'health', budget: 'budget', money: 'budget', bills: 'budget', savings: 'budget' };
   var current = null;
   var api = window.lamia;
 
@@ -35,7 +35,7 @@
     ['health', 'budget'].forEach(function (k) {
       var on = S.space(k);
       if (on) shown += 1;
-      U.$$('[data-section="' + k + '"], .tabbar [data-space="' + k + '"], [data-space-go="' + k + '"], [data-space-tab="' + k + '"]').forEach(function (n) { n.hidden = !on; });
+      U.$$('[data-section="' + k + '"], .tabbar [data-space="' + k + '"], [data-space-go="' + k + '"], [data-space-tab="' + k + '"], [data-space-link="' + k + '"]').forEach(function (n) { n.hidden = !on; });
     });
     var sw = U.$('[data-space-menu]');
     if (sw) sw.hidden = !shown;
@@ -73,7 +73,7 @@
       else btn.innerHTML = U.icon('plus') + lab;
     });
     var sub = U.$('[data-greeting-sub]');
-    if (sub) sub.textContent = { prod: 'Tes tâches, tes heures et ton humeur', health: 'Prendre soin de toi, à ton rythme', budget: 'Ton budget, sereinement', profile: 'Ce qui te ressemble' }[tab] || 'Ton espace, tes règles';
+    if (sub) sub.textContent = { home: 'Toute ta journée en un coup d’œil', prod: 'Tes tâches, tes heures et ton humeur', health: 'Prendre soin de toi, à ton rythme', budget: 'Ton budget, sereinement', profile: 'Ce qui te ressemble' }[tab] || 'Ton espace, tes règles';
     closeSpaceMenu();
     if (changed && !opts.initial) {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -86,7 +86,7 @@
 
   /* --- Menus déroulants de la barre latérale et choix d'espace (mobile) ------- */
   // Accordéon : seul le menu de l'espace en cours est ouvert ; les autres s'ouvrent d'un clic
-  var SECTIONS = ['prod', 'health', 'budget'];
+  var SECTIONS = ['home', 'prod', 'health', 'budget'];
   function setSection(key, open) {
     var b = U.$('[data-nav-toggle="' + key + '"]'), box = document.getElementById('ns-' + key);
     if (!b || !box) return;

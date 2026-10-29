@@ -337,6 +337,8 @@
             '<span class="hero__hint">Clique sur Memeow, elle adore ça.</span></div></div>' +
           '<div class="hero__stage" data-scene-slot></div>' +
         '</section>' +
+        '<div data-dash-life class="dash-life">' + lifeHTML() + '</div>' +
+        '<h2 class="dash-section">' + icon('tasks') + 'Productivité</h2>' +
         '<div data-dash-hours class="dash-hours">' + hoursCard() + '</div>' +
         '<div data-dash-mood class="dash-mood">' + moodCard() + '</div>' +
         '<div data-dash-recap class="dash-recap">' + recapCard() + '</div>' +
@@ -353,11 +355,96 @@
     U.typo(el);
   }
 
+  /* --- Accueil : un aperçu de chaque espace (sauf le poids) ---------------------------- */
+  var BG = window.LamiaShared.budget;
+  var EURF = (function () { try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }); } catch (e) { return null; } })();
+  function eur(v) { return EURF ? EURF.format(v) : (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + NB + '€'; }
+  var MEAL = { matin: ['Matin', '☀️'], midi: ['Midi', '🍽️'], soir: ['Soir', '🌙'], collation: ['Collation', '🍎'], journee: ['Toute la journée', '💧'] };
+  function nowSlot() { var h = new Date(D.nowMs()).getHours(); return h < 11 ? 'matin' : h < 15 ? 'midi' : h < 18 ? 'collation' : 'soir'; }
+
+  function lifeTile(href, emoji, label, value, sub, cls) {
+    return '<a class="glass life-tile ' + (cls || '') + '" href="' + href + '"><span class="life-tile__icon" aria-hidden="true">' + emoji + '</span>' +
+      '<span class="life-tile__label">' + esc(label) + '</span><strong class="life-tile__value">' + value + '</strong>' + (sub ? '<span class="life-tile__sub">' + sub + '</span>' : '') + '</a>';
+  }
+  function lifeTiles() {
+    var st = S.get(), today = D.today(), w0 = D.startOfWeek(today), w1 = D.endOfWeek(today);
+    var poles = Q.minutesByPole(w0, w1, true), goal = (st.settings.schedules.flowline.weeklyHours || 0) * 60;
+    var doing = st.tasks.filter(function (t) { return t.status === 'doing'; }).length, due = Q.dueBetween(today, w1).length;
+    var out = [
+      lifeTile('#recap', '⏱️', 'Heures · ' + S.groupName('flowline'), D.duration(poles.flowline || 0), goal ? 'sur ' + D.duration(goal) + ' cette semaine' : 'cette semaine'),
+      lifeTile('#taches', '✅', 'Tâches', U.plural(doing, 'en cours', 'en cours'), U.plural(due, 'échéance') + ' d’ici dimanche')
+    ];
+    if (S.space('budget')) {
+      var b = S.budget(), m = BG.budgetMonth(today, b.startDay), f = BG.forecast(b, m.start, m.end, today);
+      out.push(f.income ? lifeTile('#budget', '💶', 'Reste à vivre', eur(f.rest), eur(f.perDay) + ' par jour', f.rest < 0 ? 'is-neg' : '')
+        : lifeTile('#factures', '💶', 'Reste à vivre', '—', 'Ajoute ta paie pour le calculer'));
+    }
+    if (S.space('health')) {
+      var mins = S.health().sports.filter(function (x) { return D.between(x.date, w0, w1); }).reduce(function (a, x) { return a + x.minutes; }, 0);
+      out.push(lifeTile('#sport', '🏃', 'Sport', mins ? D.duration(mins) : '0 min', 'cette semaine'));
+    }
+    return '<div class="life-tiles">' + out.join('') + '</div>';
+  }
+  function healthCard() {
+    var h = S.health(), today = D.today(), w0 = D.startOfWeek(today), w1 = D.endOfWeek(today);
+    var week = h.sports.filter(function (x) { return D.between(x.date, w0, w1); });
+    var last = h.sports.slice().sort(function (a, c) { return a.date < c.date ? 1 : -1; })[0];
+    var slot = nowSlot(), now = h.plan.filter(function (x) { return x.slots.indexOf(slot) >= 0 || x.slots.indexOf('journee') >= 0; }).slice(0, 3);
+    var days = {}; week.forEach(function (x) { days[x.date] = true; });
+    var strip = [0, 1, 2, 3, 4, 5, 6].map(function (i) { var d = D.addDays(w0, i); return '<span class="week-dot' + (days[d] ? ' is-on' : '') + (d === today ? ' is-today' : '') + '" title="' + esc(D.cap(D.DAYS[D.dow(d)])) + '">' + D.DAYS_LETTER[D.dow(d)] + '</span>'; }).join('');
+    return '<section class="glass card life-card" aria-labelledby="dh-health"><div class="card__header"><div><h2 class="card__title" id="dh-health">🌿 Santé</h2><p class="card__subtitle">Sport et alimentation</p></div>' +
+      '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#sante">Voir' + icon('chevron-right') + '</a></div></div>' +
+      '<div class="life-card__row"><div><span class="life-card__big">' + (week.length ? D.duration(week.reduce(function (a, x) { return a + x.minutes; }, 0)) : '0 min') + '</span><span class="life-card__muted"> de sport · ' + U.plural(week.length, 'séance') + '</span></div>' +
+        '<div class="week-dots" aria-label="Jours de sport cette semaine">' + strip + '</div></div>' +
+      (last ? '<p class="life-card__muted">Dernière séance : ' + esc(last.activity || 'Sport') + ', ' + esc((D.relative ? D.relative(last.date) : D.dayMonth(last.date)).toLowerCase()) + '</p>' : '<p class="life-card__muted">Pas encore de séance : même dix minutes de marche, ça compte.</p>') +
+      '<h3 class="life-card__h">' + MEAL[slot][1] + ' ' + MEAL[slot][0] + ' : ton plan alimentaire</h3>' +
+      (now.length ? '<ul class="life-list" role="list">' + now.map(function (x) { return '<li>' + esc(x.text) + '</li>'; }).join('') + '</ul>'
+        : '<p class="life-card__muted">' + (h.plan.length ? 'Rien de prévu pour ce moment.' : 'Note les indications de ta diététicienne dans <a href="#alimentation">Alimentation</a>.') + '</p>') +
+    '</section>';
+  }
+  function budgetCard() {
+    var b = S.budget(), today = D.today(), m = BG.budgetMonth(today, b.startDay), f = BG.forecast(b, m.start, m.end, today);
+    var next = BG.monthEvents(b, m.start, m.end).filter(function (e) { return e.date >= today && e.kind !== 'income' && e.kind !== 'saving' && !e.paid; })[0];
+    var envs = BG.envelopes(b, m.start, m.end, today).filter(function (e) { return e.pct >= 60; }).slice(0, 2);
+    return '<section class="glass card life-card" aria-labelledby="dh-budget"><div class="card__header"><div><h2 class="card__title" id="dh-budget">💶 Budget</h2><p class="card__subtitle">' + esc(m.label) + '</p></div>' +
+      '<div class="card__actions"><button type="button" class="btn btn--secondary btn--sm" data-dash-expense>' + icon('plus') + 'Dépense</button></div></div>' +
+      (f.income ? '<div><span class="life-card__big' + (f.rest < 0 ? ' is-neg' : '') + '">' + eur(f.rest) + '</span><span class="life-card__muted"> de reste à vivre</span></div>' +
+        '<p class="life-card__muted">' + (f.daysLeft > 0 && f.rest > 0 ? 'soit <strong>' + eur(f.perDay) + ' par jour</strong> jusqu’au ' + esc(D.dayMonth(m.end)) : 'On regarde les enveloppes ensemble ?') + '</p>'
+        : '<p class="life-card__muted">Ajoute ta paie dans <a href="#factures">Charges fixes</a> : ton reste à vivre s’affichera ici.</p>') +
+      (next ? '<p class="life-chip">🔔 ' + esc(next.label) + ' · ' + eur(next.amount) + ' ' + (next.date === today ? 'aujourd’hui' : 'dans ' + U.plural(D.diff(today, next.date), 'jour')) + '</p>' : '') +
+      (envs.length ? '<ul class="life-env" role="list">' + envs.map(function (e) {
+        return '<li class="' + (e.pct > 100 ? 'is-over' : e.pct >= 80 ? 'is-warn' : '') + '"><span>' + e.category.icon + ' ' + esc(e.category.name) + '</span><span class="life-env__track"><span style="width:' + Math.min(100, e.pct) + '%"></span></span><strong>' + Math.min(999, e.pct) + NB + '%</strong></li>';
+      }).join('') + '</ul>' : '') +
+      '<a class="btn btn--ghost btn--sm life-card__more" href="#budget">Vue d’ensemble' + icon('chevron-right') + '</a></section>';
+  }
+  function goalPct(g) {
+    if (g.link) {
+      var kind = g.link.slice(0, 4), val = g.link.slice(4);
+      var ts = S.get().tasks.filter(function (t) { return kind === 'cat:' ? t.categoryId === val : (t.tags || []).indexOf(val) >= 0; });
+      return ts.length ? Math.round((ts.filter(function (t) { return t.status === 'done'; }).length / ts.length) * 100) : 0;
+    }
+    return Math.max(0, Math.min(100, +g.progress || 0));
+  }
+  function profileCard() {
+    var pr = S.profile(), goals = pr.goals.slice(0, 3), wish = pr.bucket.filter(function (x) { return !x.done; })[0];
+    return '<section class="glass card life-card" aria-labelledby="dh-me"><div class="card__header"><div><h2 class="card__title" id="dh-me">✨ Mes objectifs</h2><p class="card__subtitle">' + (pr.word ? 'Mot de l’année : <strong>' + esc(pr.word) + '</strong>' : 'Ce qui donne du sens') + '</p></div>' +
+      '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#profil">Profil' + icon('chevron-right') + '</a></div></div>' +
+      (goals.length ? '<ul class="life-goals" role="list">' + goals.map(function (g) {
+        var p = goalPct(g);
+        return '<li><div class="life-goals__head"><span>' + esc(g.title) + '</span><strong>' + p + NB + '%</strong></div><div class="progress" style="--value:' + p + '" role="progressbar" aria-valuenow="' + p + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + esc(g.title) + '"></div></li>';
+      }).join('') + '</ul>' : '<p class="life-card__muted">Fixe jusqu’à 5 objectifs pour l’année dans ton <a href="#profil">profil</a>.</p>') +
+      (wish ? '<p class="life-chip">🌍 Prochaine envie : ' + esc(wish.text) + '</p>' : '') +
+    '</section>';
+  }
+  function lifeHTML() {
+    return lifeTiles() + '<div class="life-grid">' + (S.space('health') ? healthCard() : '') + (S.space('budget') ? budgetCard() : '') + profileCard() + '</div>';
+  }
+
   // Re-rendu ciblé (la scène pixel n'est jamais reconstruite inutilement)
   function update(part) {
     if (!el || !el.querySelector('.dash-grid')) return render();
     if (part === 'side') part = null;
-    var map = { hours: ['[data-dash-hours]', hoursCard], mood: ['[data-dash-mood]', moodCard], doing: ['[data-dash-doing]', doingCard], due: ['[data-dash-due]', dueCard], recap: ['[data-dash-recap]', recapCard] };
+    var map = { life: ['[data-dash-life]', lifeHTML], hours: ['[data-dash-hours]', hoursCard], mood: ['[data-dash-mood]', moodCard], doing: ['[data-dash-doing]', doingCard], due: ['[data-dash-due]', dueCard], recap: ['[data-dash-recap]', recapCard] };
     (part ? [part] : Object.keys(map)).forEach(function (k) {
       var box = el.querySelector(map[k][0]);
       U.keepFocus(box, function () { box.innerHTML = map[k][1](); });
@@ -422,6 +509,7 @@
     el.addEventListener('click', function (e) {
       var b;
       if (e.target.closest('[data-another]')) { anotherPhrase(); return; }
+      if ((b = e.target.closest('[data-dash-expense]')) && L.budgetQuick) { L.budgetQuick.open('expense', b); return; }
       if (e.target.closest('[data-memeow]')) { petMemeow(); return; }
       if ((b = e.target.closest('[data-dash-period]'))) { S.setUI({ dashPeriod: b.getAttribute('data-dash-period') }); return; }
       if ((b = e.target.closest('[data-replan]'))) { replan(b.getAttribute('data-task'), b.getAttribute('data-replan'), b); return; }
@@ -437,11 +525,13 @@
       // Prénom ou personnage changé : tout se redessine (titre, scène)
       if (type === 'setup' || type === 'profile') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
+      if (type === 'timer') update('life');
       if (type === 'reset') { voice = null; el.innerHTML = ''; render(); return; }
       if (type === 'mood') { update('mood'); if (d.level) { anotherPhrase(); } return; }
       if (type === 'ui') { if (d.dashPeriod) update('recap'); return; }
       if (type === 'timer') { update('hours'); update('doing'); return; }
       if (type === 'settings' || type === 'category') { update(); return; }
+      if (type === 'budget' || type === 'health') { update('life'); return; }
       if (type.indexOf('task') === 0) {
         if (d.part === 'checklist') return;
         update();
@@ -460,5 +550,5 @@
   }
 
   L.views = L.views || {};
-  L.views.dashboard = { mount: mount, render: render, show: show, anotherPhrase: anotherPhrase, petMemeow: petMemeow, title: 'Dashboard' };
+  L.views.dashboard = { mount: mount, render: render, show: show, anotherPhrase: anotherPhrase, petMemeow: petMemeow, title: 'Accueil' };
 })(window.Lamia = window.Lamia || {});

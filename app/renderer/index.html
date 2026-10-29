@@ -24,7 +24,8 @@
         <span class="shell-logo__name">Plateforme<br>de suivi</span>
       </a>
       <nav class="spacebar" aria-label="Espaces">
-        <a class="spacebar__item" href="#dashboard" data-space-tab="prod">Productivité</a>
+        <a class="spacebar__item" href="#dashboard" data-space-tab="home">Accueil</a>
+        <a class="spacebar__item" href="#taches" data-space-tab="prod">Productivité</a>
         <a class="spacebar__item" href="#sante" data-space-tab="health">Santé</a>
         <a class="spacebar__item" href="#budget" data-space-tab="budget">Budget</a>
         <a class="spacebar__item" href="#profil" data-space-tab="profile">Mon profil</a>
@@ -48,10 +49,19 @@
       </div>
 
       <nav class="sidebar__nav" aria-label="Navigation principale">
+        <div class="nav-section" data-section="home">
+          <p class="nav-label">Accueil</p>
+          <div class="nav-section__items" id="ns-home">
+            <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Vue globale</span></a>
+            <a class="nav-item" href="#taches"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
+            <a class="nav-item" href="#sante" data-space-link="health"><span data-icon="heart"></span><span class="nav-item__label">Santé</span></a>
+            <a class="nav-item" href="#budget" data-space-link="budget"><span data-icon="wallet"></span><span class="nav-item__label">Budget</span></a>
+            <a class="nav-item" href="#profil"><span data-icon="user"></span><span class="nav-item__label">Mon profil</span></a>
+          </div>
+        </div>
         <div class="nav-section" data-section="prod">
           <p class="nav-label">Productivité</p>
           <div class="nav-section__items" id="ns-prod">
-            <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
             <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
             <a class="nav-item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
             <a class="nav-item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
@@ -118,7 +128,11 @@
   <div class="dock" data-inert-root>
     <section class="glass glass--strong chrono-pill" data-chrono-pill aria-label="Chrono" hidden></section>
     <nav class="glass glass--strong tabbar" aria-label="Navigation principale">
-      <a class="tabbar__item" href="#dashboard" data-nav="dashboard" data-space="prod"><span data-icon="dashboard"></span><span>Accueil</span></a>
+      <a class="tabbar__item" href="#dashboard" data-nav="dashboard" data-space="home"><span data-icon="dashboard"></span><span>Accueil</span></a>
+      <a class="tabbar__item" href="#taches" data-space="home"><span data-icon="tasks"></span><span>Tâches</span></a>
+      <a class="tabbar__item" href="#sante" data-space="home" data-space-link="health"><span data-icon="heart"></span><span>Santé</span></a>
+      <a class="tabbar__item" href="#budget" data-space="home" data-space-link="budget"><span data-icon="wallet"></span><span>Budget</span></a>
+      <a class="tabbar__item" href="#dashboard" data-space="prod"><span data-icon="dashboard"></span><span>Accueil</span></a>
       <a class="tabbar__item" href="#taches" data-nav="tasks" data-space="prod"><span data-icon="tasks"></span><span>Tâches</span></a>
       <a class="tabbar__item" href="#planning" data-nav="planning" data-space="prod"><span data-icon="planning"></span><span>Planning</span></a>
       <a class="tabbar__item" href="#recap" data-nav="recap" data-space="prod"><span data-icon="recap"></span><span>Récap</span></a>
@@ -133,7 +147,8 @@
       <button type="button" class="tabbar__item tabbar__item--switch" data-space-menu aria-expanded="false" aria-controls="space-menu"><span data-icon="menu"></span><span>Espaces</span></button>
     </nav>
     <div class="glass glass--strong space-menu" id="space-menu" hidden>
-      <a class="space-menu__item" href="#dashboard" data-space-go="prod"><span data-icon="tasks"></span>Productivité</a>
+      <a class="space-menu__item" href="#dashboard" data-space-go="home"><span data-icon="dashboard"></span>Accueil</a>
+      <a class="space-menu__item" href="#taches" data-space-go="prod"><span data-icon="tasks"></span>Productivité</a>
       <a class="space-menu__item" href="#sante" data-space-go="health"><span data-icon="heart"></span>Santé</a>
       <a class="space-menu__item" href="#budget" data-space-go="budget"><span data-icon="wallet"></span>Budget</a>
     </div>

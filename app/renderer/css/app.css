@@ -1693,7 +1693,9 @@ h1[tabindex="-1"]:focus { outline: none; }
 html:not([data-space="health"]) .tabbar__item[data-space="health"],
 html:not([data-space="budget"]) .tabbar__item[data-space="budget"],
 html[data-space="health"] .tabbar__item[data-space="prod"],
-html[data-space="budget"] .tabbar__item[data-space="prod"] { display: none; }
+html[data-space="budget"] .tabbar__item[data-space="prod"],
+html:not([data-space="home"]) .tabbar__item[data-space="home"],
+html[data-space="home"] .tabbar__item[data-space="prod"] { display: none; }
 button.tabbar__item { border: 0; background: transparent; font-family: inherit; cursor: pointer; }
 .dock { position: fixed; }
 .space-menu {
@@ -2306,7 +2308,8 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
   .nav-label { margin: var(--space-3) var(--space-3) var(--space-2); font-size: 11px; font-weight: var(--fw-semibold); letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-subtle); }
   html[data-space="prod"] .sidebar .nav-section:not([data-section="prod"]),
   html[data-space="health"] .sidebar .nav-section:not([data-section="health"]),
-  html[data-space="budget"] .sidebar .nav-section:not([data-section="budget"]) { display: none; }
+  html[data-space="budget"] .sidebar .nav-section:not([data-section="budget"]),
+  html[data-space="home"] .sidebar .nav-section:not([data-section="home"]) { display: none; }
   .sidebar__sep { margin: var(--space-3) var(--space-3); }
   .sidebar .nav-item { height: 46px; border-radius: var(--radius-pill); padding: 0 var(--space-4); }
   .sidebar .nav-item[aria-current="page"] { background: var(--nav-active-bg); color: var(--nav-active-ink); box-shadow: 0 8px 18px -10px rgba(31, 27, 61, 0.6); }
@@ -2620,3 +2623,51 @@ body::before { display: none !important; }
 .tl { margin-top: var(--space-8); }
 @container (max-width: 520px) { .bars__rest { display: none; } }
 #view-budget .card { container-type: inline-size; }
+
+/* ============================================================
+   Accueil : vue globale (santé, budget, objectifs, tâches)
+   ============================================================ */
+.dash-life, .dash-section { grid-column: 1 / -1; min-width: 0; }
+.dash-life { display: grid; gap: var(--space-4); }
+.dash-section { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-2) 0 0; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: var(--fw-semibold); }
+.dash-section .icon { color: var(--accent); }
+.life-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+.life-tile { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "i l" "v v" "s s"; align-items: center; column-gap: var(--space-2); row-gap: 4px; padding: var(--space-4); border-radius: var(--radius-lg); color: var(--color-text); text-decoration: none; min-width: 0; transition: background-color var(--dur-fast) var(--ease-out); }
+.life-tile:hover { background-color: var(--color-hover); }
+.life-tile__icon { grid-area: i; font-size: 18px; line-height: 1; }
+.life-tile__label { grid-area: l; font-size: var(--fs-sm); color: var(--color-text-muted); min-width: 0; overflow-wrap: break-word; }
+.life-tile__value { grid-area: v; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; letter-spacing: var(--ls-tight); margin-top: var(--space-1); }
+.life-tile__sub { grid-area: s; font-size: var(--fs-xs); color: var(--color-text-subtle); overflow-wrap: break-word; }
+.life-tile.is-neg .life-tile__value { color: var(--danger); }
+.life-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.life-card { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.life-card .card__header { margin-bottom: 0; }
+.life-card p { margin: 0; }
+.life-card__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.life-card__big { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+.life-card__big.is-neg { color: var(--danger); }
+.life-card__muted { font-size: var(--fs-sm); color: var(--color-text-muted); }
+.life-card__h { margin: var(--space-1) 0 0; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.life-card__more { align-self: flex-start; margin-top: auto; }
+.week-dots { display: flex; gap: 4px; }
+.week-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: 11px; font-weight: var(--fw-semibold); background: var(--color-track); color: var(--color-text-subtle); }
+.week-dot.is-on { background: var(--success); color: #fff; }
+.week-dot.is-today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.life-list { margin: 0; padding-left: 1.1em; font-size: var(--fs-sm); display: grid; gap: 4px; }
+.life-chip { display: inline-flex; align-self: flex-start; max-width: 100%; padding: 6px 12px; border-radius: var(--radius-pill); background: var(--accent-soft); font-size: var(--fs-sm); overflow-wrap: break-word; }
+.life-env { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
+.life-env li { display: grid; grid-template-columns: minmax(0, 1fr) 70px auto; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); }
+.life-env li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.life-env strong { font-variant-numeric: tabular-nums; font-size: var(--fs-xs); }
+.life-env__track { height: 8px; border-radius: var(--radius-pill); background: var(--color-track); overflow: hidden; }
+.life-env__track > span { display: block; height: 100%; border-radius: inherit; background: var(--success); }
+.life-env .is-warn .life-env__track > span { background: var(--warning); }
+.life-env .is-over .life-env__track > span { background: var(--danger); }
+.life-env .is-over strong { color: var(--danger); }
+.life-goals { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-3); }
+.life-goals__head { display: flex; justify-content: space-between; gap: var(--space-2); font-size: var(--fs-sm); margin-bottom: 6px; }
+.life-goals__head span { min-width: 0; overflow-wrap: break-word; }
+.life-goals__head strong { font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) { .life-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .life-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 860px) { .life-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); } .life-tile { padding: var(--space-3); } }
