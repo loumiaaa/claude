@@ -85,6 +85,8 @@
     mountPixelAvatars(document.querySelector('.sidebar') || document, 'brand-side');
     var top = document.querySelector('.topbar');
     if (top) mountPixelAvatars(top, 'brand-top');
+    var head = document.querySelector('.shell-head');
+    if (head) mountPixelAvatars(head, 'brand-head');
   }
 
   /* --- Objectifs reliés au suivi des tâches ------------------------------------------ */

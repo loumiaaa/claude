@@ -17,18 +17,39 @@
   <a class="skip-link" href="#main">Aller au contenu</a>
 
   <div class="app" data-inert-root>
-    <!-- Barre latérale (ordinateur) -->
-    <aside class="glass sidebar" aria-label="Barre latérale">
-      <a class="brand" href="#profil" aria-label="Mon profil">
-        <span class="brand__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
-        <span class="brand__text"><span class="brand__name">Plateforme de suivi</span><span class="brand__sub"></span></span>
+    <!-- En-tête (ordinateur) : logo, espaces, actions, profil -->
+    <header class="shell-head">
+      <a class="shell-logo" href="#dashboard" aria-label="Plateforme de suivi, accueil">
+        <span class="shell-logo__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
+        <span class="shell-logo__name">Plateforme<br>de suivi</span>
       </a>
+      <nav class="spacebar" aria-label="Espaces">
+        <a class="spacebar__item" href="#dashboard" data-space-tab="prod">Productivité</a>
+        <a class="spacebar__item" href="#sante" data-space-tab="health">Santé</a>
+        <a class="spacebar__item" href="#budget" data-space-tab="budget">Budget</a>
+        <a class="spacebar__item" href="#profil" data-space-tab="profile">Mon profil</a>
+      </nav>
+      <div class="shell-head__actions">
+        <button type="button" class="btn btn--primary btn--sm" data-action="new-task"><span data-icon="plus"></span>Nouvelle tâche</button>
+        <button type="button" class="btn btn--secondary btn--icon round-btn" data-action="cycle-theme" aria-label="Changer de thème"><span data-icon="moon"></span></button>
+        <a class="btn btn--secondary btn--icon round-btn" href="#reglages" aria-label="Réglages"><span data-icon="settings"></span></a>
+        <a class="brand user-chip" href="#profil" aria-label="Mon profil">
+          <span class="brand__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
+          <span class="brand__text"><span class="brand__name" data-user-name>Mon profil</span><span class="brand__sub">Voir mon profil</span></span>
+        </a>
+      </div>
+    </header>
 
-      <button type="button" class="btn btn--primary btn--block" data-action="new-task"><span data-icon="plus"></span>Nouvelle tâche</button>
+    <!-- Colonne de gauche (ordinateur) : accueil et pages de l'espace en cours -->
+    <aside class="sidebar" aria-label="Barre latérale">
+      <div class="sidebar__hello">
+        <h2 class="sidebar__title" data-greeting>Bonjour !</h2>
+        <p class="sidebar__sub" data-greeting-sub>Ton résumé du jour</p>
+      </div>
 
       <nav class="sidebar__nav" aria-label="Navigation principale">
         <div class="nav-section" data-section="prod">
-          <button type="button" class="nav-group" aria-expanded="true" aria-controls="ns-prod" data-nav-toggle="prod"><span data-icon="tasks"></span><span class="nav-group__label">Productivité</span><span class="nav-group__chev"><span data-icon="chevron-down"></span></span></button>
+          <p class="nav-label">Productivité</p>
           <div class="nav-section__items" id="ns-prod">
             <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Dashboard</span></a>
             <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
@@ -37,7 +58,7 @@
           </div>
         </div>
         <div class="nav-section" data-section="health">
-          <button type="button" class="nav-group" aria-expanded="true" aria-controls="ns-health" data-nav-toggle="health"><span data-icon="heart"></span><span class="nav-group__label">Santé</span><span class="nav-group__chev"><span data-icon="chevron-down"></span></span></button>
+          <p class="nav-label">Santé</p>
           <div class="nav-section__items" id="ns-health">
             <a class="nav-item" href="#sante" data-nav="health"><span data-icon="dashboard"></span><span class="nav-item__label">Tableau de bord</span></a>
             <a class="nav-item" href="#corps" data-nav="body"><span data-icon="trend"></span><span class="nav-item__label">Poids &amp; mensurations</span></a>
@@ -46,7 +67,7 @@
           </div>
         </div>
         <div class="nav-section" data-section="budget">
-          <button type="button" class="nav-group" aria-expanded="true" aria-controls="ns-budget" data-nav-toggle="budget"><span data-icon="wallet"></span><span class="nav-group__label">Budget</span><span class="nav-group__chev"><span data-icon="chevron-down"></span></span></button>
+          <p class="nav-label">Budget</p>
           <div class="nav-section__items" id="ns-budget">
             <a class="nav-item" href="#budget" data-nav="budget"><span data-icon="dashboard"></span><span class="nav-item__label">Tableau de bord</span></a>
             <a class="nav-item" href="#depenses" data-nav="money"><span data-icon="list"></span><span class="nav-item__label">Entrées &amp; dépenses</span></a>
@@ -55,17 +76,11 @@
           </div>
         </div>
         <span class="sidebar__sep" role="presentation"></span>
-        <a class="nav-item" href="#profil" data-nav="profile"><span data-icon="user"></span><span class="nav-item__label">Mon profil</span></a>
         <a class="nav-item" href="#reglages" data-nav="settings"><span data-icon="settings"></span><span class="nav-item__label">Réglages</span></a>
       </nav>
 
       <div class="sidebar__foot">
         <section class="glass glass--nested chrono" data-chrono-widget aria-label="Chrono"></section>
-        <div class="segmented segmented--theme" role="group" aria-label="Thème" data-theme-switch>
-          <button type="button" class="segmented__item" data-theme-set="light" aria-pressed="false"><span data-icon="sun"></span><span class="sr-only">Thème </span>Clair</button>
-          <button type="button" class="segmented__item" data-theme-set="dark" aria-pressed="false"><span data-icon="moon"></span><span class="sr-only">Thème </span>Sombre</button>
-          <button type="button" class="segmented__item" data-theme-set="system" aria-pressed="false"><span class="sr-only">Thème du </span>Système</button>
-        </div>
       </div>
     </aside>
 

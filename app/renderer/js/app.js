@@ -27,14 +27,15 @@
   function applyPersona() {
     var me = S.me();
     document.title = 'Plateforme de suivi' + (me.name ? ' - ' + me.name : '');
-    var side = U.$('.sidebar .brand__sub'), top = U.$('.topbar .brand__sub');
-    if (side) side.textContent = me.name || 'Mon espace';
+    var top = U.$('.topbar .brand__sub'), user = U.$('[data-user-name]'), hello = U.$('[data-greeting]');
     if (top) top.textContent = me.name || 'Plateforme de suivi';
+    if (user) user.textContent = me.name || 'Mon profil';
+    if (hello) hello.textContent = me.name ? 'Bon retour, ' + me.name + D.NBSP + '!' : 'Bon retour' + D.NBSP + '!';
     var shown = 0;
     ['health', 'budget'].forEach(function (k) {
       var on = S.space(k);
       if (on) shown += 1;
-      U.$$('[data-section="' + k + '"], .tabbar [data-space="' + k + '"], [data-space-go="' + k + '"]').forEach(function (n) { n.hidden = !on; });
+      U.$$('[data-section="' + k + '"], .tabbar [data-space="' + k + '"], [data-space-go="' + k + '"], [data-space-tab="' + k + '"]').forEach(function (n) { n.hidden = !on; });
     });
     var sw = U.$('[data-space-menu]');
     if (sw) sw.hidden = !shown;
@@ -62,6 +63,11 @@
     if (title) title.textContent = V ? V.title : '';
     document.documentElement.setAttribute('data-view', view);
     if (view !== 'settings' && view !== 'profile') { var sp = SPACES[view] || 'prod'; document.documentElement.setAttribute('data-space', sp); openSection(sp); }
+    // Onglets d'espaces (en haut) et sous-titre d'accueil de la colonne de gauche
+    var tab = view === 'profile' ? 'profile' : view === 'settings' ? '' : (SPACES[view] || 'prod');
+    U.$$('[data-space-tab]').forEach(function (a) { if (a.getAttribute('data-space-tab') === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    var sub = U.$('[data-greeting-sub]');
+    if (sub) sub.textContent = { prod: 'Tes tâches, tes heures et ton humeur', health: 'Prendre soin de toi, à ton rythme', budget: 'Ton budget, sereinement', profile: 'Ce qui te ressemble' }[tab] || 'Ton espace, tes règles';
     closeSpaceMenu();
     if (changed && !opts.initial) {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -105,8 +111,7 @@
     else delete document.documentElement.dataset.theme;
     U.$$('[data-theme-set]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-set') === th)); });
     var dark = effectiveDark();
-    var cyc = U.$('[data-action="cycle-theme"]');
-    if (cyc) { cyc.innerHTML = U.icon(dark ? 'sun' : 'moon'); cyc.setAttribute('aria-label', dark ? 'Passer en thème clair' : 'Passer en thème sombre'); }
+    U.$$('[data-action="cycle-theme"]').forEach(function (cyc) { cyc.innerHTML = U.icon(dark ? 'sun' : 'moon'); cyc.setAttribute('aria-label', dark ? 'Passer en thème clair' : 'Passer en thème sombre'); });
     if (api) api.app.setTheme(th);
   }
 
