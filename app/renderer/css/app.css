@@ -2372,3 +2372,67 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
 @media (min-width: 861px) and (max-width: 1400px) {
   .kpi-row:has(.stat--ring) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ==========================================================================
+   STYLE PLAT — aucune ombre, aucun relief, aucun dégradé décoratif
+   (les bulles pixel gardent leur contour dessiné : il fait partie du pixel art)
+   ========================================================================== */
+:root:root:root {
+  --glass-shadow: none;
+  --glass-shadow-hover: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --accent-shadow: none;
+  --input-shadow: none;
+  --glass-highlight: none;
+  --glass-edge: linear-gradient(transparent, transparent);
+  --glass-border: transparent;
+  --accent-gradient: linear-gradient(var(--accent), var(--accent));
+  --accent-gradient-hover: linear-gradient(var(--accent-hover), var(--accent-hover));
+  --gradient-soft: linear-gradient(var(--accent-soft), var(--accent-soft));
+  --gradient-progress: linear-gradient(var(--progress-flat), var(--progress-flat));
+  --gradient-progress-start: var(--progress-flat);
+  --gradient-progress-end: var(--progress-flat);
+  --color-bg-gradient: linear-gradient(var(--page-bg), var(--page-bg));
+}
+/* Couleurs à plat de chaque thème */
+:root { --tab-flat: #4569D4; --feature-flat: #1F1B3D; --progress-flat: #5B78E6; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --tab-flat: #5B7FE6; --feature-flat: #262052; --progress-flat: #7F96F5; }
+}
+:root[data-theme="dark"] { --tab-flat: #5B7FE6; --feature-flat: #262052; --progress-flat: #7F96F5; }
+:root:root { --tab-active: linear-gradient(var(--tab-flat), var(--tab-flat)); --feature-bg: var(--feature-flat); }
+
+/* Ombres écrites en dur, reliefs et soulèvements au survol */
+.app, .hero, .hero.glass, .sidebar .chrono, .is-scrolled .topbar, .topbar, .dock .glass, .tabbar,
+.spacebar__item[aria-current="page"], .sidebar .nav-item[aria-current="page"], .nav-item[aria-current="page"],
+.btn, .btn--primary, .btn--danger, .btn--secondary, .segmented__item[aria-pressed="true"],
+.checkbox__input:checked + .checkbox__box, .setup__char[aria-pressed="true"], .task-row__play.is-running,
+.gantt__day.is-today .gantt__num, .gantt__bar:hover, .glass, .modal, .drawer, .toast, .celebrate, .menu,
+.glass--nested, .glass--interactive:hover, .view .stat:hover, .inst-card:hover, .measure-card:hover, .view .card.glass:hover,
+.brand__mark, .shell-logo__mark, .mood-option, .mood-option:hover, .input, .select, .textarea {
+  box-shadow: none;
+}
+.glass::before, .glass::after, .modal::before, .modal::after, .drawer::before, .drawer::after, .toast::before, .toast::after { display: none; }
+.btn:hover, .btn--primary:hover, .btn--secondary:hover, .btn--danger:hover, .glass--interactive:hover,
+.view .stat:hover, .inst-card:hover, .measure-card:hover, .gantt__bar:hover, .mood-option:hover,
+.setup__char:hover, .inst-step:hover, .scene__cat:hover, .side-cat__btn:hover canvas, .brand:hover .brand__mark--avatar {
+  transform: none;
+}
+/* Cartes séparées du panneau par la couleur seulement ; menus et fenêtres par un filet fin */
+.modal, .drawer, .menu, .toast, .celebrate { border: 1px solid var(--color-border); }
+/* Le focus clavier reste bien visible, sans ombre : un contour net */
+:focus-visible { outline: 2px solid var(--focus-color, var(--accent)); outline-offset: 2px; }
+.input:focus, .select:focus, .textarea:focus, .title-input:focus { box-shadow: none; outline: 2px solid var(--focus-color, var(--accent)); outline-offset: 0; }
+/* Barres flottantes sur téléphone : un filet au lieu de l'ombre */
+.topbar, .tabbar, .chrono-pill { border: 1px solid var(--color-border-strong); }
+/* Plus de halo pastel animé derrière la page, ni de dégradés dans les scènes et pastilles */
+body::before { display: none !important; }
+.mini-scene { background: var(--glass-bg-tint-violet); }
+.chip--pole { background-image: none; }
+.progress--pole { --progress-fill: var(--cat-carnet); }
+.pixel-stage::before, .pixel-stage::after { background: none !important; }
+.brand__mark--avatar, .profile-hero__avatar .avatar--xl, .pet-card__pic { background-image: none; }
+@media (min-width: 861px) { html, body { background: var(--page-bg); } }
+@media (max-width: 860px) { html, body { background: var(--panel-bg); } }
