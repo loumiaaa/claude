@@ -268,14 +268,14 @@
     var ov = document.getElementById('overlay-dialog');
     var body = o.body || (o.text ? '<p class="text-muted">' + esc(o.text) + '</p>' : '');
     ov.innerHTML =
-      '<div class="modal modal--sm" role="dialog" aria-modal="true" aria-labelledby="dlg-title"' + (o.text ? ' aria-describedby="dlg-desc"' : '') + '>' +
+      '<div class="modal ' + (o.size === 'lg' ? 'modal--lg' : o.size === 'md' ? 'modal--md' : 'modal--sm') + '" role="dialog" aria-modal="true" aria-labelledby="dlg-title"' + (o.text ? ' aria-describedby="dlg-desc"' : '') + '>' +
         '<form class="dialog-form" novalidate>' +
           '<div class="modal__header"><div><h2 class="modal__title" id="dlg-title">' + esc(o.title) + '</h2>' +
             (o.desc ? '<p class="modal__desc">' + esc(o.desc) + '</p>' : '') + '</div>' +
             '<button type="button" class="btn btn--ghost btn--icon" data-dlg-cancel aria-label="Fermer">' + icon('close') + '</button></div>' +
           '<div class="modal__body" id="dlg-desc">' + body + '</div>' +
           '<div class="modal__footer">' +
-            '<button type="button" class="btn btn--ghost" data-dlg-cancel>' + esc(o.cancelLabel || 'Annuler') + '</button>' +
+            (o.cancel === false ? '' : '<button type="button" class="btn btn--ghost" data-dlg-cancel>' + esc(o.cancelLabel || 'Annuler') + '</button>') +
             '<button type="submit" class="btn ' + (o.danger ? 'btn--danger' : 'btn--primary') + '">' + esc(o.confirmLabel || 'Valider') + '</button>' +
           '</div>' +
         '</form>' +

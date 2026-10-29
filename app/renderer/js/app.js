@@ -66,6 +66,12 @@
     // Onglets d'espaces (en haut) et sous-titre d'accueil de la colonne de gauche
     var tab = view === 'profile' ? 'profile' : view === 'settings' ? '' : (SPACES[view] || 'prod');
     U.$$('[data-space-tab]').forEach(function (a) { if (a.getAttribute('data-space-tab') === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    var inBudget = SPACES[view] === 'budget';
+    U.$$('[data-action="new-task"]').forEach(function (btn) {
+      var lab = inBudget ? 'Nouvelle dépense' : 'Nouvelle tâche';
+      if (btn.classList.contains('btn--icon')) btn.setAttribute('aria-label', lab);
+      else btn.innerHTML = U.icon('plus') + lab;
+    });
     var sub = U.$('[data-greeting-sub]');
     if (sub) sub.textContent = { prod: 'Tes tâches, tes heures et ton humeur', health: 'Prendre soin de toi, à ton rythme', budget: 'Ton budget, sereinement', profile: 'Ce qui te ressemble' }[tab] || 'Ton espace, tes règles';
     closeSpaceMenu();
@@ -369,7 +375,12 @@
 
     document.addEventListener('click', function (e) {
       var b;
-      if ((b = e.target.closest('[data-action="new-task"]'))) { L.taskForm.open({ returnTo: b }); return; }
+      if ((b = e.target.closest('[data-action="new-task"]'))) {
+        // Dans l'espace Budget, le bouton « + » ajoute une dépense
+        if (document.documentElement.getAttribute('data-space') === 'budget' && SPACES[current] === 'budget' && L.budgetQuick) L.budgetQuick.open('expense', b);
+        else L.taskForm.open({ returnTo: b });
+        return;
+      }
       if ((b = e.target.closest('[data-theme-set]'))) { setTheme(b.getAttribute('data-theme-set')); return; }
       if (e.target.closest('[data-action="cycle-theme"]')) { setTheme(effectiveDark() ? 'light' : 'dark'); return; }
       if ((b = e.target.closest('[data-banner-action]'))) { bannerAction(b.getAttribute('data-banner-action'), b); return; }

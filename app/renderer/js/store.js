@@ -411,6 +411,15 @@
       emit('budget', { kind: kind }, { now: true });
       return item;
     },
+    // Montant d'une paie corrigé pour un mois précis (null : revient au montant habituel)
+    setIncomeAdjust: function (key, amount) {
+      var b = store.budget();
+      if (!b.adjust || typeof b.adjust !== 'object') b.adjust = {};
+      if (amount == null) delete b.adjust[key]; else b.adjust[key] = amount;
+      emit('budget', { kind: 'adjust' }, { now: true });
+    },
+    // Remplace la liste des catégories du budget (icônes, plafonds)
+    setBudgetCategories: function (list) { store.budget().categories = list; emit('budget', { kind: 'categories' }, { now: true }); },
     // Coche (ou décoche) un prélèvement / une échéance comme passé
     setBudgetPaid: function (key, on) {
       var b = store.budget();
@@ -431,7 +440,7 @@
     removeBudget: function (kind, id) {
       var b = store.budget();
       b[kind] = b[kind].filter(function (x) { return x.id !== id; });
-      if (kind === 'goals') b.deposits = b.deposits.filter(function (x) { return x.goalId !== id; });
+      if (kind === 'goals') { b.deposits = b.deposits.filter(function (x) { return x.goalId !== id; }); b.plans = (b.plans || []).filter(function (x) { return x.goalId !== id; }); }
       emit('budget', { kind: kind });
     },
 

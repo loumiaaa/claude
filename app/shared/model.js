@@ -260,9 +260,40 @@
       // Cagnottes d'épargne : { id, name, target? } et versements : { id, goalId, date, amount }
       goals: arr(b.goals).filter(function (x) { return typeof x.name === 'string'; }),
       deposits: arr(b.deposits).filter(function (x) { return DATE_RE.test(x.date) && typeof x.goalId === 'string' && typeof x.amount === 'number' && isFinite(x.amount); }),
+      // Revenus réguliers (paie) : { id, label, amount, day, since, category } ; montants corrigés d'un mois : { « inc:<id>:<date> » : montant }
+      incomes: arr(b.incomes).filter(function (x) { return typeof x.label === 'string' && amount(x) && x.day >= 1 && x.day <= 31 && DATE_RE.test(x.since); }),
+      adjust: b.adjust && typeof b.adjust === 'object' && !Array.isArray(b.adjust) ? Object.keys(b.adjust).reduce(function (o, k) { if (/^inc:.+:\d{4}-\d{2}-\d{2}$/.test(k) && typeof b.adjust[k] === 'number' && isFinite(b.adjust[k]) && b.adjust[k] >= 0) o[k] = b.adjust[k]; return o; }, {}) : {},
+      // Versements automatiques vers une cagnotte : { id, goalId, amount, day, since }
+      plans: arr(b.plans).filter(function (x) { return typeof x.goalId === 'string' && amount(x) && x.day >= 1 && x.day <= 31 && DATE_RE.test(x.since); }),
+      // Catégories avec icône et plafond mensuel facultatif (enveloppe)
+      categories: budgetCategories(b),
       // Prélèvements et échéances cochés « passés » : « bill:<id>:<date> » / « inst:<id>:<date> »
       paid: (Array.isArray(b.paid) ? b.paid : []).filter(function (k, i, a) { return typeof k === 'string' && /^(bill|inst):.+:\d{4}-\d{2}-\d{2}$/.test(k) && a.indexOf(k) === i; })
     };
+  }
+
+  /* Catégories du budget : liste par défaut, complétée par celles déjà utilisées */
+  var BUDGET_CATEGORIES = [
+    ['Courses', '🛒'], ['Logement', '🏠'], ['Énergie', '⚡'], ['Téléphone & internet', '📱'], ['Transport', '🚗'], ['Restaurants', '🍽️'],
+    ['Loisirs', '🎉'], ['Shopping', '🛍️'], ['Beauté', '💄'], ['Santé', '💊'], ['Formation', '📚'], ['Matériel pro', '💻'],
+    ['Cadeaux', '🎁'], ['Assurances', '🛡️'], ['Abonnements', '🔁'], ['Crédit', '💳'], ['Autre', '✨']
+  ];
+  var BUDGET_INCOME_CATEGORIES = [['Salaire', '💼'], ['Freelance', '🧾'], ['Remboursement', '↩️'], ['Cadeau reçu', '🎀'], ['Autre revenu', '✨']];
+  function budgetCategories(b) {
+    var list = Array.isArray(b.categories) ? b.categories.filter(function (c) { return c && typeof c.name === 'string' && c.name.trim(); }).map(function (c, i) {
+      return { id: typeof c.id === 'string' && c.id ? c.id : 'bc-' + i, name: c.name.trim(), icon: typeof c.icon === 'string' && c.icon ? c.icon : '✨', kind: c.kind === 'income' ? 'income' : 'expense',
+        limit: typeof c.limit === 'number' && c.limit > 0 ? Math.round(c.limit * 100) / 100 : null };
+    }) : null;
+    if (!list) {
+      list = BUDGET_CATEGORIES.map(function (c, i) { return { id: 'bc-e' + i, name: c[0], icon: c[1], kind: 'expense', limit: null }; })
+        .concat(BUDGET_INCOME_CATEGORIES.map(function (c, i) { return { id: 'bc-i' + i, name: c[0], icon: c[1], kind: 'income', limit: null }; }));
+      // Catégories déjà saisies à la main : gardées, pour ne rien perdre
+      var known = function (n) { return list.some(function (c) { return c.name.toLowerCase() === String(n).trim().toLowerCase(); }); };
+      var add = function (n, kind) { if (n && typeof n === 'string' && !known(n)) list.push({ id: 'bc-u' + list.length, name: n.trim(), icon: kind === 'income' ? '💶' : '🏷️', kind: kind, limit: null }); };
+      (Array.isArray(b.entries) ? b.entries : []).forEach(function (x) { if (x) add(x.category, x.type === 'income' ? 'income' : 'expense'); });
+      ['bills', 'installments'].forEach(function (k) { (Array.isArray(b[k]) ? b[k] : []).forEach(function (x) { if (x) add(x.category, 'expense'); }); });
+    }
+    return list;
   }
 
   /* --- Profil (facultatif) ------------------------------------------------------ */

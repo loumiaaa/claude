@@ -82,3 +82,40 @@ test('paiements cochés : facture et échéances marquées « passées » à la 
   assert.equal(st.remaining, 900);
   assert.equal(B.installmentStatus(b.installments[0], '2026-10-28').paidCount, 2);   // sans liste : comportement d'avant
 });
+
+test('paie automatique, montant corrigé d’un mois, versements automatiques et reste à vivre', () => {
+  const b = M.normalizeBudget({
+    entries: [{ id: 'e1', date: '2026-11-02', type: 'expense', label: 'Courses', amount: 100, category: 'courses' }],
+    bills: [{ id: 'b1', label: 'Loyer', amount: 600, day: 5, since: '2026-01-01', category: 'Logement' }],
+    incomes: [{ id: 'i1', label: 'Paie', amount: 1800, day: 28, since: '2026-01-01' }],
+    adjust: { 'inc:i1:2026-10-28': 1900 },
+    goals: [{ id: 'g1', name: 'BTS', target: 1000 }],
+    plans: [{ id: 'p1', goalId: 'g1', amount: 100, day: 28, since: '2026-09-01' }]
+  });
+  const m = B.budgetMonth('2026-11-03', 27);
+  assert.deepEqual([m.start, m.end], ['2026-10-27', '2026-11-26']);
+  const f = B.forecast(b, m.start, m.end, '2026-11-03');
+  assert.equal(f.income, 1900);                 // le mois corrigé
+  assert.equal(f.savings, 100);                 // versement automatique du 28
+  assert.equal(f.spent, 100);                   // les courses du 2 novembre
+  assert.equal(f.upcoming, 600);                // le loyer du 5 novembre
+  assert.equal(f.rest, 1100);
+  assert.equal(f.daysLeft, 24);
+  assert.equal(f.perDay, 45.83);
+  assert.equal(B.goalSaved(b, 'g1', '2026-11-03'), 200);   // 28 septembre et 28 octobre
+  const pr = B.goalProjection(b, b.goals[0], '2026-11-03');
+  assert.equal(pr.auto, true);
+  assert.equal(pr.months, 8);                   // 800 € restants à 100 €/mois
+  assert.equal(pr.date, '2027-07-03');
+});
+
+test('catégories par défaut, catégories déjà utilisées gardées, enveloppes', () => {
+  const b = M.normalizeBudget({ entries: [{ id: 'e', date: '2026-11-01', type: 'expense', label: 'Croquettes', amount: 40, category: 'Animaux' }] });
+  assert.ok(b.categories.find((c) => c.name === 'Courses' && c.icon === '🛒'));
+  assert.ok(b.categories.find((c) => c.name === 'Animaux' && c.kind === 'expense'));
+  b.categories.find((c) => c.name === 'Animaux').limit = 50;
+  const env = B.envelopes(b, '2026-10-27', '2026-11-26', '2026-11-03');
+  assert.equal(env.length, 1);
+  assert.equal(env[0].left, 10);
+  assert.equal(env[0].pct, 80);
+});
