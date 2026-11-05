@@ -27,7 +27,7 @@
         <a class="spacebar__item" href="#dashboard" data-space-tab="home">Accueil</a>
         <a class="spacebar__item" href="#taches" data-space-tab="prod">Productivité</a>
         <a class="spacebar__item" href="#sante" data-space-tab="health">Santé</a>
-        <a class="spacebar__item" href="#budget" data-space-tab="budget">Budget</a>
+        <a class="spacebar__item" href="#comptes" data-space-tab="budget">Budget</a>
         <a class="spacebar__item" href="#profil" data-space-tab="profile">Mon profil</a>
       </nav>
       <div class="shell-head__actions">
@@ -80,6 +80,7 @@
         <div class="nav-section" data-section="budget">
           <p class="nav-label">Budget</p>
           <div class="nav-section__items" id="ns-budget">
+            <a class="nav-item" href="#comptes" data-nav="accounts"><span data-icon="list"></span><span class="nav-item__label">Mes comptes</span></a>
             <a class="nav-item" href="#budget" data-nav="budget"><span data-icon="dashboard"></span><span class="nav-item__label">Vue d’ensemble</span></a>
             <a class="nav-item" href="#depenses" data-nav="money"><span data-icon="list"></span><span class="nav-item__label">Mouvements</span></a>
             <a class="nav-item" href="#factures" data-nav="bills"><span data-icon="receipt"></span><span class="nav-item__label">Charges fixes</span></a>
@@ -120,6 +121,7 @@
       <section class="view" id="view-body" data-view="body" aria-labelledby="h-body" hidden></section>
       <section class="view" id="view-food" data-view="food" aria-labelledby="h-food" hidden></section>
       <section class="view" id="view-sport" data-view="sport" aria-labelledby="h-sport" hidden></section>
+      <section class="view" id="view-accounts" data-view="accounts" aria-labelledby="h-accounts" hidden></section>
       <section class="view" id="view-budget" data-view="budget" aria-labelledby="h-budget" hidden></section>
       <section class="view" id="view-money" data-view="money" aria-labelledby="h-money" hidden></section>
       <section class="view" id="view-bills" data-view="bills" aria-labelledby="h-bills" hidden></section>
@@ -145,8 +147,8 @@
       <a class="tabbar__item" href="#corps" data-nav="body" data-space="health"><span data-icon="trend"></span><span>Corps</span></a>
       <a class="tabbar__item" href="#alimentation" data-nav="food" data-space="health"><span data-icon="coffee"></span><span>Repas</span></a>
       <a class="tabbar__item" href="#sport" data-nav="sport" data-space="health"><span data-icon="timer"></span><span>Sport</span></a>
+      <a class="tabbar__item" href="#comptes" data-nav="accounts" data-space="budget"><span data-icon="list"></span><span>Comptes</span></a>
       <a class="tabbar__item" href="#budget" data-nav="budget" data-space="budget"><span data-icon="wallet"></span><span>Budget</span></a>
-      <a class="tabbar__item" href="#depenses" data-nav="money" data-space="budget"><span data-icon="list"></span><span>Dépenses</span></a>
       <a class="tabbar__item" href="#factures" data-nav="bills" data-space="budget"><span data-icon="receipt"></span><span>Fixes</span></a>
       <a class="tabbar__item" href="#epargne" data-nav="savings" data-space="budget"><span data-icon="piggy"></span><span>Épargne</span></a>
       <button type="button" class="tabbar__item tabbar__item--switch" data-space-menu aria-expanded="false" aria-controls="space-menu"><span data-icon="menu"></span><span>Espaces</span></button>
@@ -155,7 +157,7 @@
       <a class="space-menu__item" href="#dashboard" data-space-go="home"><span data-icon="dashboard"></span>Accueil</a>
       <a class="space-menu__item" href="#taches" data-space-go="prod"><span data-icon="tasks"></span>Productivité</a>
       <a class="space-menu__item" href="#sante" data-space-go="health"><span data-icon="heart"></span>Santé</a>
-      <a class="space-menu__item" href="#budget" data-space-go="budget"><span data-icon="wallet"></span>Budget</a>
+      <a class="space-menu__item" href="#comptes" data-space-go="budget"><span data-icon="wallet"></span>Budget</a>
     </div>
   </div>
 
@@ -196,6 +198,7 @@
   <script src="js/ui-settings.js"></script>
   <script src="js/ui-health.js"></script>
   <script src="js/ui-budget.js"></script>
+  <script src="js/ui-accounts.js"></script>
   <script src="js/ui-profile.js"></script>
   <script src="js/ui-setup.js"></script>
   <script src="js/ui-hours.js"></script>

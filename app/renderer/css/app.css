@@ -2997,3 +2997,60 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .focus__phase { display: inline-flex; align-items: center; gap: 8px; }
 .focus-chip .px-ico--1 { margin-top: 0; }
 .tl-mark__dot .px-ico--1 { margin-top: 0; }
+
+/* ============================================================
+   Budget · Mes comptes (tableaux façon tableur)
+   ============================================================ */
+.acc-nav { display: flex; align-items: center; gap: var(--space-2); }
+.acc-sheet { --acc-line: color-mix(in srgb, var(--accent) 28%, var(--color-border)); --acc-head: color-mix(in srgb, var(--accent) 22%, var(--color-surface)); --acc-total: color-mix(in srgb, var(--accent) 38%, var(--color-surface)); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); align-items: start; }
+.acc-col { display: grid; gap: var(--space-5); min-width: 0; }
+.acc-block { display: grid; gap: 0; }
+.acc-h { margin: 0; padding: 8px 12px; background: var(--acc-head); border: 1px solid var(--acc-line); border-radius: var(--radius-sm) var(--radius-sm) 0 0; text-align: center; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: var(--fw-semibold); color: var(--color-text); }
+.acc-h--month { border-radius: var(--radius-sm); }
+.acc-table { width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--color-surface); font-size: var(--fs-sm); }
+.acc-cap { caption-side: top; padding: 6px 12px; background: var(--acc-head); border: 1px solid var(--acc-line); border-bottom: 0; font-weight: var(--fw-semibold); text-align: center; color: var(--color-text); }
+.acc-table--sub .acc-cap { font-size: var(--fs-sm); }
+.acc-block .acc-table--sub .acc-cap { border-top: 0; }
+.acc-table th, .acc-table td { border: 1px solid var(--acc-line); padding: 0; height: 34px; vertical-align: middle; }
+.acc-table thead th { padding: 4px 10px; text-align: left; font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--color-text-muted); background: color-mix(in srgb, var(--accent) 8%, var(--color-surface)); }
+.acc-table thead th.num { text-align: right; }
+.acc-table tbody th { padding: 0 10px; text-align: left; font-weight: var(--fw-medium); color: var(--color-text-muted); }
+.acc-table td:last-child, .acc-table th.acc-x { width: 34px; }
+.acc-table td.acc-date { width: 112px; }
+.acc-table td:nth-last-child(2):not(.acc-date):not(.acc-ro):not(:first-child) { width: 34%; }
+.acc-total td.num { width: 34%; }
+.acc-ro { padding: 0 10px !important; color: var(--color-text); }
+.acc-in { display: block; width: 100%; height: 34px; padding: 0 10px; border: 0; border-radius: 0; background: transparent; color: var(--color-text); font: inherit; font-size: var(--fs-sm); min-width: 0; }
+.acc-in:hover { background: var(--color-hover); }
+.acc-in:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--color-surface); }
+.acc-in--num { text-align: right; font-variant-numeric: tabular-nums; }
+.acc-in--sel { appearance: auto; padding: 0 4px; }
+.acc-in::placeholder { color: var(--color-text-subtle); }
+.acc-new .acc-in { font-style: italic; }
+.acc-new .acc-in:focus { font-style: normal; }
+.acc-table td .num { display: block; padding: 0 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.acc-table td.num { padding: 0 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.acc-table--params th { width: 42%; }
+.acc-table--params td:last-child { width: auto; }
+.acc-table td:first-child { position: relative; }
+.acc-table td:first-child:has(.acc-rec, .acc-of, .acc-rec-toggle) .acc-in { padding-right: 46px; }
+.acc-rec, .acc-of { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: var(--fs-xs); color: var(--color-text-subtle); pointer-events: none; }
+.acc-of { color: var(--accent); font-weight: var(--fw-semibold); }
+.acc-of + .acc-rec { display: none; }
+.acc-rec-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 28px; height: 26px; border: 1px solid var(--color-border); border-radius: var(--radius-xs, 6px); background: var(--color-surface); color: var(--color-text-subtle); cursor: pointer; font: inherit; }
+.acc-rec-toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.acc-del { display: grid; place-items: center; width: 100%; height: 34px; border: 0; background: transparent; color: var(--color-text-subtle); cursor: pointer; opacity: .55; }
+.acc-del .icon { width: 14px; height: 14px; }
+.acc-del:hover, .acc-del:focus-visible { opacity: 1; color: var(--danger); background: var(--color-hover); }
+.acc-month { text-align: right !important; font-weight: var(--fw-regular, 400) !important; }
+.acc-table tr.is-current th { color: var(--color-text); font-weight: var(--fw-semibold) !important; }
+.acc-eco td { padding: 0 10px; color: var(--warning); font-weight: var(--fw-semibold); }
+.acc-eco td .num { padding: 0; }
+.acc-total th, .acc-total td { background: var(--acc-total); color: var(--color-text) !important; font-weight: var(--fw-semibold) !important; padding: 0 10px !important; }
+.acc-total td.num { text-align: right; }
+.acc-table--sum { margin-top: var(--space-4); }
+.acc-rest th, .acc-rest td { background: var(--acc-head); }
+.acc-rest.is-neg td { color: var(--danger) !important; }
+@media (max-width: 900px) { .acc-sheet { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .acc-nav { width: 100%; justify-content: space-between; } .acc-table td.acc-date { width: 96px; } }
+.acc-txt { display: block; padding: 0 10px; }
