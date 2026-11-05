@@ -441,9 +441,9 @@
         '<div><dt>Épargne prévue</dt><dd>' + eur(f.savings) + '</dd></div>' +
       '</dl></section>';
   }
-  var KIND_ICON = { income: '💼', bill: '🧾', installment: '💳', saving: '🐷' };
+  var KIND_ICON = { income: 'coin', bill: 'bell', installment: 'calendar', saving: 'piggy' };
   var SHORT_MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
-  function evIcon(e) { return e.kind === 'bill' ? catIcon((B().bills.filter(function (x) { return e.key && e.key.indexOf(':' + x.id + ':') > 0; })[0] || {}).category) : KIND_ICON[e.kind]; }
+  function evIcon(e) { return e.kind === 'bill' ? esc(catIcon((B().bills.filter(function (x) { return e.key && e.key.indexOf(':' + x.id + ':') > 0; })[0] || {}).category)) : U.px(KIND_ICON[e.kind]); }
   function timelineCard(m, today) {
     var ev = BG.monthEvents(B(), m.start, m.end), total = D.diff(m.start, m.end) || 1;
     var pos = function (d) { return Math.max(0, Math.min(100, (D.diff(m.start, d) / total) * 100)); };
@@ -465,8 +465,8 @@
         (inMonth ? '<span class="tl__today" style="left:' + pos(today).toFixed(2) + '%"><span>Aujourd’hui</span></span>' : '') +
         '<div class="tl__ends"><span>' + esc(D.dayMonth(m.start)) + '</span><span>' + esc(D.dayMonth(m.end)) + '</span></div></div>' +
       (next ? '<p class="tl__next">' + icon('bell') + 'Prochain prélèvement ' + (next.date === today ? '<strong>aujourd’hui</strong>' : 'dans <strong>' + U.plural(D.diff(today, next.date), 'jour') + '</strong>') + ' : ' + esc(next.label) + ' · ' + eur(next.amount) + '</p>' : '') +
-      (pay ? '<p class="tl__next tl__next--pay">💼 Prochaine paie ' + (pay.date === today ? '<strong>aujourd’hui</strong>' : 'dans <strong>' + U.plural(D.diff(today, pay.date), 'jour') + '</strong>') + ' · ' + eur(pay.amount) + '</p>' : '') +
-      (upcoming.length ? '<ul class="tl__list" role="list">' + upcoming.map(function (e) { return '<li><span>' + esc(D.cap(D.dayMonth(e.date))) + '</span><span>' + (e.kind === 'income' ? '💼 ' : '') + esc(e.label) + '</span><strong class="' + (e.kind === 'income' ? 'is-pos' : '') + '">' + (e.kind === 'income' ? '+' : '−') + NB + eur(e.amount) + '</strong></li>'; }).join('') + '</ul>' : '') +
+      (pay ? '<p class="tl__next tl__next--pay">' + U.px('coin') + ' Prochaine paie ' + (pay.date === today ? '<strong>aujourd’hui</strong>' : 'dans <strong>' + U.plural(D.diff(today, pay.date), 'jour') + '</strong>') + ' · ' + eur(pay.amount) + '</p>' : '') +
+      (upcoming.length ? '<ul class="tl__list" role="list">' + upcoming.map(function (e) { return '<li><span>' + esc(D.cap(D.dayMonth(e.date))) + '</span><span>' + (e.kind === 'income' ? U.px('coin') + ' ' : '') + esc(e.label) + '</span><strong class="' + (e.kind === 'income' ? 'is-pos' : '') + '">' + (e.kind === 'income' ? '+' : '−') + NB + eur(e.amount) + '</strong></li>'; }).join('') + '</ul>' : '') +
       (ev.length ? '' : empty('Ajoute ta paie et tes factures dans Charges fixes : elles s’afficheront ici.')), 'tl-card');
   }
   function envelopesCard(m, today) {
@@ -672,9 +672,9 @@
         (pct != null ? '<div class="progress" style="--value:' + pct + '" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Progression ' + esc(g.name) + '"></div>' : '') +
         (proj ? '<p class="goal-proj">' + proj + '</p>' : '') +
         (plans.length ? '<ul class="plan-list" role="list">' + plans.map(function (pl) {
-          return '<li><span>🔁 ' + eur(pl.amount) + ' automatiquement le ' + pl.day + ' de chaque mois</span>' + btns('plans', pl.id, 'ce versement automatique') + '</li>';
+          return '<li><span>' + icon('refresh') + ' ' + eur(pl.amount) + ' automatiquement le ' + pl.day + ' de chaque mois</span>' + btns('plans', pl.id, 'ce versement automatique') + '</li>';
         }).join('') + '</ul>' :
-          '<details class="data-twin"><summary>🔁 Programmer un versement automatique</summary><form class="health-form deposit-form" data-b-form="plans" data-goal="' + g.id + '" novalidate>' + fields(DEFS.plans, null, 'p' + g.id) +
+          '<details class="data-twin"><summary>' + icon('refresh') + ' Programmer un versement automatique</summary><form class="health-form deposit-form" data-b-form="plans" data-goal="' + g.id + '" novalidate>' + fields(DEFS.plans, null, 'p' + g.id) +
           '<button type="submit" class="btn btn--primary btn--sm" data-focus-key="pl-' + g.id + '">' + icon('check') + 'Activer</button></form></details>') +
         '<form class="deposit-form" data-b-form="deposits" data-goal="' + g.id + '" novalidate>' + fields(DEFS.deposits, null, 'd' + g.id) +
           '<button type="submit" class="btn btn--primary btn--sm" data-focus-key="ds-' + g.id + '">' + icon('plus') + 'Verser</button>' +

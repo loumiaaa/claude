@@ -47,7 +47,7 @@
   }
 
   function tile(emoji, label, value, sub) {
-    return '<article class="rv-tile"><span class="rv-tile__icon" aria-hidden="true">' + emoji + '</span><span class="rv-tile__label">' + esc(label) + '</span>' +
+    return '<article class="rv-tile"><span class="rv-tile__icon" aria-hidden="true">' + U.px(emoji, 2) + '</span><span class="rv-tile__label">' + esc(label) + '</span>' +
       '<strong class="rv-tile__value">' + value + '</strong>' + (sub ? '<span class="rv-tile__sub">' + sub + '</span>' : '') + '</article>';
   }
 
@@ -60,14 +60,14 @@
         '<span class="rv-mood__d" aria-hidden="true">' + D.DAYS_LETTER[D.dow(d)] + '</span></span>';
     }).join('');
     var tiles = [
-      tile('✅', 'Tâches bouclées', String(done.length), done.length ? 'Bravo pour chacune' : 'Une semaine plus calme'),
-      tile('⏱️', S.groupName('flowline'), D.duration(n.poles.flowline), n.goal ? 'objectif ' + D.duration(n.goal.weekly) : ''),
-      tile('🎨', S.groupName('auto-entreprise'), D.duration(n.poles['auto-entreprise']), 'tes projets à côté'),
-      tile('🍅', 'Focus', String(n.focus.count), n.focus.count ? D.duration(n.focus.minutes) + ' de concentration' : 'sessions de concentration'),
-      tile('🌱', 'Habitudes', n.hab.pct == null ? '—' : n.hab.pct + NB + '%', n.hab.planned ? n.hab.done + ' cases sur ' + n.hab.planned : 'pas encore d’habitude')
+      tile('check', 'Tâches bouclées', String(done.length), done.length ? 'Bravo pour chacune' : 'Une semaine plus calme'),
+      tile('clock', S.groupName('flowline'), D.duration(n.poles.flowline), n.goal ? 'objectif ' + D.duration(n.goal.weekly) : ''),
+      tile('palette', S.groupName('auto-entreprise'), D.duration(n.poles['auto-entreprise']), 'tes projets à côté'),
+      tile('tomato', 'Focus', String(n.focus.count), n.focus.count ? D.duration(n.focus.minutes) + ' de concentration' : 'sessions de concentration'),
+      tile('sprout', 'Habitudes', n.hab.pct == null ? '—' : n.hab.pct + NB + '%', n.hab.planned ? n.hab.done + ' cases sur ' + n.hab.planned : 'pas encore d’habitude')
     ];
-    if (n.sport) tiles.push(tile('🏃', 'Sport', D.duration(n.sport.reduce(function (a, x) { return a + x.minutes; }, 0)), U.plural(n.sport.length, 'séance')));
-    if (n.money) tiles.push(tile('💶', 'Dépensé', eur(n.money.expenses), n.money.byCategory[0] ? 'surtout ' + esc(n.money.byCategory[0].category) : ''));
+    if (n.sport) tiles.push(tile('shoe', 'Sport', D.duration(n.sport.reduce(function (a, x) { return a + x.minutes; }, 0)), U.plural(n.sport.length, 'séance')));
+    if (n.money) tiles.push(tile('coin', 'Dépensé', eur(n.money.expenses), n.money.byCategory[0] ? 'surtout ' + esc(n.money.byCategory[0].category) : ''));
     var prev = S.review(D.addDays(w0, -7));
     return '<section class="glass card rv-step" aria-labelledby="rv-1"><div class="card__header"><div><p class="rv-step__n">Étape 1 sur 4</p><h2 class="card__title" id="rv-1">Ta semaine en chiffres</h2>' +
         '<p class="card__subtitle">On regarde, sans juger : chaque semaine a sa couleur.</p></div></div>' +
@@ -235,11 +235,11 @@
     var today = D.today(), r = currentPriorities(), todo = defaultWeek(today), dow = D.dowMon(today);
     var askNow = !S.review(todo) && (dow >= 5 || dow === 0);
     if (!r && !askNow) {
-      return '<section class="glass card life-card" aria-labelledby="dh-prio"><div class="card__header"><div><h2 class="card__title" id="dh-prio">🎯 Priorités de la semaine</h2><p class="card__subtitle">Elles se choisissent au bilan du dimanche</p></div></div>' +
+      return '<section class="glass card life-card" aria-labelledby="dh-prio"><div class="card__header"><div><h2 class="card__title" id="dh-prio">' + U.px('target', 2) + 'Priorités de la semaine</h2><p class="card__subtitle">Elles se choisissent au bilan du dimanche</p></div></div>' +
         '<p class="life-card__muted">Dimanche, prends dix minutes pour faire le point et choisir tes trois priorités.</p>' +
         '<a class="btn btn--ghost btn--sm life-card__more" href="#bilan">Découvrir le bilan' + icon('chevron-right') + '</a></section>';
     }
-    return '<section class="glass card life-card' + (askNow ? ' life-card--ask' : '') + '" aria-labelledby="dh-prio"><div class="card__header"><div><h2 class="card__title" id="dh-prio">🎯 Priorités de la semaine</h2>' +
+    return '<section class="glass card life-card' + (askNow ? ' life-card--ask' : '') + '" aria-labelledby="dh-prio"><div class="card__header"><div><h2 class="card__title" id="dh-prio">' + U.px('target', 2) + 'Priorités de la semaine</h2>' +
         '<p class="card__subtitle">' + (r ? r.priorities.filter(function (p) { return p.done; }).length + ' sur ' + r.priorities.length + ' faites' : 'À choisir') + '</p></div>' +
         (r ? '<a class="btn btn--ghost btn--sm" href="#bilan">Bilan' + icon('chevron-right') + '</a>' : '') + '</div>' +
       (r ? '<ul class="prio-list" role="list">' + r.priorities.map(function (p) { return prioRow(r.week, p); }).join('') + '</ul>' : '') +

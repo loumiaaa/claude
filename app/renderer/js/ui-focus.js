@@ -16,9 +16,9 @@
   var esc = U.esc, icon = U.icon, NB = U.NB;
   var KEY = 'lamia:focus';
   var PHASES = {
-    work: { label: 'Concentration', short: 'Focus', emoji: '🍅' },
-    short: { label: 'Petite pause', short: 'Pause', emoji: '☕' },
-    long: { label: 'Grande pause', short: 'Pause', emoji: '🌿' }
+    work: { label: 'Concentration', short: 'Focus', emoji: 'tomato' },
+    short: { label: 'Petite pause', short: 'Pause', emoji: 'coffee' },
+    long: { label: 'Grande pause', short: 'Pause', emoji: 'leaf' }
   };
   var PRESETS = [[25, 5, 15, 'Classique'], [50, 10, 20, 'Longues sessions'], [15, 3, 10, 'Petits pas']];
 
@@ -134,7 +134,7 @@
   /* --- Pastille (en-tête) ----------------------------------------------------------------- */
   function chipHTML() {
     var p = PHASES[st.phase];
-    return '<span aria-hidden="true">' + p.emoji + '</span><span class="focus-chip__label">' + (st.waiting ? 'Prête ?' : p.short) + '</span>' +
+    return '<span aria-hidden="true">' + U.px(p.emoji) + '</span><span class="focus-chip__label">' + (st.waiting ? 'Prête ?' : p.short) + '</span>' +
       '<span class="num" data-focus-time>' + clock(left()) + '</span>';
   }
   function sync() {
@@ -164,7 +164,7 @@
     var key = st.phase + (st.waiting ? 'w' : '');
     var box = ov.querySelector('.focus');
     box.className = 'focus focus--' + st.phase + (st.waiting ? ' focus--waiting' : '');
-    box.querySelector('.focus__phase').textContent = p.emoji + ' ' + (st.waiting ? 'Prête pour la suite ?' : p.label + (paused ? ' (en pause)' : ''));
+    box.querySelector('.focus__phase').innerHTML = U.px(p.emoji, 2) + '<span>' + esc(st.waiting ? 'Prête pour la suite ?' : p.label + (paused ? ' (en pause)' : '')) + '</span>';
     box.querySelector('.focus__task').innerHTML = t ? esc(t.title) : 'Sans tâche';
     box.querySelector('.focus__dots').innerHTML = dots;
     box.querySelector('.focus__dots').setAttribute('aria-label', (st.cycle % every) + ' session' + (st.cycle % every > 1 ? 's' : '') + ' sur ' + every + ' avant la grande pause');

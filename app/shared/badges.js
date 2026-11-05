@@ -4,6 +4,7 @@
    tâches bouclées, heures, focus, habitudes, humeur, sport, bilans, épargne.
    Chaque badge gagné rapproche d'un cadeau pixel : un accessoire pour son
    personnage ou pour Memeow (fleur, nœud, béret, collier, couronnes).
+   icon : nom d'une icône pixel (design/sprites/pixel-cast.js).
    Module UMD.
    ========================================================================== */
 (function (root, factory) {
@@ -66,26 +67,26 @@
   /* --- Catalogue ------------------------------------------------------------ */
   // space : badge affiché seulement si l'espace est activé (santé, budget)
   var CATALOG = [
-    { id: 'task-1', icon: '🎯', title: 'Première victoire', desc: 'Boucler une première tâche', target: 1, value: doneTasks },
-    { id: 'task-10', icon: '🔟', title: 'Sur la lancée', desc: 'Boucler 10 tâches', target: 10, value: doneTasks },
-    { id: 'task-50', icon: '🚀', title: 'Machine à pixels', desc: 'Boucler 50 tâches', target: 50, value: doneTasks },
-    { id: 'task-100', icon: '💯', title: 'Cent pour cent', desc: 'Boucler 100 tâches', target: 100, value: doneTasks },
-    { id: 'hours-100', icon: '⏱️', title: 'Cent heures', desc: 'Chronométrer 100 heures de travail', target: 100, value: totalHours },
-    { id: 'hours-500', icon: '⌛', title: 'Cinq cents heures', desc: 'Chronométrer 500 heures de travail', target: 500, value: totalHours },
-    { id: 'week-goal', icon: '🏁', title: 'Semaine bouclée', desc: 'Atteindre l’objectif d’heures d’une semaine', target: 1, value: function (d) { return goalWeeks(d).count; } },
-    { id: 'week-goal-4', icon: '🏆', title: 'Un mois carré', desc: 'Atteindre l’objectif d’heures 4 semaines d’affilée', target: 4, value: function (d) { return goalWeeks(d).run; } },
-    { id: 'focus-1', icon: '🍅', title: 'Premier focus', desc: 'Terminer une session du mode focus', target: 1, value: function (d) { return ((d.focus && d.focus.sessions) || []).length; } },
-    { id: 'focus-25', icon: '🧠', title: 'Concentration maximale', desc: 'Terminer 25 sessions du mode focus', target: 25, value: function (d) { return ((d.focus && d.focus.sessions) || []).length; } },
-    { id: 'habit-7', icon: '🌱', title: 'Petite graine', desc: 'Tenir une habitude 7 jours d’affilée', target: 7, value: habitBest },
-    { id: 'habit-30', icon: '🌳', title: 'Bien enracinée', desc: 'Tenir une habitude 30 jours d’affilée', target: 30, value: habitBest },
-    { id: 'mood-7', icon: '🌈', title: 'À l’écoute de soi', desc: 'Noter son humeur 7 jours d’affilée', target: 7, value: moodRun },
-    { id: 'mood-30', icon: '📔', title: 'Journal d’humeur', desc: 'Noter son humeur 30 fois', target: 30, value: function (d) { return (d.moods || []).length; } },
-    { id: 'sport-10', icon: '🏃', title: 'En mouvement', desc: 'Faire 10 séances de sport', target: 10, space: 'health', value: function (d) { return ((d.health && d.health.sports) || []).length; } },
-    { id: 'sport-weeks', icon: '💪', title: 'Régulière', desc: 'Faire du sport 4 semaines d’affilée', target: 4, space: 'health', value: sportWeeksRun },
-    { id: 'review-1', icon: '🗓️', title: 'Premier bilan', desc: 'Faire un premier bilan du dimanche', target: 1, value: function (d) { return (d.reviews || []).length; } },
-    { id: 'review-4', icon: '📈', title: 'Rituel installé', desc: 'Faire 4 bilans du dimanche', target: 4, value: function (d) { return (d.reviews || []).length; } },
-    { id: 'save-goal', icon: '🐷', title: 'Cagnotte remplie', desc: 'Atteindre le montant d’une cagnotte d’épargne', target: 1, space: 'budget', value: savedGoal },
-    { id: 'word', icon: '✨', title: 'Un mot pour l’année', desc: 'Choisir son mot de l’année dans le profil', target: 1, value: function (d) { return d.profile && d.profile.word ? 1 : 0; } }
+    { id: 'task-1', icon: 'target', title: 'Première victoire', desc: 'Boucler une première tâche', target: 1, value: doneTasks },
+    { id: 'task-10', icon: 'check', title: 'Sur la lancée', desc: 'Boucler 10 tâches', target: 10, value: doneTasks },
+    { id: 'task-50', icon: 'rocket', title: 'Machine à pixels', desc: 'Boucler 50 tâches', target: 50, value: doneTasks },
+    { id: 'task-100', icon: 'trophy', title: 'Cent pour cent', desc: 'Boucler 100 tâches', target: 100, value: doneTasks },
+    { id: 'hours-100', icon: 'clock', title: 'Cent heures', desc: 'Chronométrer 100 heures de travail', target: 100, value: totalHours },
+    { id: 'hours-500', icon: 'hourglass', title: 'Cinq cents heures', desc: 'Chronométrer 500 heures de travail', target: 500, value: totalHours },
+    { id: 'week-goal', icon: 'flag', title: 'Semaine bouclée', desc: 'Atteindre l’objectif d’heures d’une semaine', target: 1, value: function (d) { return goalWeeks(d).count; } },
+    { id: 'week-goal-4', icon: 'medal', title: 'Un mois carré', desc: 'Atteindre l’objectif d’heures 4 semaines d’affilée', target: 4, value: function (d) { return goalWeeks(d).run; } },
+    { id: 'focus-1', icon: 'tomato', title: 'Premier focus', desc: 'Terminer une session du mode focus', target: 1, value: function (d) { return ((d.focus && d.focus.sessions) || []).length; } },
+    { id: 'focus-25', icon: 'bulb', title: 'Concentration maximale', desc: 'Terminer 25 sessions du mode focus', target: 25, value: function (d) { return ((d.focus && d.focus.sessions) || []).length; } },
+    { id: 'habit-7', icon: 'sprout', title: 'Petite graine', desc: 'Tenir une habitude 7 jours d’affilée', target: 7, value: habitBest },
+    { id: 'habit-30', icon: 'tree', title: 'Bien enracinée', desc: 'Tenir une habitude 30 jours d’affilée', target: 30, value: habitBest },
+    { id: 'mood-7', icon: 'rainbow', title: 'À l’écoute de soi', desc: 'Noter son humeur 7 jours d’affilée', target: 7, value: moodRun },
+    { id: 'mood-30', icon: 'book', title: 'Journal d’humeur', desc: 'Noter son humeur 30 fois', target: 30, value: function (d) { return (d.moods || []).length; } },
+    { id: 'sport-10', icon: 'shoe', title: 'En mouvement', desc: 'Faire 10 séances de sport', target: 10, space: 'health', value: function (d) { return ((d.health && d.health.sports) || []).length; } },
+    { id: 'sport-weeks', icon: 'dumbbell', title: 'Régulière', desc: 'Faire du sport 4 semaines d’affilée', target: 4, space: 'health', value: sportWeeksRun },
+    { id: 'review-1', icon: 'calendar', title: 'Premier bilan', desc: 'Faire un premier bilan du dimanche', target: 1, value: function (d) { return (d.reviews || []).length; } },
+    { id: 'review-4', icon: 'chart', title: 'Rituel installé', desc: 'Faire 4 bilans du dimanche', target: 4, value: function (d) { return (d.reviews || []).length; } },
+    { id: 'save-goal', icon: 'piggy', title: 'Cagnotte remplie', desc: 'Atteindre le montant d’une cagnotte d’épargne', target: 1, space: 'budget', value: savedGoal },
+    { id: 'word', icon: 'star', title: 'Un mot pour l’année', desc: 'Choisir son mot de l’année dans le profil', target: 1, value: function (d) { return d.profile && d.profile.word ? 1 : 0; } }
   ];
 
   // Cadeaux pixel, débloqués au fil des badges gagnés

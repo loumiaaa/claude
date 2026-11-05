@@ -82,7 +82,7 @@
     var body = todays.length
       ? '<ul class="ev-list" role="list">' + todays.map(function (e) { return evRow(e).replace('class="ev', 'class="ev' + (!e.allDay && (e.end || e.time) < hm ? ' is-past' : '')); }).join('') + '</ul>'
       : '<p class="life-card__muted">' + (status.state === 'error' ? esc(status.error) : status.state === 'loading' && !cache ? 'Lecture du calendrier…' : 'Aucun rendez-vous aujourd’hui : la journée est à toi.') + '</p>';
-    return '<section class="glass card life-card" aria-labelledby="dh-cal"><div class="card__header"><div><h2 class="card__title" id="dh-cal">📅 Aujourd’hui</h2>' +
+    return '<section class="glass card life-card" aria-labelledby="dh-cal"><div class="card__header"><div><h2 class="card__title" id="dh-cal">' + U.px('calendar', 2) + 'Aujourd’hui</h2>' +
       '<p class="card__subtitle">' + (todays.length ? U.plural(todays.length, 'rendez-vous').replace('rendez-vouss', 'rendez-vous') + (upcoming.length && upcoming.length < todays.length ? ' · encore ' + upcoming.length : '') : 'Ton calendrier') + '</p></div>' +
       '<a class="btn btn--ghost btn--sm" href="#planning">Planning' + icon('chevron-right') + '</a></div>' + body +
       (next.length ? '<p class="life-chip">Demain : ' + esc(next[0].title) + (next[0].time ? ' à ' + esc(next[0].time.replace(':', 'h')) : '') + (next.length > 1 ? ' et ' + (next.length - 1) + ' autre' + (next.length > 2 ? 's' : '') : '') + '</p>' : '') +

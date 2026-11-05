@@ -34,7 +34,7 @@
     S.markBadges(fresh.map(function (b) { return b.id; }));
     if (first && fresh.length > 1) return;            // premier lancement : rien à fêter d'un coup
     var b = fresh[0];
-    L.fun.celebrate({ title: 'Nouveau badge : ' + b.title + ' ' + b.icon, text: fresh.length > 1 ? 'et ' + U.plural(fresh.length - 1, 'autre') + ' !' : b.desc + '.', duration: 4200 });
+    L.fun.celebrate({ title: 'Nouveau badge : ' + b.title, text: fresh.length > 1 ? 'et ' + U.plural(fresh.length - 1, 'autre') + ' !' : b.desc + '.', duration: 4200 });
     var gift = BD.rewards(count(l)).filter(function (r) { return r.unlocked && r.need > before; })[0];
     if (gift) setTimeout(function () {
       U.toast({ kind: 'success', icon: 'sparkle', title: 'Cadeau débloqué : ' + gift.label, text: 'Viens l’essayer dans ta garde-robe.', duration: 9000,
@@ -73,7 +73,7 @@
     var got = l.filter(function (b) { return b.got; }).sort(function (a, b) { return (at[b.id] || '') < (at[a.id] || '') ? -1 : 1; });
     var todo = l.filter(function (b) { return !b.got; }).sort(function (a, b) { return b.pct - a.pct; });
     function badge(b) {
-      return '<li class="badge-card' + (b.got ? ' is-got' : '') + '"><span class="badge-card__icon" aria-hidden="true">' + b.icon + '</span>' +
+      return '<li class="badge-card' + (b.got ? ' is-got' : '') + '"><span class="badge-card__icon" aria-hidden="true">' + U.px(b.icon, 3) + '</span>' +
         '<span class="badge-card__title">' + esc(b.title) + '</span><span class="badge-card__desc">' + esc(b.desc) + '</span>' +
         (b.got ? '<span class="badge-card__when">' + icon('check') + (at[b.id] ? 'Gagné le ' + esc(D.dayMonth(at[b.id])) : 'Gagné') + '</span>'
           : '<span class="badge-card__prog">' + U.progress(b.pct, 'progress--sm') + '<span class="num">' + b.value + '/' + b.target + '</span></span>') + '</li>';
@@ -116,11 +116,11 @@
   function cardHTML() {
     var l = list(), n = count(l), next = BD.nextReward(n);
     var close = l.filter(function (b) { return !b.got; }).sort(function (a, b) { return b.pct - a.pct; })[0];
-    return '<section class="glass card life-card" aria-labelledby="dh-badges"><div class="card__header"><div><h2 class="card__title" id="dh-badges">🏅 Badges</h2>' +
+    return '<section class="glass card life-card" aria-labelledby="dh-badges"><div class="card__header"><div><h2 class="card__title" id="dh-badges">' + U.px('medal', 2) + 'Badges</h2>' +
       '<p class="card__subtitle">' + n + ' sur ' + l.length + ' gagnés</p></div><a class="btn btn--ghost btn--sm" href="#badges">Voir' + icon('chevron-right') + '</a></div>' +
       U.progress(Math.round(n / l.length * 100), 'progress--sm') +
-      (close ? '<p class="life-chip">' + close.icon + ' Bientôt : ' + esc(close.title) + ' · ' + close.value + '/' + close.target + '</p>' : '') +
-      (next ? '<p class="life-card__muted">🎁 ' + esc(next.label) + ' dans ' + U.plural(next.left, 'badge') + '</p>' : '') + '</section>';
+      (close ? '<p class="life-chip">' + U.px(close.icon) + ' Bientôt : ' + esc(close.title) + ' · ' + close.value + '/' + close.target + '</p>' : '') +
+      (next ? '<p class="life-card__muted">' + U.px('gift') + ' ' + esc(next.label) + ' dans ' + U.plural(next.left, 'badge') + '</p>' : '') + '</section>';
   }
 
   L.badgesUI = { list: list, count: count, extras: extras, check: check, cardHTML: cardHTML };

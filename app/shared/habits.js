@@ -32,14 +32,14 @@
 
   // Idées proposées quand la liste est vide
   var SUGGESTIONS = [
-    { name: 'Sommeil', icon: '😴', kind: 'amount', unit: 'h', goal: 420, dir: 'min' },
-    { name: 'Eau', icon: '💧', kind: 'amount', unit: 'L', goal: 1.5, dir: 'min' },
-    { name: 'Pas', icon: '🚶', kind: 'amount', unit: 'pas', goal: 8000, dir: 'min' },
-    { name: 'Temps d’écran', icon: '📱', kind: 'amount', unit: 'h', goal: 180, dir: 'max' },
-    { name: 'Lecture', icon: '📖', kind: 'amount', unit: 'pages', goal: 10, dir: 'min' },
-    { name: 'Étirements', icon: '🧘', kind: 'check' },
-    { name: 'Dessiner pour moi', icon: '✏️', kind: 'check' },
-    { name: 'Prendre l’air', icon: '🌤️', kind: 'check' }
+    { name: 'Sommeil', icon: 'px:moon', kind: 'amount', unit: 'h', goal: 420, dir: 'min' },
+    { name: 'Eau', icon: 'px:drop', kind: 'amount', unit: 'L', goal: 1.5, dir: 'min' },
+    { name: 'Pas', icon: 'px:shoe', kind: 'amount', unit: 'pas', goal: 8000, dir: 'min' },
+    { name: 'Temps d’écran', icon: 'px:phone', kind: 'amount', unit: 'h', goal: 180, dir: 'max' },
+    { name: 'Lecture', icon: 'px:book', kind: 'amount', unit: 'pages', goal: 10, dir: 'min' },
+    { name: 'Étirements', icon: 'px:lotus', kind: 'check' },
+    { name: 'Dessiner pour moi', icon: 'px:pencil', kind: 'check' },
+    { name: 'Prendre l’air', icon: 'px:sun', kind: 'check' }
   ];
   var KINDS = ['check', 'count', 'amount'];
 
@@ -53,7 +53,7 @@
       return {
         id: typeof x.id === 'string' && x.id ? x.id : 'hab-' + (i + 1),
         name: x.name.trim(),
-        icon: typeof x.icon === 'string' && x.icon ? x.icon : '✨',
+        icon: typeof x.icon === 'string' && x.icon ? x.icon : 'px:star',
         kind: kind,
         target: kind === 'count' ? Math.max(2, target) : 1,
         unit: typeof x.unit === 'string' ? x.unit.slice(0, 20) : '',

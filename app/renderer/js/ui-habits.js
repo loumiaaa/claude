@@ -15,7 +15,12 @@
 
   var D = L.dates, S = L.store, U = L.ui, HB = window.LamiaShared.habits;
   var esc = U.esc, icon = U.icon, NB = U.NB;
-  var ICONS = ['💧', '😴', '📖', '📱', '📵', '🧘', '🚶', '✏️', '🌤️', '🍎', '🥦', '☕', '💊', '🦷', '🧴', '🎧', '🙏', '📝', '🧹', '💪', '🎨', '🌱'];
+  // Icônes pixel proposées (design/sprites/pixel-cast.js) ; enregistrées « px:nom »
+  var ICONS = ['drop', 'moon', 'book', 'phone', 'lotus', 'shoe', 'pencil', 'sun', 'apple', 'leaf', 'coffee', 'pill', 'tooth', 'headphones', 'note', 'broom', 'dumbbell', 'palette', 'sprout', 'heart', 'plate', 'star', 'bulb', 'tomato'];
+  // Anciennes habitudes enregistrées avec un emoji : leur équivalent pixel
+  var EMOJI = { '💧': 'drop', '😴': 'moon', '📖': 'book', '📱': 'phone', '📵': 'phone', '🧘': 'lotus', '🚶': 'shoe', '✏️': 'pencil', '🌤️': 'sun', '🍎': 'apple', '🥦': 'leaf', '☕': 'coffee', '💊': 'pill', '🦷': 'tooth', '🎧': 'headphones', '🙏': 'heart', '📝': 'note', '🧹': 'broom', '💪': 'dumbbell', '🎨': 'palette', '🌱': 'sprout', '✨': 'star' };
+  function iconName(v) { return /^px:/.test(v || '') ? v.slice(3) : EMOJI[v] || null; }
+  function habIcon(h, scale) { var n = iconName(h.icon); return n ? U.px(n, scale || 1) : '<span class="hab-emoji">' + esc(h.icon) + '</span>'; }
   var DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
   var DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
   // Unités proposées pour une valeur à noter ; « h » = une durée (saisie 7h30, enregistrée en minutes)
@@ -34,7 +39,7 @@
     if (days.join() === '5,6') return 'Le week-end';
     return days.map(function (d) { return DAY_NAMES[d].slice(0, 3) + '.'; }).join(' ');
   }
-  function flame(n) { return n >= 2 ? '<span class="hab-streak" title="Série en cours">🔥' + NB + U.plural(n, 'jour') + '</span>' : ''; }
+  function flame(n) { return n >= 2 ? '<span class="hab-streak" title="Série en cours">' + U.px('flame') + U.plural(n, 'jour') + '</span>' : ''; }
 
   /* --- Valeurs notées : affichage et saisie ------------------------------------- */
   function isAmount(h) { return h.kind === 'amount'; }
@@ -101,7 +106,7 @@
     }
     var sub = [isAmount(h) || h.kind === 'count' ? '<span>' + goalText(h) + '</span>' : '', flame(streak), streak < 2 && !compact && h.kind === 'check' ? '<span class="text-subtle">' + esc(daysLabel(h.days)) + '</span>' : ''].filter(Boolean).join('');
     return '<li class="hab-row' + (done ? ' is-done' : '') + (compact ? ' hab-row--compact' : '') + (isAmount(h) ? ' hab-row--amount' : '') + '">' +
-      '<span class="hab-row__icon" aria-hidden="true">' + esc(h.icon) + '</span>' +
+      '<span class="hab-row__icon" aria-hidden="true">' + habIcon(h, 2) + '</span>' +
       '<span class="hab-row__text"><span class="hab-row__name">' + esc(h.name) + '</span>' + (sub ? '<span class="hab-row__sub">' + sub + '</span>' : '') + '</span>' +
       bar + ctl + '</li>';
   }
@@ -113,7 +118,7 @@
       ? '<ul class="hab-list" role="list">' + list.map(function (h) { return rowHTML(h, today, true); }).join('') + '</ul>'
       : hs().list.length ? '<p class="life-card__muted">Rien de prévu aujourd’hui : profite.</p>'
         : '<p class="life-card__muted">Sommeil, eau, pas, temps d’écran… Note ce qui compte pour toi.</p>';
-    return '<section class="glass card life-card" aria-labelledby="dh-hab"><div class="card__header"><div><h2 class="card__title" id="dh-hab">🌱 Habitudes</h2>' +
+    return '<section class="glass card life-card" aria-labelledby="dh-hab"><div class="card__header"><div><h2 class="card__title" id="dh-hab">' + U.px('sprout', 2) + 'Habitudes</h2>' +
       '<p class="card__subtitle">' + (sum.total ? sum.done + ' sur ' + sum.total + ' aujourd’hui' : 'Un petit suivi par jour') + '</p></div>' +
       '<a class="btn btn--ghost btn--sm" href="#habitudes">' + (hs().list.length ? 'Voir' : 'Commencer') + icon('chevron-right') + '</a></div>' +
       (sum.total ? U.progress(Math.round(sum.done / sum.total * 100), 'progress--sm' + (sum.all ? ' progress--success' : '')) : '') + body + '</section>';
@@ -131,7 +136,7 @@
       list.map(function (h) {
         var r = HB.rate(log, h, w0, D.addDays(w0, 6), today);
         var avg = isAmount(h) ? HB.values(log, h, w0, D.addDays(w0, 6)).avg : null;
-        return '<tr><th scope="row"><span aria-hidden="true">' + esc(h.icon) + '</span> ' + esc(h.name) + '</th>' + days.map(function (d) {
+        return '<tr><th scope="row"><span class="hab-week__name"><span aria-hidden="true">' + habIcon(h, 1) + '</span>' + esc(h.name) + '</span></th>' + days.map(function (d) {
           if (!HB.isActive(h, d)) return '<td><span class="hab-cell hab-cell--off" title="Pas prévu">·</span></td>';
           var done = HB.isDone(log, h, d), future = d > today, attrs = ' data-date="' + d + '" data-focus-key="hc-' + h.id + d + '"' + (future ? ' disabled' : '');
           var when = esc(D.dayMonthLong(d));
@@ -163,7 +168,7 @@
             '<span class="hab-bar__fill" style="height:' + (v != null ? Math.max(3, Math.round(v / top * 100)) : 0) + '%"></span></span>';
         }).join('');
         var summary = wk.avg == null ? 'Rien noté ces 7 derniers jours' : 'Moyenne sur 7 jours : ' + fmtVal(h, wk.avg) + (h.goal != null ? ' · objectif tenu ' + ok + ' jour' + (ok > 1 ? 's' : '') + ' sur ' + noted : '');
-        return '<article class="hab-trend"><div class="hab-trend__head"><span aria-hidden="true">' + esc(h.icon) + '</span><strong>' + esc(h.name) + '</strong>' +
+        return '<article class="hab-trend"><div class="hab-trend__head"><span aria-hidden="true">' + habIcon(h, 2) + '</span><strong>' + esc(h.name) + '</strong>' +
           '<span class="hab-trend__avg num">' + (wk.avg == null ? '—' : esc(fmtVal(h, wk.avg))) + '</span></div>' +
           '<div class="hab-bars" role="img" aria-label="' + esc(h.name + ', ' + summary) + '">' + cols +
             (h.goal ? '<span class="hab-bars__goal" style="bottom:' + Math.round(h.goal / top * 100) + '%" title="Objectif : ' + esc(fmtVal(h, h.goal)) + '"></span>' : '') + '</div>' +
@@ -177,7 +182,7 @@
     return '<ul class="hab-manage" role="list">' + list.map(function (h, i) {
       var best = HB.bestStreak(hs().log, h, D.today());
       var kind = { check: 'Case à cocher', count: 'Compteur', amount: 'Valeur notée' }[h.kind];
-      return '<li class="' + (h.archived ? 'is-archived' : '') + '"><span class="hab-row__icon" aria-hidden="true">' + esc(h.icon) + '</span>' +
+      return '<li class="' + (h.archived ? 'is-archived' : '') + '"><span class="hab-row__icon" aria-hidden="true">' + habIcon(h, 2) + '</span>' +
         '<span class="hab-row__text"><span class="hab-row__name">' + esc(h.name) + (h.archived ? ' <span class="chip">En pause</span>' : '') + '</span>' +
         '<span class="hab-row__sub">' + [kind, goalText(h), esc(daysLabel(h.days)), best ? 'record ' + U.plural(best, 'jour') : ''].filter(Boolean).join(' · ') + '</span></span>' +
         '<span class="hab-manage__actions">' +
@@ -197,7 +202,7 @@
     if (!list.length) return '';
     return '<div class="hab-ideas"><p class="hab-ideas__label">Idées en un clic</p><div class="hab-ideas__list">' + list.map(function (x, i) {
       var hint = x.kind === 'amount' && x.goal != null ? ' (' + (x.dir === 'max' ? '≤ ' : '≥ ') + fmtVal(x, x.goal) + ')' : '';
-      return '<button type="button" class="chip-btn" data-hab-idea="' + i + '" data-focus-key="hi-' + i + '">' + esc(x.icon) + ' ' + esc(x.name) + esc(hint) + '</button>';
+      return '<button type="button" class="chip-btn" data-hab-idea="' + i + '" data-focus-key="hi-' + i + '">' + habIcon(x, 1) + esc(x.name) + esc(hint) + '</button>';
     }).join('') + '</div></div>';
   }
 
@@ -243,7 +248,7 @@
   /* --- Ajouter / modifier ------------------------------------------------------------ */
   function openEditor(h, returnTo) {
     var isNew = !h;
-    h = h || { name: '', icon: '😴', kind: 'amount', target: 2, unit: 'h', goal: null, dir: 'min', days: [0, 1, 2, 3, 4, 5, 6] };
+    h = h || { name: '', icon: 'px:moon', kind: 'amount', target: 2, unit: 'h', goal: null, dir: 'min', days: [0, 1, 2, 3, 4, 5, 6] };
     var knownUnit = UNITS.some(function (u) { return u[0] && u[0] === h.unit; });
     var KIND_CHOICES = [['check', 'Case à cocher', 'Fait ou pas fait'], ['count', 'Compteur', 'ex. 8 verres d’eau'], ['amount', 'Valeur à noter', 'ex. heures de sommeil, litres, pas']];
     U.dialog({
@@ -265,8 +270,8 @@
           '<option value="min"' + (h.dir !== 'max' ? ' selected' : '') + '>Au moins</option><option value="max"' + (h.dir === 'max' ? ' selected' : '') + '>Au plus</option></select></div>' +
         '<div class="field" data-kf="amount"><label class="label" for="hb-goal">Valeur visée</label><input class="input" id="hb-goal" name="goal" autocomplete="off" value="' + esc(h.kind === 'amount' && h.goal != null ? editVal(h, h.goal) : '') + '" placeholder="ex. 7h30"><p class="hint" data-goal-hint>Vide : la journée compte dès que tu notes une valeur.</p></div>' +
         '<fieldset class="field field--full hab-icons"><legend class="label">Icône</legend><div class="hab-icons__list">' +
-          ICONS.map(function (ic, i) { return '<label class="hab-icon"><input type="radio" name="icon" value="' + ic + '"' + (ic === h.icon ? ' checked' : '') + '><span aria-hidden="true">' + ic + '</span><span class="sr-only">Icône ' + (i + 1) + '</span></label>'; }).join('') +
-          (ICONS.indexOf(h.icon) < 0 ? '<label class="hab-icon"><input type="radio" name="icon" value="' + esc(h.icon) + '" checked><span aria-hidden="true">' + esc(h.icon) + '</span></label>' : '') +
+          ICONS.map(function (ic) { return '<label class="hab-icon"><input type="radio" name="icon" value="px:' + ic + '"' + (ic === iconName(h.icon) ? ' checked' : '') + '><span aria-hidden="true">' + U.px(ic, 2) + '</span><span class="sr-only">' + ic + '</span></label>'; }).join('') +
+          (ICONS.indexOf(iconName(h.icon)) < 0 ? '<label class="hab-icon"><input type="radio" name="icon" value="' + esc(h.icon) + '" checked><span aria-hidden="true">' + habIcon(h, 2) + '</span></label>' : '') +
         '</div></fieldset>' +
         '<fieldset class="field field--full"><legend class="label">Jours prévus</legend><div class="hab-days">' +
           DAY_NAMES.map(function (n, i) { return '<label class="hab-day"><input type="checkbox" name="days" value="' + i + '"' + (h.days.indexOf(i) >= 0 ? ' checked' : '') + '><span aria-hidden="true">' + DAY_LETTERS[i] + '</span><span class="sr-only">' + n + '</span></label>'; }).join('') +
@@ -299,7 +304,7 @@
         if (!days.length) { U.toast({ kind: 'warning', icon: 'alert', title: 'Choisis au moins un jour', duration: 3500 }); return false; }
         var iconChecked = form.querySelector('[name=icon]:checked');
         var kind = (form.querySelector('[name=kind]:checked') || {}).value || 'check';
-        var data = { name: name, icon: iconChecked ? iconChecked.value : '✨', kind: kind, days: days, target: 1, unit: '', goal: null, dir: 'min' };
+        var data = { name: name, icon: iconChecked ? iconChecked.value : 'px:star', kind: kind, days: days, target: 1, unit: '', goal: null, dir: 'min' };
         if (kind === 'count') { data.target = Math.max(2, Math.min(50, Math.round(+form.target.value || 2))); data.unit = form.cunit.value.trim(); }
         if (kind === 'amount') {
           data.unit = form.unit.value || form.ounit.value.trim();
@@ -323,7 +328,7 @@
   function editDay(h, date, returnTo) {
     var v = HB.value(hs().log, h, date);
     U.dialog({
-      title: h.icon + ' ' + h.name, desc: D.cap(D.dayMonthLong(date)) + (h.goal != null ? ' · ' + (h.dir === 'max' ? 'au plus ' : 'au moins ') + fmtVal(h, h.goal) : ''),
+      title: h.name, desc: D.cap(D.dayMonthLong(date)) + (h.goal != null ? ' · ' + (h.dir === 'max' ? 'au plus ' : 'au moins ') + fmtVal(h, h.goal) : ''),
       returnTo: returnTo, confirmLabel: 'Enregistrer',
       body: '<div class="field"><label class="label" for="hd-v">' + (h.unit === 'h' ? 'Durée' : 'Valeur' + (h.unit ? ' (' + esc(h.unit) + ')' : '')) + '</label>' +
         '<input class="input" id="hd-v" name="v" autocomplete="off" inputmode="' + (h.unit === 'h' ? 'text' : 'decimal') + '" value="' + esc(editVal(h, v)) + '" placeholder="' + placeholder(h) + '">' +

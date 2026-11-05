@@ -2976,3 +2976,24 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .hours-log__day { color: var(--color-text-muted); }
 .hours-log__note { color: var(--color-text-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hours-log .hint { margin: 0; }
+
+/* Icônes pixel de l'interface (remplacent les emojis) */
+.px-ico { display: inline-block; flex: none; image-rendering: pixelated; vertical-align: middle; }
+.px-ico--1 { width: 16px; height: 16px; margin-top: -3px; }
+.px-ico--2 { width: 32px; height: 32px; }
+.px-ico--3 { width: 48px; height: 48px; }
+.card__title .px-ico--2 { margin: -6px 8px -4px 0; }
+.life-chip .px-ico, .life-card__muted .px-ico, .life-card__h .px-ico, .tl__next .px-ico, .tl__list .px-ico { margin-right: 2px; }
+.life-tile__icon { font-size: 0; width: 32px; }
+.hab-row__icon { width: 32px; font-size: 20px; }
+.hab-streak { display: inline-flex; align-items: center; gap: 2px; }
+.hab-streak .px-ico--1 { margin-top: 0; }
+.hab-week__name { display: inline-flex; align-items: center; gap: 6px; }
+.hab-week__name .px-ico--1 { margin-top: 0; }
+.hab-icon span[aria-hidden] { width: 44px; height: 44px; }
+.chip-btn .px-ico--1 { margin-top: 0; }
+.rv-tile__icon { font-size: 0; }
+.badge-card__icon { font-size: 0; line-height: 0; }
+.focus__phase { display: inline-flex; align-items: center; gap: 8px; }
+.focus-chip .px-ico--1 { margin-top: 0; }
+.tl-mark__dot .px-ico--1 { margin-top: 0; }

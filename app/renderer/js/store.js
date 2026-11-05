@@ -516,7 +516,7 @@
     },
     addHabit: function (data) {
       var kind = data.kind || (data.target > 1 ? 'count' : 'check');
-      var h = { id: uid('hab'), name: data.name, icon: data.icon || '✨', kind: kind, target: kind === 'count' ? Math.max(2, data.target || 2) : 1, unit: data.unit || '',
+      var h = { id: uid('hab'), name: data.name, icon: data.icon || 'px:star', kind: kind, target: kind === 'count' ? Math.max(2, data.target || 2) : 1, unit: data.unit || '',
         goal: kind === 'amount' && data.goal != null ? data.goal : null, dir: data.dir === 'max' ? 'max' : 'min', days: data.days || [0, 1, 2, 3, 4, 5, 6], since: data.since || D.today(), archived: false };
       store.habits().list.push(h);
       emit('habits', { id: h.id }, { now: true });

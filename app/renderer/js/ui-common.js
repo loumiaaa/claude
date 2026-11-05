@@ -107,6 +107,9 @@
     return '<img class="pixelated ' + (cls || '') + '" src="' + url + '" width="' + size + '" height="' + size + '" alt="' + esc(alt || '') + '">';
   }
 
+  // Icône pixel de l'interface (remplace les emojis) : scale 1 = 16 px, 2 = 32 px
+  function px(name, scale, alt) { return pixelImg(name, scale || 1, 'px-ico px-ico--' + (scale || 1), alt || ''); }
+
   /* --- Humeur ------------------------------------------------------------ */
   var MOODS = [
     { level: 1, label: 'Au plus bas' },
@@ -426,7 +429,7 @@
     esc: esc, icon: icon, $: $, $$: $$, plural: plural, NB: NB, typo: typo, typoString: typoString,
     PALETTE: PALETTE, hue: hue, catChip: catChip, catDot: catDot, statusChip: statusChip, prio: prio, tags: tags,
     progress: progress, due: due, dueBadge: dueBadge,
-    pixelURL: pixelURL, pixelImg: pixelImg, MOODS: MOODS, moodLabel: moodLabel,
+    pixelURL: pixelURL, pixelImg: pixelImg, px: px, MOODS: MOODS, moodLabel: moodLabel,
     announce: announce, toast: toast, openLayer: openLayer, closeLayer: closeLayer, topLayer: topLayer, focusables: focusables,
     dialog: dialog, openMenu: openMenu, closeMenu: closeMenu, debounce: debounce, keepFocus: keepFocus,
     reducedMotion: reducedMotion, download: download
