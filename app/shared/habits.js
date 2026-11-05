@@ -2,11 +2,20 @@
    Plateforme de suivi - Lamia — logique partagée · habitudes
    Petites cases à cocher chaque jour (eau, sommeil, lecture…), avec séries.
 
+   Trois façons de suivre une habitude (kind) :
+   - 'check'  : une case à cocher ;
+   - 'count'  : un compteur (8 verres : fait quand on atteint la cible) ;
+   - 'amount' : une valeur notée (7 h 30 de sommeil, 1,5 L d'eau, 6 000 pas),
+                avec un objectif facultatif « au moins » (dir 'min') ou
+                « au plus » (dir 'max', ex. temps d'écran). Sans objectif, la
+                journée compte dès qu'une valeur est notée. Unité 'h' : durée,
+                enregistrée en minutes.
+
    Données (doc.habits) :
-   - list : [{ id, name, icon, target (fois par jour, 1 = case à cocher),
-              unit, days (jours actifs, 0 = lundi … 6 = dimanche),
+   - list : [{ id, name, icon, kind, target, unit, goal, dir,
+              days (jours actifs, 0 = lundi … 6 = dimanche),
               since (YYYY-MM-DD), archived }]
-   - log  : { 'YYYY-MM-DD': { <id habitude>: nombre fait ce jour-là } }
+   - log  : { 'YYYY-MM-DD': { <id habitude>: nombre fait / valeur notée } }
    Un jour où l'habitude n'est pas prévue ne casse jamais une série.
    Module UMD.
    ========================================================================== */
@@ -23,26 +32,33 @@
 
   // Idées proposées quand la liste est vide
   var SUGGESTIONS = [
-    { name: 'Boire de l’eau', icon: '💧', target: 8, unit: 'verres' },
-    { name: 'Dormir 7 h', icon: '😴', target: 1, unit: '' },
-    { name: 'Lire 15 minutes', icon: '📖', target: 1, unit: '' },
-    { name: 'Pas d’écran après 22 h', icon: '📵', target: 1, unit: '' },
-    { name: 'Étirements', icon: '🧘', target: 1, unit: '' },
-    { name: 'Marcher 10 000 pas', icon: '🚶', target: 1, unit: '' },
-    { name: 'Dessiner pour moi', icon: '✏️', target: 1, unit: '' },
-    { name: 'Prendre l’air', icon: '🌤️', target: 1, unit: '' }
+    { name: 'Sommeil', icon: '😴', kind: 'amount', unit: 'h', goal: 420, dir: 'min' },
+    { name: 'Eau', icon: '💧', kind: 'amount', unit: 'L', goal: 1.5, dir: 'min' },
+    { name: 'Pas', icon: '🚶', kind: 'amount', unit: 'pas', goal: 8000, dir: 'min' },
+    { name: 'Temps d’écran', icon: '📱', kind: 'amount', unit: 'h', goal: 180, dir: 'max' },
+    { name: 'Lecture', icon: '📖', kind: 'amount', unit: 'pages', goal: 10, dir: 'min' },
+    { name: 'Étirements', icon: '🧘', kind: 'check' },
+    { name: 'Dessiner pour moi', icon: '✏️', kind: 'check' },
+    { name: 'Prendre l’air', icon: '🌤️', kind: 'check' }
   ];
+  var KINDS = ['check', 'count', 'amount'];
 
   function normalize(h) {
     h = h && typeof h === 'object' && !Array.isArray(h) ? h : {};
     var list = (Array.isArray(h.list) ? h.list : []).filter(function (x) { return x && typeof x === 'object' && typeof x.name === 'string' && x.name.trim(); }).map(function (x, i) {
       var days = Array.isArray(x.days) ? x.days.filter(function (d, j, a) { return d >= 0 && d <= 6 && d === Math.round(d) && a.indexOf(d) === j; }).sort() : ALL_DAYS.slice();
+      var target = x.target >= 1 && x.target <= 50 ? Math.round(x.target) : 1;
+      // Ancien format : une cible > 1 = un compteur
+      var kind = KINDS.indexOf(x.kind) >= 0 ? x.kind : target > 1 ? 'count' : 'check';
       return {
         id: typeof x.id === 'string' && x.id ? x.id : 'hab-' + (i + 1),
         name: x.name.trim(),
         icon: typeof x.icon === 'string' && x.icon ? x.icon : '✨',
-        target: x.target >= 1 && x.target <= 50 ? Math.round(x.target) : 1,
-        unit: typeof x.unit === 'string' ? x.unit : '',
+        kind: kind,
+        target: kind === 'count' ? Math.max(2, target) : 1,
+        unit: typeof x.unit === 'string' ? x.unit.slice(0, 20) : '',
+        goal: kind === 'amount' && typeof x.goal === 'number' && isFinite(x.goal) && x.goal >= 0 ? x.goal : null,
+        dir: x.dir === 'max' ? 'max' : 'min',
         days: days.length ? days : ALL_DAYS.slice(),
         since: DATE_RE.test(x.since) ? x.since : '2000-01-01',
         archived: !!x.archived
@@ -53,7 +69,8 @@
     Object.keys(src).forEach(function (d) {
       if (!DATE_RE.test(d) || !src[d] || typeof src[d] !== 'object') return;
       var day = {};
-      Object.keys(src[d]).forEach(function (id) { var n = src[d][id]; if (typeof n === 'number' && n > 0 && isFinite(n)) day[id] = Math.min(99, Math.round(n)); });
+      // 0 est une vraie valeur pour une mesure « au plus » (0 min d'écran)
+      Object.keys(src[d]).forEach(function (id) { var n = src[d][id]; if (typeof n === 'number' && n >= 0 && isFinite(n)) day[id] = Math.min(1e6, Math.round(n * 100) / 100); });
       if (Object.keys(day).length) log[d] = day;
     });
     return { list: list, log: log };
@@ -61,7 +78,27 @@
 
   function isActive(h, date) { return !h.archived && date >= h.since && h.days.indexOf(D.dowMon(date)) >= 0; }
   function count(log, h, date) { return (log[date] && log[date][h.id]) || 0; }
-  function isDone(log, h, date) { return count(log, h, date) >= h.target; }
+  // Valeur notée (mesure) : null si rien n'a été noté ce jour-là
+  function value(log, h, date) { var v = log[date] && log[date][h.id]; return typeof v === 'number' ? v : null; }
+  function isDone(log, h, date) {
+    if (h.kind !== 'amount') return count(log, h, date) >= h.target;
+    var v = value(log, h, date);
+    if (v == null) return false;
+    if (h.goal == null) return true;
+    return h.dir === 'max' ? v <= h.goal : v >= h.goal;
+  }
+  // Mesures sur une période : valeurs notées, moyenne, minimum, maximum
+  function values(log, h, start, end) {
+    var out = [];
+    for (var d = start; d <= end; d = D.addDays(d, 1)) { var v = value(log, h, d); if (v != null) out.push({ date: d, value: v }); }
+    var sum = out.reduce(function (a, x) { return a + x.value; }, 0);
+    return {
+      list: out, count: out.length, total: sum,
+      avg: out.length ? sum / out.length : null,
+      min: out.length ? Math.min.apply(null, out.map(function (x) { return x.value; })) : null,
+      max: out.length ? Math.max.apply(null, out.map(function (x) { return x.value; })) : null
+    };
+  }
 
   // Série en cours : jours prévus réussis d'affilée. Aujourd'hui compte s'il est fait,
   // sinon la série part d'hier (la journée n'est pas finie).
@@ -125,8 +162,8 @@
   }
 
   return {
-    SUGGESTIONS: SUGGESTIONS, ALL_DAYS: ALL_DAYS,
-    normalize: normalize, isActive: isActive, count: count, isDone: isDone,
+    SUGGESTIONS: SUGGESTIONS, ALL_DAYS: ALL_DAYS, KINDS: KINDS,
+    normalize: normalize, isActive: isActive, count: count, value: value, isDone: isDone, values: values,
     streak: streak, bestStreak: bestStreak, rate: rate, day: day, period: period, maxStreak: maxStreak
   };
 });

@@ -131,3 +131,23 @@ test('relais Supabase : ics.js est une copie exacte de shared/ics.js', () => {
   const b = fs.readFileSync(path.join(__dirname, '../../../supabase/functions/calendar/ics.js'), 'utf8');
   assert.equal(b, a, 'copier app/shared/ics.js vers supabase/functions/calendar/ics.js');
 });
+
+test('habitudes : mesures (sommeil au moins 7 h, écran au plus 2 h, sans objectif), ancien format', () => {
+  const h = H.normalize({ list: [
+    { id: 's', name: 'Sommeil', kind: 'amount', unit: 'h', goal: 420, dir: 'min', since: '2026-10-01' },
+    { id: 'e', name: 'Écran', kind: 'amount', unit: 'h', goal: 120, dir: 'max', since: '2026-10-01' },
+    { id: 'p', name: 'Pas', kind: 'amount', unit: 'pas', since: '2026-10-01' },
+    { id: 'old', name: 'Eau', target: 8, unit: 'verres' }
+  ], log: { '2026-10-05': { s: 450, e: 0, p: 6420.456 }, '2026-10-06': { s: 380, e: 150 } } });
+  const [s, e, p, old] = h.list;
+  assert.equal(old.kind, 'count');
+  assert.equal(H.isDone(h.log, s, '2026-10-05'), true);
+  assert.equal(H.isDone(h.log, s, '2026-10-06'), false);
+  assert.equal(H.isDone(h.log, e, '2026-10-05'), true);         // 0 min d'écran : réussi
+  assert.equal(H.isDone(h.log, e, '2026-10-06'), false);
+  assert.equal(H.isDone(h.log, e, '2026-10-07'), false);        // rien noté
+  assert.equal(H.isDone(h.log, p, '2026-10-05'), true);         // sans objectif : noté = compté
+  assert.equal(H.value(h.log, p, '2026-10-05'), 6420.46);
+  const v = H.values(h.log, s, '2026-10-05', '2026-10-11');
+  assert.deepEqual([v.count, v.avg, v.min, v.max], [2, 415, 380, 450]);
+});

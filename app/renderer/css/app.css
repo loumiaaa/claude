@@ -2928,3 +2928,38 @@ body::before { display: none !important; }
 .cal-relay { margin: var(--space-3) 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--warning-soft); font-size: var(--fs-sm); }
 .cal-relay p { margin: 0; }
 @media (max-width: 600px) { .cal-form, .cal-feed { flex-direction: column; } .ev { grid-template-columns: 72px minmax(0, 1fr); } }
+
+/* Habitudes : valeurs notées (sommeil, eau, pas…) et tendances */
+.hab-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.hab-val { display: inline-flex; align-items: center; gap: 6px; }
+.hab-val__input { width: 84px; height: 36px; padding: 0 10px; text-align: right; font-variant-numeric: tabular-nums; font-weight: var(--fw-semibold); }
+.hab-val.is-done .hab-val__input { border-color: var(--success); color: var(--success); background: var(--success-soft); }
+.hab-val.is-noted .hab-val__input { border-color: var(--color-border-strong); }
+.hab-val__input.is-invalid { border-color: var(--danger); }
+.hab-val__unit { font-size: var(--fs-sm); color: var(--color-text-muted); min-width: 2ch; }
+.hab-row--amount.is-done { background: var(--success-soft); }
+.hab-hint { margin: var(--space-3) 0 0; }
+.hab-cell--val { width: 40px; font-size: 11px; color: var(--color-text-muted); }
+.hab-cell--val.is-done { color: #fff; }
+.hab-trends { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-5); }
+.hab-trend { display: grid; gap: var(--space-2); min-width: 0; }
+.hab-trend__head { display: flex; align-items: baseline; gap: var(--space-2); }
+.hab-trend__head strong { flex: 1; min-width: 0; overflow-wrap: break-word; }
+.hab-trend__avg { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: var(--fw-semibold); }
+.hab-bars { position: relative; display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); align-items: end; gap: 4px; height: 96px; padding-bottom: 1px; border-bottom: 1px solid var(--color-border); }
+.hab-bar { position: relative; display: flex; align-items: flex-end; height: 100%; }
+.hab-bar__fill { display: block; width: 100%; border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.hab-bar.is-done .hab-bar__fill { background: var(--success); }
+.hab-bar.is-today .hab-bar__fill { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hab-bars__goal { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--color-text-subtle); pointer-events: none; }
+.hab-trend__sum { margin: 0; font-size: var(--fs-xs); color: var(--color-text-muted); }
+@media (max-width: 600px) { .hab-kinds { grid-template-columns: minmax(0, 1fr); } .hab-val__input { width: 72px; } }
+.hab-val__input::placeholder { color: var(--color-text-subtle); font-weight: var(--fw-regular, 400); opacity: .7; }
+/* Formulaires en grille : pleine largeur, champs groupés sans cadre */
+.form-grid { align-items: start; }
+.form-grid > .field--full, .form-grid > .check { grid-column: 1 / -1; }
+fieldset.field { margin: 0; padding: 0; border: 0; min-width: 0; }
+fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
+.form-grid > [hidden] { display: none; }
+.card > .table-scroll { overflow-x: auto; max-width: 100%; }
+@media (max-width: 600px) { .hab-week tbody th { max-width: 96px; font-size: var(--fs-xs); } .hab-cell--val { width: 34px; font-size: 10px; } }

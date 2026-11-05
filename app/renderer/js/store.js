@@ -498,7 +498,9 @@
       return state.habits;
     },
     addHabit: function (data) {
-      var h = { id: uid('hab'), name: data.name, icon: data.icon || '✨', target: data.target || 1, unit: data.unit || '', days: data.days || [0, 1, 2, 3, 4, 5, 6], since: data.since || D.today(), archived: false };
+      var kind = data.kind || (data.target > 1 ? 'count' : 'check');
+      var h = { id: uid('hab'), name: data.name, icon: data.icon || '✨', kind: kind, target: kind === 'count' ? Math.max(2, data.target || 2) : 1, unit: data.unit || '',
+        goal: kind === 'amount' && data.goal != null ? data.goal : null, dir: data.dir === 'max' ? 'max' : 'min', days: data.days || [0, 1, 2, 3, 4, 5, 6], since: data.since || D.today(), archived: false };
       store.habits().list.push(h);
       emit('habits', { id: h.id }, { now: true });
       return h;
@@ -529,6 +531,14 @@
       if (n) { log[date] = log[date] || {}; log[date][id] = n; }
       else if (log[date]) { delete log[date][id]; if (!Object.keys(log[date]).length) delete log[date]; }
       emit('habits', { id: id, date: date, count: n }, { now: true });
+    },
+
+    // Valeur notée d'une mesure (null : efface ; 0 est une vraie valeur)
+    setHabitValue: function (id, date, v) {
+      var log = store.habits().log;
+      if (v == null || !isFinite(v) || v < 0) { if (log[date]) { delete log[date][id]; if (!Object.keys(log[date]).length) delete log[date]; } }
+      else { log[date] = log[date] || {}; log[date][id] = Math.min(1e6, Math.round(v * 100) / 100); }
+      emit('habits', { id: id, date: date, value: v }, { now: true });
     },
 
     /* Mode focus */
