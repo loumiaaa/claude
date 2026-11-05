@@ -104,8 +104,16 @@
 
   function touch(t) { t.updatedAt = D.today(); }
 
+  // Chaque lundi, la colonne « Terminé » repart à zéro : les tâches bouclées
+  // les semaines précédentes passent dans l'historique (rien n'est supprimé).
+  function doneOn(t) { return t.completedAt || t.updatedAt || ''; }
+  function isArchived(t) { return t.status === 'done' && doneOn(t) < D.startOfWeek(D.today()); }
+  function archived() {
+    return state.tasks.filter(isArchived).sort(function (a, b) { return doneOn(b) < doneOn(a) ? -1 : doneOn(b) > doneOn(a) ? 1 : 0; });
+  }
+
   function column(status) {
-    return state.tasks.filter(function (t) { return t.status === status; }).sort(function (a, b) { return a.order - b.order; });
+    return state.tasks.filter(function (t) { return t.status === status && !isArchived(t); }).sort(function (a, b) { return a.order - b.order; });
   }
 
   function renumber(status) {
@@ -137,6 +145,9 @@
     task: task,
     category: cat,
     column: column,
+    isArchived: isArchived,
+    archived: archived,
+    doneOn: doneOn,
     timerElapsed: timerElapsed,
     isReadOnly: function () { return readOnly; },
     setReadOnly: function (v) { readOnly = !!v; if (!readOnly && dirty) schedule(); },
@@ -560,6 +571,7 @@
     var q = (f.q || '').trim().toLowerCase();
     var today = D.today();
     return state.tasks.filter(function (t) {
+      if (isArchived(t)) return false;
       if (f.categories && f.categories.length && f.categories.indexOf(t.categoryId) < 0) return false;
       if (f.priority && t.priority !== f.priority) return false;
       if (f.tag && t.tags.indexOf(f.tag) < 0) return false;

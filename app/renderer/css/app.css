@@ -2671,3 +2671,28 @@ body::before { display: none !important; }
 @media (max-width: 1100px) { .life-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .life-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 860px) { .life-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); } .life-tile { padding: var(--space-3); } }
+
+/* ============================================================
+   Suivi des tâches : historique des semaines précédentes
+   ============================================================ */
+.kanban__history { display: flex; align-items: center; gap: var(--space-2); width: 100%; margin-top: var(--space-3); padding: 10px 12px; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); background: transparent; color: var(--color-text-muted); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-medium); text-align: left; cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.kanban__history:hover { background: var(--color-hover); color: var(--color-text); }
+.kanban__history .icon:last-child { margin-left: auto; }
+.history__search { margin-bottom: var(--space-3); }
+.history { display: grid; gap: var(--space-3); }
+.history__empty { margin: 0; }
+.history__week { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.history__sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-3); padding: 12px 16px; cursor: pointer; list-style: none; }
+.history__sum::-webkit-details-marker { display: none; }
+.history__sum::before { content: "›"; display: inline-block; width: 10px; color: var(--color-text-subtle); transition: transform var(--dur-fast) var(--ease-out); }
+.history__week[open] > .history__sum::before { transform: rotate(90deg); }
+.history__label { font-weight: var(--fw-semibold); }
+.history__range { font-size: var(--fs-sm); color: var(--color-text-muted); }
+.history__meta { margin-left: auto; font-size: var(--fs-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.history__list { margin: 0; padding: 0 8px 8px; list-style: none; display: grid; gap: 2px; }
+.history__item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); width: 100%; padding: 8px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-text); font: inherit; text-align: left; cursor: pointer; }
+.history__item:hover { background: var(--color-hover); }
+.history__title { display: grid; min-width: 0; font-weight: var(--fw-medium); overflow-wrap: break-word; }
+.history__sub { font-size: var(--fs-xs); font-weight: normal; color: var(--color-text-muted); }
+.history__when { display: grid; justify-items: end; font-size: var(--fs-sm); color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .history__meta { margin-left: 0; width: 100%; padding-left: 22px; } }

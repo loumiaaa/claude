@@ -84,7 +84,7 @@
       todo: 'Rien en attente. Une idée ? Le bouton + est là pour ça.',
       doing: 'Glisse ici la tâche du moment.',
       review: 'Rien chez le client pour l’instant.',
-      done: 'Les victoires du jour arriveront ici.'
+      done: 'Les victoires de la semaine arriveront ici. La colonne repart à zéro chaque lundi.'
     }[status] + '</p>';
   }
 
@@ -102,10 +102,80 @@
           '<button type="button" class="btn btn--ghost btn--icon btn--sm kanban__add" data-add-in="' + s.id + '" aria-label="Nouvelle tâche dans « ' + esc(s.label) + ' »">' + icon('plus') + '</button></header>' +
         '<div class="kanban__list" data-drop="' + s.id + '" role="list" aria-labelledby="col-' + s.id + '">' +
           (list.length ? list.map(cardHTML).join('') : columnEmpty(s.id, anyFilter)) + '</div>' +
+        (s.id === 'done' ? historyLink() : '') +
       '</section>';
     }).join('') + '</div>' +
     '<p class="kbd-help kbd-help--touch">Astuce : maintiens la poignée en haut d’une carte pour la glisser, ou touche ⋯ puis « Déplacer vers… ».</p>' +
     '<p class="kbd-help kbd-help--desk" id="kanban-help">Astuce : glisse une carte d’une colonne à l’autre, ou au clavier : <span class="kbd">Entrée</span> ouvre le détail, <span class="kbd">Alt</span> + <span class="kbd">←</span> <span class="kbd">→</span> change de colonne, <span class="kbd">Alt</span> + <span class="kbd">↑</span> <span class="kbd">↓</span> change l’ordre. Le menu ⋯ propose aussi « Déplacer vers… ».</p>';
+  }
+
+  /* --- Historique des semaines passées ------------------------------------ */
+  function historyLink() {
+    var n = S.archived().length;
+    return '<button type="button" class="kanban__history" data-history>' + icon('clock') +
+      (n ? 'Semaines précédentes · ' + U.plural(n, 'tâche') : 'Historique des semaines précédentes') + icon('chevron-right') + '</button>';
+  }
+
+  function historyWeeks() {
+    var weeks = [], byStart = {};
+    S.archived().forEach(function (t) {
+      var w0 = D.startOfWeek(S.doneOn(t) || D.today());
+      if (!byStart[w0]) { byStart[w0] = { start: w0, tasks: [] }; weeks.push(byStart[w0]); }
+      byStart[w0].tasks.push(t);
+    });
+    return weeks;
+  }
+
+  function historyHTML(q) {
+    q = (q || '').trim().toLowerCase();
+    var weeks = historyWeeks();
+    if (!weeks.length) return '<p class="text-muted history__empty">Pas encore d’historique : chaque lundi, les tâches terminées la semaine d’avant viendront se ranger ici.</p>';
+    var shown = 0;
+    var html = weeks.map(function (w, i) {
+      var list = w.tasks.filter(function (t) {
+        return !q || (t.title + ' ' + t.client + ' ' + t.tags.join(' ') + ' ' + S.category(t.categoryId).name).toLowerCase().indexOf(q) >= 0;
+      });
+      if (!list.length) return '';
+      shown += list.length;
+      var mins = list.reduce(function (a, t) { return a + Q.taskMinutes(t, null, null, true); }, 0);
+      return '<details class="history__week"' + (i === 0 || q ? ' open' : '') + '><summary class="history__sum">' +
+          '<span class="history__label">Semaine ' + D.isoWeek(w.start) + '</span>' +
+          '<span class="history__range">du ' + esc(D.dayMonth(w.start)) + ' au ' + esc(D.dayMonth(D.endOfWeek(w.start))) + '</span>' +
+          '<span class="history__meta">' + U.plural(list.length, 'tâche') + (mins ? ' · ' + esc(D.duration(mins)) : '') + '</span></summary>' +
+        '<ul class="history__list" role="list">' + list.map(function (t) {
+          var c = S.category(t.categoryId), m = Q.taskMinutes(t, null, null, true);
+          return '<li><button type="button" class="history__item" data-open-hist="' + t.id + '">' +
+            U.catDot(c) +
+            '<span class="history__title">' + esc(t.title) + '<span class="history__sub">' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + '</span></span>' +
+            '<span class="history__when">' + (S.doneOn(t) ? esc(D.dayMonth(S.doneOn(t))) : '') + (m ? '<span class="history__sub">' + esc(D.duration(m)) + '</span>' : '') + '</span>' +
+            '</button></li>';
+        }).join('') + '</ul></details>';
+    }).join('');
+    return shown ? html : '<p class="text-muted history__empty">Aucune tâche ne correspond à « ' + esc(q) + ' ».</p>';
+  }
+
+  function openHistory(btn) {
+    var n = S.archived().length;
+    U.dialog({
+      title: 'Historique des tâches terminées',
+      desc: n ? U.plural(n, 'tâche') + ' bouclée' + (n > 1 ? 's' : '') + ' les semaines précédentes' : 'Les semaines précédentes',
+      size: 'lg', cancel: false, confirmLabel: 'Fermer', returnTo: btn,
+      initialFocus: '[data-hist-q], [type="submit"]',
+      body: (n ? '<div class="input-wrap history__search">' + icon('search') +
+        '<input type="search" class="input" data-hist-q placeholder="Rechercher une tâche, un client…" aria-label="Rechercher dans l’historique" autocomplete="off"></div>' : '') +
+        '<div class="history" data-hist-body>' + historyHTML('') + '</div>',
+      onMount: function (form) {
+        var box = form.querySelector('[data-hist-body]'), input = form.querySelector('[data-hist-q]');
+        if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+        if (input) input.addEventListener('input', U.debounce(function () { box.innerHTML = historyHTML(input.value); }, 150));
+        box.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-open-hist]');
+          if (!b) return;
+          U.closeLayer(document.getElementById('overlay-dialog'), 'cancel');
+          L.drawer.open(b.getAttribute('data-open-hist'), { returnTo: btn && document.contains(btn) ? btn : null });
+        });
+      }
+    });
   }
 
   /* --- Vue liste ----------------------------------------------------------- */
@@ -182,7 +252,7 @@
     if (!el) return;
     var st = S.get();
     var mode = st.settings.ui.tasksView || 'kanban';
-    var total = st.tasks.length;
+    var total = st.tasks.filter(function (t) { return !S.isArchived(t); }).length;
     var visible = Q.filtered().length;
     var doing = S.column('doing').length;
     var html =
@@ -192,6 +262,7 @@
           '<div class="segmented" role="group" aria-label="Affichage des tâches">' +
             '<button type="button" class="segmented__item" data-mode="kanban" data-focus-key="mode-k" aria-pressed="' + (mode === 'kanban') + '">' + icon('kanban') + 'Kanban</button>' +
             '<button type="button" class="segmented__item" data-mode="list" data-focus-key="mode-l" aria-pressed="' + (mode === 'list') + '">' + icon('list') + 'Liste</button></div>' +
+          '<button type="button" class="btn btn--ghost" data-history data-focus-key="history">' + icon('clock') + 'Historique</button>' +
           '<button type="button" class="btn btn--primary" data-action="new-task">' + icon('plus') + 'Nouvelle tâche</button></div></header>' +
       toolbarHTML(mode) +
       '<p class="filters__count" aria-live="polite">' + (visible === total ? 'Toutes les tâches sont affichées.' : U.plural(visible, 'tâche') + ' sur ' + total + ' correspond' + (visible > 1 ? 'ent' : '') + ' aux filtres.') + '</p>' +
@@ -391,6 +462,7 @@
     el.addEventListener('click', function (e) {
       var b;
       if ((b = e.target.closest('[data-card-menu]'))) { e.stopPropagation(); cardMenu(b); return; }
+      if ((b = e.target.closest('[data-history]'))) { openHistory(b); return; }
       if ((b = e.target.closest('[data-mode]'))) { S.setUI({ tasksView: b.getAttribute('data-mode') }); return; }
       if ((b = e.target.closest('[data-filter-cat]'))) {
         var id = b.getAttribute('data-filter-cat');
