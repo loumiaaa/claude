@@ -133,7 +133,7 @@
           'Crée un raccourci « Plateforme de suivi - Lamia » dans le menu Démarrer : Windows en a besoin pour afficher les notifications d’une application portable.' +
           (m.windowsNotifications ? ' <button type="button" class="btn btn--ghost btn--sm" data-test-notif>' + icon('bell') + 'Tester</button>' : '')) +
         sw('data-opt-tray', m.closeToTray, 'Fermer dans la zone de notification',
-          'La croix garde l’application en arrière-plan (rappels, chrono). Pour quitter : clic droit sur l’icône près de l’horloge, puis « Quitter ».') +
+          'La croix garde l’application en arrière-plan (rappels, mode focus). Pour quitter : clic droit sur l’icône près de l’horloge, puis « Quitter ».') +
         sw('data-opt-login', m.openAtLogin, 'Lancer au démarrage de Windows',
           win || !m.platform ? 'L’application s’ouvre avec Windows' + (m.closeToTray ? ', discrètement dans la zone de notification.' : '.') + ' Si tu déplaces l’exe, ouvre-le une fois depuis son nouveau dossier.' : 'Disponible sous Windows uniquement.', m.platform && !m.loginItemSupported) +
       '</ul>') + '</section>';

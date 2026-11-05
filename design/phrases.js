@@ -215,7 +215,7 @@
     objectif: [
       "35 heures Flow Line, c'est bouclé ! Tout le reste de la semaine est du bonus.",
       "Objectif d'heures atteint ! Tu peux fermer tes fichiers la tête haute.",
-      "La barre des 35 h est pleine. Le chrono peut se reposer, et toi aussi.",
+      "La barre des 35 h est pleine. Le minuteur peut se reposer, et toi aussi.",
       "Contrat rempli pour la semaine Flow Line. Le temps qui reste est pour toi.",
       "35 h au compteur : bravo ! Garde-toi du temps rien que pour toi."
     ],

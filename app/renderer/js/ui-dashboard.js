@@ -210,18 +210,13 @@
 
   function taskRow(t) {
     var c = S.category(t.categoryId);
-    var tm = S.get().activeTimer;
-    var mine = tm && tm.taskId === t.id;
-    var play = mine
-      ? (tm.pausedAt
-        ? '<button type="button" class="btn btn--soft btn--icon task-row__play is-paused" data-chrono="resume" data-focus-key="play-' + t.id + '" aria-label="Reprendre le chrono sur « ' + esc(t.title) + ' »">' + icon('play') + '</button>'
-        : '<button type="button" class="btn btn--primary btn--icon task-row__play is-running" data-chrono="pause" data-focus-key="play-' + t.id + '" aria-label="Mettre en pause le chrono de « ' + esc(t.title) + ' »">' + icon('pause') + '</button>')
-      : '<button type="button" class="btn btn--soft btn--icon task-row__play" data-chrono="start" data-task="' + t.id + '" data-focus-key="play-' + t.id + '" aria-label="Démarrer le chrono sur « ' + esc(t.title) + ' »">' + icon('play') + '</button>';
+    var mine = L.focus && L.focus.on(t.id);
+    var play = '<button type="button" class="btn ' + (mine ? 'btn--primary' : 'btn--soft') + ' btn--icon task-row__play' + (mine ? ' is-running' : '') + '" data-focus-start="' + t.id + '" data-focus-key="play-' + t.id + '" aria-label="' + (mine ? 'Ouvrir la concentration en cours sur « ' : 'Lancer un focus sur « ') + esc(t.title) + ' »">' + icon('target') + '</button>';
     return '<li class="task-row' + (mine ? ' is-timing' : '') + '">' + play +
       '<button type="button" class="task-row__main" data-open-task="' + t.id + '" data-focus-key="doing-' + t.id + '">' +
         '<span class="task-row__title">' + esc(t.title) + '</span>' +
         '<span class="task-row__meta">' + U.catDot(c) + '<span class="task-row__meta-text">' + esc(c.name) + (t.client ? ' · ' + esc(t.client) : '') + '</span></span></button>' +
-      (mine ? '<span class="task-row__clock num" data-timer-elapsed role="timer" aria-label="Temps écoulé">' + D.clock(L.chrono.elapsed()) + '</span>'
+      (mine ? '<span class="task-row__clock num" data-focus-time role="timer" aria-label="Temps restant">' + L.focus.clock() + '</span>'
             : '<span class="task-row__progress"><span class="task-row__pct num">' + t.progress + NB + '%</span>' + U.progress(t.progress, 'progress--sm') + '</span>') +
       '<span class="task-row__due">' + U.dueBadge(t) + '</span></li>';
   }
@@ -231,7 +226,7 @@
     var review = S.column('review');
     return '<section class="glass card doing-card" aria-labelledby="dh-doing">' +
       '<div class="card__header"><div><h2 class="card__title" id="dh-doing">Tes tâches en cours</h2>' +
-      '<p class="card__subtitle">▶ lance le chrono : deux clics, pas de formulaire.</p></div>' +
+      '<p class="card__subtitle">◎ lance une session de concentration : le temps s’ajoute aux heures de la tâche.</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#taches">Kanban' + icon('chevron-right') + '</a></div></div>' +
       (doing.length ? '<ul class="task-rows" role="list">' + doing.map(taskRow).join('') + '</ul>' +
         (review.length ? '<h3 class="subsection-title">' + icon('eye') + 'En validation, chez le client <span class="badge badge--neutral">' + review.length + '</span></h3>' +
@@ -247,7 +242,7 @@
   function welcomeHTML() {
     return '<div class="empty-state empty-state--welcome"><div class="empty-state__art">' + U.pixelImg('heart', 3, '', '') + '</div>' +
       '<p class="empty-state__title">Ton carnet est tout neuf</p>' +
-      '<p class="empty-state__text">Crée ta première tâche : seul le titre est obligatoire. Ensuite, ▶ lance le chrono en un clic.</p>' +
+      '<p class="empty-state__text">Crée ta première tâche : seul le titre est obligatoire. Ensuite, ◎ lance une session de concentration en un clic.</p>' +
       '<div class="empty-state__actions"><button type="button" class="btn btn--primary btn--sm" data-action="new-task">' + icon('plus') + 'Créer ma première tâche</button>' +
       '<a class="btn btn--secondary btn--sm" href="#reglages" data-goto-demo>' + icon('sparkle') + 'Explorer avec la démo</a></div></div>';
   }
@@ -532,6 +527,7 @@
       if (type === 'setup' || type === 'profile' || type === 'wardrobe') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'timer') update('life');
+      if (type === 'focus-state') { update('doing'); return; }
       if (type === 'reset') { voice = null; el.innerHTML = ''; render(); return; }
       if (type === 'mood') { update('mood'); if (d.level) { anotherPhrase(); } return; }
       if (type === 'ui') { if (d.dashPeriod) update('recap'); return; }

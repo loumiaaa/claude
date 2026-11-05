@@ -350,6 +350,12 @@
     L.fun.sidebarCat();
     L.focus.sync();
     L.calendarUI.start();
+    // Le chrono par tâche n'existe plus : un chrono resté en route est arrêté et enregistré
+    // (au-delà de 10 h, l'alerte « chrono oublié » propose de corriger la durée)
+    setTimeout(function () {
+      var tm = S.get().activeTimer;
+      if (tm && !ST.isLongTimer(tm)) L.chrono.stop();
+    }, 2500);
     S.subscribe(function (type, d) {
       var done = (type === 'task:move' && d.status === 'done' && d.prevStatus !== 'done') ||
         (type === 'task:update' && d.patch && d.patch.status === 'done' && d.prevStatus !== 'done');

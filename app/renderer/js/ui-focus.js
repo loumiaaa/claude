@@ -1,8 +1,9 @@
 /* ==========================================================================
    Plateforme de suivi - Lamia — mode focus (Pomodoro)
-   Sessions de concentration (25 min par défaut) entrecoupées de pauses
-   (5 min, et 15 min toutes les 4 sessions). Relié au chrono : il démarre sur
-   la tâche choisie, se met en pause pendant les pauses et reprend ensuite.
+   Le seul minuteur de la plateforme. Sessions de concentration (25 min par
+   défaut) entrecoupées de pauses (5 min, et 15 min toutes les 4 sessions).
+   Sur une tâche, le temps de concentration s'ajoute à ses heures (objectif
+   35 h, récap) à la fin de chaque session ; les pauses ne comptent pas.
    Pendant la concentration, Memeow fait la sieste ; à la pause, elle se
    réveille et miaule pour te rappeler de souffler (notification + petit son).
    L'état du minuteur reste sur l'appareil (localStorage) : il survit à un
@@ -33,19 +34,13 @@
   function clock(ms) { var s = Math.ceil(ms / 1000); return D.pad(Math.floor(s / 60)) + ':' + D.pad(s % 60); }
   function task() { return st && st.taskId ? S.task(st.taskId) : null; }
 
-  /* --- Chrono relié --------------------------------------------------------------- */
-  function chronoOn() { return cfg().chrono && st && st.taskId && S.task(st.taskId); }
-  function chronoRun() {
-    if (!chronoOn()) return;
-    var tm = S.get().activeTimer;
-    if (!tm || tm.taskId !== st.taskId) L.chrono.start(st.taskId);
-    else if (tm.pausedAt) S.resumeTimer();
+  /* --- Heures de la tâche ------------------------------------------------------------ */
+  // Le temps de concentration s'ajoute aux heures de la tâche (pas les pauses)
+  function logWork(minutes) {
+    if (!cfg().chrono || !st || !st.taskId || minutes < 1 || !S.task(st.taskId)) return;
+    S.addEntry(st.taskId, { minutes: minutes, note: 'Mode focus', source: 'timer' });
   }
-  function chronoPause() {
-    if (!chronoOn()) return;
-    var tm = S.get().activeTimer;
-    if (tm && tm.taskId === st.taskId && !tm.pausedAt) S.pauseTimer();
-  }
+  function changed() { S.signal('focus-state', { active: !!st, taskId: st && st.taskId }); }
 
   /* --- Son et notification --------------------------------------------------------- */
   function chime(up) {
@@ -75,8 +70,10 @@
   function start(taskId) {
     st = { phase: 'work', endsAt: Date.now() + phaseMin('work') * 60000, left: null, waiting: false, cycle: 0, taskId: taskId || null };
     write();
-    chronoRun();
+    var t = taskId && S.task(taskId);
+    if (t && t.status === 'todo') S.moveTask(taskId, 'doing', 0);
     open();
+    changed();
     U.announce('Mode focus lancé : ' + phaseMin('work') + ' minutes de concentration');
     sync();
   }
@@ -85,12 +82,11 @@
     if (!st) return;
     if (st.phase === 'work') {
       var done = skipped ? Math.round((phaseMin('work') * 60000 - left()) / 60000) : phaseMin('work');
-      if (done >= 1) S.addFocusSession(done, st.taskId);
+      if (done >= 1) { S.addFocusSession(done, st.taskId); logWork(done); }
       st.cycle += 1;
       st.phase = st.cycle % cfg().every === 0 ? 'long' : 'short';
       st.endsAt = Date.now() + phaseMin(st.phase) * 60000;
       st.left = null; st.waiting = false;
-      chronoPause();
       if (!skipped) {
         chime(false);
         notify('Pause ! Memeow te réclame', 'Session terminée. Étire-toi, bois un verre d’eau : ' + phaseMin(st.phase) + ' minutes rien que pour toi.');
@@ -109,26 +105,26 @@
     sync();
   }
 
-  function pause() { if (!st || st.waiting || st.left != null) return; st.left = left(); write(); if (st.phase === 'work') chronoPause(); sync(); }
+  function pause() { if (!st || st.waiting || st.left != null) return; st.left = left(); write(); sync(); }
   function resume() {
     if (!st) return;
     if (st.waiting) { st.waiting = false; st.endsAt = Date.now() + phaseMin('work') * 60000; }
     else if (st.left != null) { st.endsAt = Date.now() + st.left; st.left = null; }
     write();
-    if (st.phase === 'work') chronoRun();
     sync();
   }
   function stop() {
     if (!st) return;
-    var linked = chronoOn(), n = st.cycle;
+    var n = st.cycle;
     if (st.phase === 'work' && !st.waiting) {
       var done = Math.round((phaseMin('work') * 60000 - left()) / 60000);
+      logWork(done);
       if (done >= 5) { S.addFocusSession(done, st.taskId); n += 1; }
     }
     st = null; write();
-    if (linked && S.get().activeTimer) L.chrono.stop();
     close();
     sync();
+    changed();
     if (n) U.toast({ kind: 'success', icon: 'sparkle', title: 'Focus terminé', text: U.plural(n, 'session') + ' de concentration. Bien joué !', duration: 4500 });
   }
 
@@ -154,6 +150,7 @@
       if (st) { b.innerHTML = chipHTML(); b.setAttribute('aria-label', 'Mode focus : ' + (st.waiting ? 'prête pour la suite' : PHASES[st.phase].label + ', ' + clock(left()) + ' restantes') + '. Ouvrir'); }
     });
     document.documentElement.classList.toggle('has-focus', !!st);
+    renderWidget();
     if (ov && !ov.hidden) drawOverlay();
     clearInterval(ticker);
     if (st) ticker = setInterval(tick, 500);
@@ -239,8 +236,7 @@
     var c = cfg();
     var tasks = S.get().tasks.filter(function (t) { return t.status === 'doing' || t.status === 'todo' || t.status === 'review'; })
       .sort(function (a, b) { var r = { doing: 0, review: 1, todo: 2 }; return r[a.status] - r[b.status] || (a.endDate || '9999').localeCompare(b.endDate || '9999'); });
-    var tm = S.get().activeTimer;
-    var sel = taskId || (tm && tm.taskId) || (tasks[0] && tasks[0].id) || '';
+    var sel = taskId || (tasks[0] && tasks[0].id) || '';
     var preset = PRESETS.map(function (p) { return p[0] === c.work && p[1] === c.short && p[2] === c.long; }).indexOf(true);
     U.dialog({
       title: 'Mode focus',
@@ -260,7 +256,7 @@
         '<div class="field focus-custom"><label class="label" for="fo-short">Petite pause (min)</label><input class="input" type="number" id="fo-short" name="short" min="1" max="30" value="' + c.short + '"></div>' +
         '<div class="field focus-custom"><label class="label" for="fo-long">Grande pause (min)</label><input class="input" type="number" id="fo-long" name="long" min="5" max="60" value="' + c.long + '"></div>' +
         '<div class="field focus-custom"><label class="label" for="fo-every">Grande pause toutes les</label><input class="input" type="number" id="fo-every" name="every" min="2" max="8" value="' + c.every + '"><p class="hint">sessions</p></div>' +
-        '<label class="check field--full"><input type="checkbox" name="chrono"' + (c.chrono ? ' checked' : '') + '><span>Chronométrer la tâche (le chrono se met en pause pendant les pauses)</span></label>' +
+        '<label class="check field--full"><input type="checkbox" name="chrono"' + (c.chrono ? ' checked' : '') + '><span>Ajouter le temps de concentration aux heures de la tâche (les pauses ne comptent pas)</span></label>' +
         '<label class="check field--full"><input type="checkbox" name="sound"' + (c.sound ? ' checked' : '') + '><span>Petit son à chaque fin de session et de pause</span></label>' +
         '</div>',
       onMount: function (form) {
@@ -287,15 +283,44 @@
     return { count: list.length, minutes: list.reduce(function (s, x) { return s + x.minutes; }, 0) };
   }
 
+  /* --- Encart de la barre latérale ---------------------------------------------------- */
+  function widgetHTML() {
+    if (!st) {
+      return '<div class="chrono__head"><span class="chrono__icon">' + icon('target') + '</span><span class="chrono__eyebrow">Concentration</span></div>' +
+        '<p class="chrono__idle">Une session de ' + phaseMin('work') + NB + 'min, puis une pause. Memeow veille sur toi.</p>' +
+        '<button type="button" class="btn btn--soft btn--sm btn--block" data-focus-start data-focus-key="w-focus">' + icon('play') + 'Lancer un focus</button>';
+    }
+    var t = task(), p = PHASES[st.phase], paused = st.left != null;
+    return '<div class="chrono__head"><span class="chrono__live' + (paused || st.waiting || st.phase !== 'work' ? ' is-paused' : '') + '" aria-hidden="true"></span>' +
+        '<span class="chrono__eyebrow">' + (st.waiting ? 'Prête pour la suite ?' : p.label + (paused ? ' · en pause' : '')) + '</span></div>' +
+      (t ? '<button type="button" class="chrono__task" data-open-task="' + t.id + '" title="Ouvrir le détail de la tâche">' + esc(t.title) + '</button>' : '<p class="chrono__task">Sans tâche</p>') +
+      '<div class="chrono__time num" role="timer" aria-label="Temps restant" data-focus-time>' + clock(left()) + '</div>' +
+      '<div class="chrono__actions">' +
+        (st.waiting || paused
+          ? '<button type="button" class="btn btn--soft btn--sm" data-focus-ctl="resume" data-focus-key="w-toggle">' + icon('play') + (st.waiting ? 'Reprendre' : 'Continuer') + '</button>'
+          : '<button type="button" class="btn btn--soft btn--sm" data-focus-ctl="pause" data-focus-key="w-toggle">' + icon('pause') + 'Pause</button>') +
+        '<button type="button" class="btn btn--secondary btn--sm" data-focus-chip data-focus-key="w-open">' + icon('eye') + 'Ouvrir</button>' +
+      '</div>';
+  }
+  function renderWidget() {
+    U.$$('[data-chrono-widget]').forEach(function (n) { U.keepFocus(n, function () { n.innerHTML = widgetHTML(); }); });
+    var pill = U.$('[data-chrono-pill]');
+    if (pill) { pill.hidden = true; pill.innerHTML = ''; }
+    document.documentElement.classList.remove('has-chrono');
+  }
+  // Une session sur cette tâche ?
+  function on(taskId) { return !!(st && taskId && st.taskId === taskId); }
+
   document.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-focus-start], [data-focus-chip]');
+    var b = e.target.closest('[data-focus-start], [data-focus-chip], [data-focus-ctl]');
     if (!b) return;
     e.preventDefault();
-    if (b.hasAttribute('data-focus-chip')) open(b);
+    if (b.hasAttribute('data-focus-ctl')) { var a = b.getAttribute('data-focus-ctl'); if (a === 'pause') pause(); else if (a === 'resume') resume(); else if (a === 'stop') stop(); }
+    else if (b.hasAttribute('data-focus-chip') || (st && on(b.getAttribute('data-focus-start')))) open(b);
     else openStart(b.getAttribute('data-focus-start') || null, b);
   });
   // Retour sur l'onglet : une phase a pu se terminer pendant l'absence
   document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
 
-  L.focus = { start: start, openStart: openStart, open: open, stop: stop, active: function () { return !!st; }, stats: stats, sync: sync, state: function () { return st; } };
+  L.focus = { start: start, openStart: openStart, open: open, stop: stop, active: function () { return !!st; }, on: on, clock: function () { return clock(left()); }, stats: stats, sync: sync, renderWidget: renderWidget, state: function () { return st; } };
 })(window.Lamia = window.Lamia || {});

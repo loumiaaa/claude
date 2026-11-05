@@ -57,6 +57,8 @@
   }
 
   function render() {
+    // Le chrono par tâche a laissé la place au mode focus (seul minuteur)
+    if (L.focus) { L.focus.renderWidget(); return; }
     U.$$('[data-chrono-widget]').forEach(function (el) {
       U.keepFocus(el, function () { el.innerHTML = widgetHTML(); });
     });

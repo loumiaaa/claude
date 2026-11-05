@@ -17,6 +17,7 @@
   function timerBlock(task) {
     var tm = S.get().activeTimer;
     var mine = tm && tm.taskId === task.id;
+    var focusOn = L.focus && L.focus.on(task.id);
     var total = Q.taskMinutes(task, null, null, false);
     var week = Q.taskMinutes(task, D.startOfWeek(D.today()), D.endOfWeek(D.today()), false);
     var head = '<div class="hours-hero__figures"><div><span class="hours-hero__value num">' + D.duration(total) + '</span><span class="hours-hero__label">au total</span></div>' +
@@ -30,9 +31,13 @@
           ? '<button type="button" class="btn btn--soft btn--sm" data-chrono="resume" data-focus-key="dr-toggle">' + icon('play') + 'Reprendre</button>'
           : '<button type="button" class="btn btn--soft btn--sm" data-chrono="pause" data-focus-key="dr-toggle">' + icon('pause') + 'Pause</button>') +
         '<button type="button" class="btn btn--primary btn--sm" data-chrono="stop" data-focus-key="dr-start">' + icon('stop') + 'Stop et enregistrer</button></div>';
+    } else if (focusOn) {
+      ctl = '<div class="hours-hero__live"><span class="chrono__live" aria-hidden="true"></span>' +
+        '<span class="hours-hero__clock num" role="timer" aria-label="Temps restant de la session" data-focus-time>' + L.focus.clock() + '</span></div>' +
+        '<div class="hours-hero__actions"><button type="button" class="btn btn--primary btn--sm" data-focus-chip data-focus-key="dr-start">' + icon('target') + 'Voir la concentration</button></div>';
     } else {
-      ctl = '<div class="hours-hero__actions"><button type="button" class="btn btn--primary" data-chrono="start" data-task="' + task.id + '" data-focus-key="dr-start"' + (task.status === 'done' ? ' disabled' : '') + '>' + icon('play') + 'Démarrer le chrono</button></div>' +
-        (tm ? '<p class="hint">Le chrono en cours sur une autre tâche sera arrêté et enregistré.</p>' : '');
+      ctl = '<div class="hours-hero__actions"><button type="button" class="btn btn--primary" data-focus-start="' + task.id + '" data-focus-key="dr-start"' + (task.status === 'done' ? ' disabled' : '') + '>' + icon('target') + 'Lancer un focus sur cette tâche</button></div>' +
+        '<p class="hint">Le temps de concentration s’ajoute aux heures de la tâche. Tu peux aussi ajouter du temps à la main.</p>';
     }
     return '<div class="glass glass--nested hours-hero">' + head + ctl + '</div>';
   }
@@ -440,7 +445,7 @@
     if (opts.section === 'hours') {
       setTimeout(function () {
         var h = root && root.querySelector('[data-dr-hours]');
-        if (h) { h.scrollIntoView({ block: 'start', behavior: U.reducedMotion() ? 'auto' : 'smooth' }); var b = h.querySelector('[data-chrono], #me-dur'); if (b) b.focus(); }
+        if (h) { h.scrollIntoView({ block: 'start', behavior: U.reducedMotion() ? 'auto' : 'smooth' }); var b = h.querySelector('[data-focus-start], [data-chrono], #me-dur'); if (b) b.focus(); }
       }, 60);
     }
   }

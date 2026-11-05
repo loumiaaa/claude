@@ -54,8 +54,7 @@
     var c = S.category(t.categoryId);
     var done = t.checklist.filter(function (x) { return x.done; }).length;
     var mins = Q.taskMinutes(t, null, null, true);
-    var tm = S.get().activeTimer;
-    var timing = tm && tm.taskId === t.id;
+    var timing = L.focus && L.focus.on(t.id);
     var d = U.due(t);
     var label = t.title + ', ' + c.name + ', priorité ' + Q.prioLabel(t.priority).toLowerCase() + (d ? ', ' + d.long : '') + ', avancement ' + t.progress + ' %';
     return '<div class="glass glass--nested glass--interactive task-card' + (t.status === 'done' ? ' task-card--done' : '') + (timing ? ' is-timing' : '') + '" ' +
@@ -71,7 +70,7 @@
       '<div class="task-card__foot">' +
         (t.checklist.length ? '<span class="task-card__meta" title="Checklist">' + icon('checklist') + '<span class="num">' + done + '/' + t.checklist.length + '</span><span class="sr-only"> sous-tâches faites</span></span>' : '') +
         (mins || timing ? '<span class="task-card__meta" title="Heures passées">' + icon('clock') + '<span class="num">' + D.duration(mins, { compact: true }) + '</span><span class="sr-only"> passées</span></span>' : '') +
-        (timing ? '<span class="task-card__live"><span class="chrono__live' + (tm.pausedAt ? ' is-paused' : '') + '" aria-hidden="true"></span><span class="num" data-timer-elapsed>' + D.clock(L.chrono.elapsed()) + '</span></span>' : '') +
+        (timing ? '<span class="task-card__live"><span class="chrono__live" aria-hidden="true"></span><span class="num" data-focus-time>' + L.focus.clock() + '</span></span>' : '') +
         (t.status === 'done'
           ? '<span class="task-card__due task-card__done">' + icon('check') + (t.completedAt ? 'Terminée le ' + esc(D.dayMonth(t.completedAt)) : 'Terminée') + '</span>'
           : '<span class="task-card__due">' + U.dueBadge(t) + '</span>') +
@@ -308,9 +307,9 @@
     items.push({ label: 'Descendre d’un cran', icon: 'arrow-down', disabled: i === col.length - 1, onSelect: function () { moveTo(id, t.status, i + 1, 'menu'); focusCardSoon(id); } });
     items.push({ separator: true });
     if (t.status !== 'done') {
-      items.push(tm && tm.taskId === id
-        ? { label: 'Arrêter le chrono', icon: 'stop', onSelect: function () { L.chrono.stop(); } }
-        : { label: 'Démarrer le chrono', icon: 'play', onSelect: function () { L.chrono.start(id); } });
+      items.push(L.focus.on(id)
+        ? { label: 'Voir la concentration', icon: 'target', onSelect: function () { L.focus.open(btn); } }
+        : { label: 'Lancer un focus', icon: 'target', onSelect: function () { L.focus.openStart(id, btn); } });
     }
     items.push({ label: 'Supprimer', icon: 'trash', danger: true, onSelect: function () { L.drawer.remove(id); } });
     U.openMenu(btn, items, { label: 'Actions pour « ' + t.title + ' »' });
