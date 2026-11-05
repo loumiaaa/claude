@@ -20,8 +20,9 @@
 
   function B() { return S.budget(); }
   function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[\s  €]/g, '').replace(',', '.')); return isFinite(n) ? n : NaN; }
-  function money(v) { return (Math.round(v * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
-  function edit(v) { return v == null ? '' : String(Math.round(v * 100) / 100).replace('.', ','); }
+  // 21 → « 21 », 209,5 → « 209,50 »
+  function money(v) { var r = Math.round(v * 100) / 100, dec = r % 1 !== 0; return r.toLocaleString('fr-FR', { minimumFractionDigits: dec ? 2 : 0, maximumFractionDigits: 2 }); }
+  function edit(v) { if (v == null) return ''; var r = Math.round(v * 100) / 100; return (r % 1 ? r.toFixed(2) : String(r)).replace('.', ','); }
   function month() { return BG.budgetMonth(anchor || D.today(), B().startDay); }
   // « Novembre 2026 » : le mois où se termine la période (paie du 27 octobre → novembre)
   function monthName(m) { return D.cap(D.monthYear(B().startDay === 1 ? m.start : m.end)); }
@@ -38,13 +39,23 @@
     return '<button type="button" class="acc-del" data-acc-del="' + table + '" data-id="' + esc(id) + '" aria-label="Retirer ' + esc(label) + '">' + icon('close') + '</button>';
   }
   function rec() { return '<span class="acc-rec" title="Revient tous les mois">↻</span>'; }
-  function table(title, cols, rows, total, cls) {
-    return '<table class="acc-table ' + (cls || '') + '"><caption class="acc-cap">' + esc(title) + '</caption>' +
-      (cols ? '<thead><tr>' + cols.map(function (c) { return '<th scope="col"' + (c[1] ? ' class="' + c[1] + '"' : '') + '>' + esc(c[0]) + '</th>'; }).join('') + '</tr></thead>' : '') +
-      '<tbody>' + rows.join('') + '</tbody>' + (total || '') + '</table>';
+  // Un tableau dans une carte : icône pixel, titre, sous-total
+  function card(key, px, title, sum, cols, rows, extra) {
+    var id = 'acc-t-' + key;
+    return '<section class="acc-card acc-card--' + key + '" aria-labelledby="' + id + '">' +
+      '<header class="acc-card__head">' + U.px(px, 2) + '<h2 class="acc-card__title" id="' + id + '">' + esc(title) + '</h2>' +
+        (sum != null ? '<span class="acc-card__sum num">' + money(sum) + NB + '€</span>' : '') + '</header>' +
+      '<table class="acc-table" aria-labelledby="' + id + '">' +
+        (cols ? '<thead><tr>' + cols.map(function (c) { return '<th scope="col"' + (c[1] ? ' class="' + c[1] + '"' : '') + '>' + esc(c[0]) + '</th>'; }).join('') + '</tr></thead>' : '') +
+        '<tbody>' + rows.join('') + '</tbody></table>' + (extra || '') + '</section>';
   }
-  function totalRow(label, value, span, cls) {
-    return '<tfoot><tr class="acc-total ' + (cls || '') + '"><th scope="row" colspan="' + span + '">' + esc(label) + '</th><td class="num">' + money(value) + '</td><td></td></tr></tfoot>';
+  // « 3/4 » en pastilles (au-delà de 6 échéances, en chiffres)
+  function dots(nOf) {
+    var p = nOf.split('/'), n = +p[0], of = +p[1];
+    if (of > 6) return '<span class="acc-of">' + nOf + '</span>';
+    var out = '';
+    for (var i = 1; i <= of; i++) out += '<i class="' + (i <= n ? 'is-on' : '') + '"></i>';
+    return '<span class="acc-dots" title="Échéance ' + n + ' sur ' + of + '" aria-label="échéance ' + n + ' sur ' + of + '">' + out + '</span>';
   }
 
   /* --- Données du mois ----------------------------------------------------------------- */
@@ -77,63 +88,88 @@
   }
 
   /* --- Rendu -------------------------------------------------------------------------------- */
+  function sum(list) { return Math.round(list.reduce(function (a, x) { return a + x.amount; }, 0) * 100) / 100; }
   function render() {
     if (!el) return;
     var m = month(), d = data(m), today = D.today(), isNow = today >= m.start && today <= m.end;
     var totalExp = Math.round((d.expenses + d.savings) * 100) / 100, rest = Math.round((d.income - totalExp) * 100) / 100;
     var ledger = savingsLedger(m), saved = ledger.reduce(function (a, x) { return a + x.amount; }, 0);
+    var sBills = sum(d.bills), sInst = sum(d.inst), sMisc = sum(d.misc);
 
-    var params = '<table class="acc-table acc-table--params"><caption class="acc-cap">Paramètres</caption><tbody>' +
-      '<tr><th scope="row">Début du mois</th><td><input class="acc-in" type="date" data-acc-start value="' + m.start + '" aria-label="Début du mois (jour de paie)" data-focus-key="acc-start"></td></tr>' +
-      '<tr><th scope="row">Fin du mois</th><td class="acc-ro">' + esc(D.cap(D.dayMonthLong(m.end))) + '</td></tr></tbody></table>';
+    // Bandeau : entrées, dépenses, restant, et où part l'argent
+    var parts = [['bills', 'Factures', sBills], ['inst', 'Plusieurs fois', sInst], ['misc', 'Diverses', sMisc], ['eco', 'Économies', d.savings], ['rest', 'Restant', Math.max(0, rest)]];
+    var base = Math.max(d.income, totalExp) || 1;
+    var bar = parts.filter(function (x) { return x[2] > 0; }).map(function (x) {
+      return '<span class="acc-bar__seg acc-bar__seg--' + x[0] + '" style="width:' + (x[2] / base * 100).toFixed(2) + '%" title="' + esc(x[1]) + ' : ' + money(x[2]) + ' €"></span>';
+    }).join('');
+    var legend = parts.map(function (x) {
+      return '<li class="acc-legend__item acc-legend__item--' + x[0] + '"><i aria-hidden="true"></i><span>' + esc(x[1]) + '</span><strong class="num">' + money(x[2]) + NB + '€</strong></li>';
+    }).join('');
+    var pct = d.income ? Math.round(totalExp / d.income * 100) : null;
+    var hero =
+      '<section class="acc-hero" aria-label="Résumé du mois">' +
+        '<div class="acc-hero__month">' +
+          '<button type="button" class="acc-hero__arrow" data-acc-month="-1" aria-label="Mois précédent" data-focus-key="acc-prev">' + icon('chevron-left') + '</button>' +
+          '<div><h2 class="acc-hero__name">' + esc(monthName(m)) + '</h2><p class="acc-hero__period">du ' + esc(D.dayMonth(m.start)) + ' au ' + esc(D.dayMonth(m.end)) +
+            (isNow ? '' : ' · <button type="button" class="acc-hero__now" data-acc-month="0" data-focus-key="acc-now">revenir à ce mois-ci</button>') + '</p></div>' +
+          '<button type="button" class="acc-hero__arrow" data-acc-month="1" aria-label="Mois suivant" data-focus-key="acc-next">' + icon('chevron-right') + '</button>' +
+        '</div>' +
+        '<div class="acc-hero__stats">' +
+          '<div class="acc-stat acc-stat--in">' + U.px('coin', 2) + '<span class="acc-stat__label">Entrées</span><strong class="acc-stat__value num">' + money(d.income) + NB + '€</strong></div>' +
+          '<div class="acc-stat acc-stat--out">' + U.px('bell', 2) + '<span class="acc-stat__label">Dépenses</span><strong class="acc-stat__value num">' + money(totalExp) + NB + '€</strong>' + (pct != null ? '<span class="acc-stat__sub">' + pct + NB + '% de tes entrées</span>' : '') + '</div>' +
+          '<div class="acc-stat acc-stat--rest' + (rest < 0 ? ' is-neg' : '') + '">' + U.px(rest < 0 ? 'flame' : 'piggy', 2) + '<span class="acc-stat__label">Restant</span><strong class="acc-stat__value num">' + money(rest) + NB + '€</strong>' +
+            '<span class="acc-stat__sub">' + (rest < 0 ? 'On ajuste en douceur le mois prochain' : rest > 0 ? 'Bien joué ✦' : 'Pile à l’équilibre') + '</span></div>' +
+        '</div>' +
+        '<div class="acc-bar" role="img" aria-label="Répartition : ' + parts.map(function (x) { return x[1] + ' ' + money(x[2]) + ' €'; }).join(', ') + '">' + bar + '</div>' +
+        '<ul class="acc-legend" role="list">' + legend + '</ul>' +
+      '</section>';
 
     var inRows = d.incomes.map(function (x) {
       var id = x.src === 'income' ? x.key : x.id;
       return '<tr><td>' + cellText(x.src === 'income' ? 'incomes' : 'entries', x.id, 'label', x.label, '', 'Source') + (x.src === 'income' ? rec() : '') + '</td>' +
         '<td class="acc-date">' + (x.src === 'entry' ? '<input class="acc-in" type="date" data-acc="entries" data-id="' + x.id + '" data-f="date" value="' + x.date + '" min="' + m.start + '" max="' + m.end + '" aria-label="Date" data-focus-key="acc-ed-' + x.id + '">' : '<span class="acc-txt">' + esc(D.dayMonth(x.date)) + '</span>') + '</td>' +
-        '<td>' + (x.src === 'income' ? cellMoney('adjust', x.key, 'amount', x.amount, 'Montant de ' + x.label + ' ce mois-ci') : cellMoney('entries', x.id, 'amount', x.amount, 'Montant')) + '</td>' +
-        '<td>' + delBtn(x.src === 'income' ? 'incomes' : 'entries', id, x.label) + '</td></tr>';
+        '<td class="acc-amt">' + (x.src === 'income' ? cellMoney('adjust', x.key, 'amount', x.amount, 'Montant de ' + x.label + ' ce mois-ci') : cellMoney('entries', x.id, 'amount', x.amount, 'Montant')) + '</td>' +
+        '<td class="acc-x">' + delBtn(x.src === 'income' ? 'incomes' : 'entries', id, x.label) + '</td></tr>';
     });
-    inRows.push(newRow('income', [['label', 'Nouvelle entrée…'], ['date', ''], ['amount', '0,00']], true));
-    var entrees = table('Entrées d’argent', [['Source'], ['Date'], ['Montant', 'num'], ['', 'acc-x']], inRows, totalRow('Total', d.income, 2));
+    inRows.push(newRow('income', [['label', '+ Ajouter'], ['date', ''], ['amount', '0,00']], true));
+    var entrees = card('in', 'coin', 'Entrées d’argent', d.income, [['Source'], ['Date', 'acc-date'], ['Montant', 'acc-amt'], ['', 'acc-x']], inRows);
 
     var savRows = ledger.slice().map(function (x) {
       var cur = x.m.start === m.start;
       return '<tr' + (cur ? ' class="is-current"' : '') + '><th scope="row" class="acc-month">' + esc(monthName(x.m)) + '</th>' +
-        '<td>' + (cur ? cellMoney('savings', m.start, 'amount', x.amount, 'Économies de ' + monthName(m)) : '<span class="num">' + money(x.amount) + '</span>') + '</td><td></td></tr>';
+        '<td class="acc-amt">' + (cur ? cellMoney('savings', m.start, 'amount', x.amount, 'Économies de ' + monthName(m)) : '<span class="num">' + money(x.amount) + '</span>') + '</td><td class="acc-x"></td></tr>';
     });
-    var eco = table('Économies', [['Mois'], ['Montant', 'num'], ['', 'acc-x']], savRows, totalRow('Total', saved, 1));
+    var eco = card('eco', 'piggy', 'Économies', saved, null, savRows, '<p class="acc-card__foot">Au total depuis ' + esc(monthName(ledger[0].m).toLowerCase()) + '</p>');
+
+    var params = '<section class="acc-card acc-card--params" aria-labelledby="acc-t-params"><header class="acc-card__head">' + U.px('calendar', 2) + '<h2 class="acc-card__title" id="acc-t-params">Mon mois</h2></header>' +
+      '<table class="acc-table"><tbody>' +
+        '<tr><th scope="row">Début du mois</th><td><input class="acc-in" type="date" data-acc-start value="' + m.start + '" aria-label="Début du mois (jour de paie)" data-focus-key="acc-start"></td></tr>' +
+        '<tr><th scope="row">Fin du mois</th><td class="acc-ro"><span class="acc-txt">' + esc(D.cap(D.dayMonthLong(m.end))) + '</span></td></tr></tbody></table>' +
+      '<p class="acc-card__foot">Si tu comptes à partir de ta paie (le 27…), choisis ce jour : il vaut pour tous les mois.</p></section>';
 
     function expRows(list, kind, ph) {
       return list.map(function (x) {
         var label = kind === 'installments' ? x.label.replace(/ \((\d+)\/(\d+)\)$/, '') : x.label;
         var nOf = kind === 'installments' ? (/\((\d+\/\d+)\)$/.exec(x.label) || [])[1] : '';
-        return '<tr><td>' + cellText(kind, x.id, 'label', label, '', 'Libellé') + (nOf ? '<span class="acc-of">' + nOf + '</span>' : '') + (kind === 'bills' ? rec() : '') + '</td>' +
-          '<td>' + (kind === 'installments' ? '<span class="num">' + money(x.amount) + '</span>' : cellMoney(kind, x.id, 'amount', x.amount, 'Montant de ' + label)) + '</td>' +
-          '<td>' + delBtn(kind, x.id, label) + '</td></tr>';
-      }).concat([newRow(kind === 'entries' ? 'expense' : kind === 'bills' ? 'bill' : 'installment', kind === 'installments' ? [['label', ph], ['amount', 'par mois'], ['of', '']] : [['label', ph], ['amount', '0,00']])]);
+        return '<tr><td>' + cellText(kind, x.id, 'label', label, '', 'Libellé') + (nOf ? dots(nOf) : '') + (kind === 'bills' ? rec() : '') + '</td>' +
+          '<td class="acc-amt">' + (kind === 'installments' ? '<span class="num">' + money(x.amount) + '</span>' : cellMoney(kind, x.id, 'amount', x.amount, 'Montant de ' + label)) + '</td>' +
+          '<td class="acc-x">' + delBtn(kind, x.id, label) + '</td></tr>';
+      }).concat([newRow(kind === 'entries' ? 'expense' : kind === 'bills' ? 'bill' : 'installment', [['label', ph], ['amount', kind === 'installments' ? 'par mois' : '0,00']])]);
     }
-    var misc = expRows(d.misc, 'entries', 'Nouvelle dépense…');
-    if (d.savings) misc.unshift('<tr class="acc-eco"><td>Économies</td><td><span class="num">' + money(d.savings) + '</span></td><td></td></tr>');
-    var depenses =
-      '<div class="acc-block"><h2 class="acc-h">Dépenses</h2>' +
-        table('Factures', null, expRows(d.bills, 'bills', 'Nouvelle facture…'), '', 'acc-table--sub') +
-        table('Paiements en plusieurs fois', null, expRows(d.inst, 'installments', 'Nouvel achat…'), '', 'acc-table--sub') +
-        table('Dépenses diverses', null, misc, '', 'acc-table--sub') +
-        '<table class="acc-table acc-table--sum"><tbody>' +
-          '<tr class="acc-total"><th scope="row">Total dépenses</th><td class="num">' + money(totalExp) + '</td><td></td></tr>' +
-          '<tr class="acc-total acc-rest' + (rest < 0 ? ' is-neg' : '') + '"><th scope="row">Restant</th><td class="num">' + money(rest) + '</td><td></td></tr>' +
-        '</tbody></table></div>';
+    var misc = expRows(d.misc, 'entries', '+ Nouvelle dépense');
+    if (d.savings) misc.unshift('<tr class="acc-eco"><td><span class="acc-txt">' + U.px('piggy') + ' Économies du mois</span></td><td class="acc-amt"><span class="num">' + money(d.savings) + '</span></td><td class="acc-x"></td></tr>');
 
     var html =
       '<header class="page-head"><div class="page-head__text"><p class="eyebrow">Budget</p><h1 class="h1" id="h-accounts" tabindex="-1">Mes comptes</h1>' +
-        '<p class="page-head__lead">Ton mois en tableaux. Touche une case pour la modifier, la dernière ligne de chaque tableau sert à ajouter. ↻ revient tous les mois.</p></div>' +
-        '<div class="page-head__actions acc-nav"><button type="button" class="btn btn--ghost btn--icon" data-acc-month="-1" aria-label="Mois précédent" data-focus-key="acc-prev">' + icon('chevron-left') + '</button>' +
-          '<button type="button" class="btn btn--secondary btn--sm" data-acc-month="0"' + (isNow ? ' aria-disabled="true"' : '') + ' data-focus-key="acc-now">Ce mois-ci</button>' +
-          '<button type="button" class="btn btn--ghost btn--icon" data-acc-month="1" aria-label="Mois suivant" data-focus-key="acc-next">' + icon('chevron-right') + '</button></div></header>' +
+        '<p class="page-head__lead">Touche une case pour la modifier, la dernière ligne de chaque tableau sert à ajouter. ↻ revient tous les mois.</p></div></header>' +
+      hero +
       '<div class="acc-sheet">' +
-        '<div class="acc-col"><h2 class="acc-h acc-h--month">' + esc(monthName(m)) + '</h2>' + params + entrees + eco + '</div>' +
-        '<div class="acc-col">' + depenses + '</div>' +
+        '<div class="acc-col">' + entrees + eco + params + '</div>' +
+        '<div class="acc-col">' +
+          card('bills', 'bell', 'Factures', sBills, null, expRows(d.bills, 'bills', '+ Nouvelle facture')) +
+          card('inst', 'calendar', 'Paiements en plusieurs fois', sInst, null, expRows(d.inst, 'installments', '+ Nouvel achat')) +
+          card('misc', 'gift', 'Dépenses diverses', Math.round((sMisc + d.savings) * 100) / 100, null, misc) +
+        '</div>' +
       '</div>';
     U.keepFocus(el, function () { el.innerHTML = html; });
   }
@@ -144,13 +180,16 @@
     var cells = fields.map(function (f) {
       var key = 'acc-new-' + kind + '-' + f[0];
       if (f[0] === 'date') return '<td class="acc-date"><input class="acc-in" type="date" data-new="' + kind + '" data-f="date" value="' + def + '" min="' + m.start + '" max="' + m.end + '" aria-label="Date" data-focus-key="' + key + '"></td>';
-      if (f[0] === 'of') return '<td class="acc-of-cell"><select class="acc-in acc-in--sel" data-new="' + kind + '" data-f="of" aria-label="Échéance de ce mois sur combien" data-focus-key="' + key + '">' +
+      if (f[0] === 'of') return '<td class="acc-x acc-of-cell"><select class="acc-in acc-in--sel" data-new="' + kind + '" data-f="of" aria-label="Échéance de ce mois sur combien" data-focus-key="' + key + '">' +
         [[1, 2], [1, 3], [1, 4], [2, 4], [3, 4], [4, 4], [1, 10], [1, 12]].map(function (o) { return '<option value="' + o[0] + '/' + o[1] + '">' + o[0] + '/' + o[1] + '</option>'; }).join('') + '</select></td>';
       var isNum = f[0] === 'amount';
-      return '<td><input class="acc-in acc-in--new' + (isNum ? ' acc-in--num' : '') + '" data-new="' + kind + '" data-f="' + f[0] + '" placeholder="' + esc(f[1]) + '"' + (isNum ? ' inputmode="decimal"' : '') + ' aria-label="' + (isNum ? 'Montant' : 'Libellé') + '" data-focus-key="' + key + '" autocomplete="off"></td>';
+      return '<td' + (isNum ? ' class="acc-amt"' : '') + '><input class="acc-in acc-in--new' + (isNum ? ' acc-in--num' : '') + '" data-new="' + kind + '" data-f="' + f[0] + '" placeholder="' + esc(f[1]) + '"' + (isNum ? ' inputmode="decimal"' : '') + ' aria-label="' + (isNum ? 'Montant' : 'Libellé') + '" data-focus-key="' + key + '" autocomplete="off"></td>';
     });
     if (kind === 'income') cells[0] = cells[0].replace('</td>', '<button type="button" class="acc-rec-toggle" data-new-rec aria-pressed="false" title="Tous les mois">↻</button></td>');
-    return '<tr class="acc-new">' + cells.join('') + (kind === 'installment' ? '' : '<td></td>') + '</tr>';
+    // Paiement en plusieurs fois : où il en est ce mois-ci (1/4, 2/4…), dans la case du libellé
+    if (kind === 'installment') cells[0] = cells[0].replace('</td>', '<select class="acc-of-sel" data-new="installment" data-f="of" aria-label="Échéance de ce mois sur combien" data-focus-key="acc-new-installment-of">' +
+      [[1, 2], [1, 3], [1, 4], [2, 4], [3, 4], [4, 4], [1, 10], [1, 12]].map(function (o) { return '<option value="' + o[0] + '/' + o[1] + '"' + (o[0] === 1 && o[1] === 4 ? ' selected' : '') + '>' + o[0] + '/' + o[1] + '</option>'; }).join('') + '</select></td>');
+    return '<tr class="acc-new">' + cells.join('') + '<td class="acc-x"></td></tr>';
   }
 
   /* --- Enregistrement -------------------------------------------------------------------------- */
