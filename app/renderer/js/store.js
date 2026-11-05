@@ -492,6 +492,23 @@
       return src.length;
     },
 
+    /* Compteurs d'heures (saisie à la main, sans tâche) */
+    hours: function () { if (!Array.isArray(state.hours)) state.hours = []; return state.hours; },
+    addHours: function (data) {
+      var e = { id: uid('h'), date: data.date || D.today(), categoryId: data.categoryId, minutes: Math.round(data.minutes), note: data.note || '' };
+      store.hours().push(e);
+      emit('hours', { id: e.id }, { now: true });
+      return e;
+    },
+    removeHours: function (id) {
+      var list = store.hours(), i = list.map(function (e) { return e.id; }).indexOf(id);
+      if (i < 0) return null;
+      var e = list.splice(i, 1)[0];
+      emit('hours', { id: id, removed: true }, { now: true });
+      return e;
+    },
+    restoreHours: function (e) { store.hours().push(e); emit('hours', { id: e.id }, { now: true }); },
+
     /* Habitudes */
     habits: function () {
       if (!state.habits) state.habits = window.LamiaShared.habits.normalize(null);
@@ -623,6 +640,7 @@
     },
     removeCategory: function (id, reassignTo) {
       state.tasks.forEach(function (t) { if (t.categoryId === id) t.categoryId = reassignTo; });
+      store.hours().forEach(function (e) { if (e.categoryId === id) e.categoryId = reassignTo; });
       state.categories = state.categories.filter(function (c) { return c.id !== id; });
       emit('category', { id: id, removed: true });
     }

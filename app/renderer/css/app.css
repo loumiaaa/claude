@@ -2963,3 +2963,16 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .form-grid > [hidden] { display: none; }
 .card > .table-scroll { overflow-x: auto; max-width: 100%; }
 @media (max-width: 600px) { .hab-week tbody th { max-width: 96px; font-size: var(--fs-xs); } .hab-cell--val { width: 34px; font-size: 10px; } }
+
+/* Compteurs d'heures (saisie à la main) */
+.hours-row__head { align-items: center; }
+.hours-row__add { flex: none; margin-left: var(--space-2); }
+.hours-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--space-2); }
+.hours-log { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-muted); }
+.hours-log__title { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-2); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.hours-log__title strong { margin-left: auto; }
+.hours-log__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.hours-log__list li { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); }
+.hours-log__day { color: var(--color-text-muted); }
+.hours-log__note { color: var(--color-text-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hours-log .hint { margin: 0; }

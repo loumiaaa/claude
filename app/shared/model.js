@@ -229,6 +229,9 @@
     d.profile = normalizeProfile(d.profile);
     d.budget = normalizeBudget(d.budget);
     d.health = normalizeHealth(d.health);
+    // Compteurs d'heures mis à jour à la main (sans tâche) : { id, date, categoryId, minutes, note }
+    d.hours = (Array.isArray(d.hours) ? d.hours : []).filter(function (e) { return e && DATE_RE.test(e.date) && typeof e.minutes === 'number' && e.minutes > 0 && e.minutes <= 24 * 60; })
+      .map(function (e) { return { id: typeof e.id === 'string' && e.id ? e.id : id('h'), date: e.date, categoryId: catIds.indexOf(e.categoryId) >= 0 ? e.categoryId : catIds[0], minutes: Math.round(e.minutes), note: typeof e.note === 'string' ? e.note : '' }; });
     d.habits = H.normalize(d.habits);
     d.focus = normalizeFocus(d.focus);
     d.reviews = normalizeReviews(d.reviews);

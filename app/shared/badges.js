@@ -22,6 +22,7 @@
   function totalHours(doc) {
     var m = 0;
     (doc.tasks || []).forEach(function (t) { (t.timeEntries || []).forEach(function (e) { m += e.minutes || 0; }); });
+    (doc.hours || []).forEach(function (e) { m += e.minutes || 0; });
     return Math.floor(m / 60);
   }
   // Semaines (lundi) où l'objectif hebdomadaire du travail principal est atteint ; meilleure suite
@@ -36,6 +37,7 @@
       if (!cats[t.categoryId]) return;
       (t.timeEntries || []).forEach(function (e) { var w = D.startOfWeek(e.date); weeks[w] = (weeks[w] || 0) + (e.minutes || 0); });
     });
+    (doc.hours || []).forEach(function (e) { if (!cats[e.categoryId]) return; var w = D.startOfWeek(e.date); weeks[w] = (weeks[w] || 0) + (e.minutes || 0); });
     var ok = Object.keys(weeks).filter(function (w) { return weeks[w] >= goal; }).sort();
     return { count: ok.length, run: bestRun(ok, 7) };
   }

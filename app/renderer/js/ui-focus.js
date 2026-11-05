@@ -2,8 +2,8 @@
    Plateforme de suivi - Lamia — mode focus (Pomodoro)
    Le seul minuteur de la plateforme. Sessions de concentration (25 min par
    défaut) entrecoupées de pauses (5 min, et 15 min toutes les 4 sessions).
-   Sur une tâche, le temps de concentration s'ajoute à ses heures (objectif
-   35 h, récap) à la fin de chaque session ; les pauses ne comptent pas.
+   Il n'ajoute aucune heure : les heures se notent à la main dans les
+   compteurs (carte « Heures de la semaine », ui-hours.js).
    Pendant la concentration, Memeow fait la sieste ; à la pause, elle se
    réveille et miaule pour te rappeler de souffler (notification + petit son).
    L'état du minuteur reste sur l'appareil (localStorage) : il survit à un
@@ -34,12 +34,6 @@
   function clock(ms) { var s = Math.ceil(ms / 1000); return D.pad(Math.floor(s / 60)) + ':' + D.pad(s % 60); }
   function task() { return st && st.taskId ? S.task(st.taskId) : null; }
 
-  /* --- Heures de la tâche ------------------------------------------------------------ */
-  // Le temps de concentration s'ajoute aux heures de la tâche (pas les pauses)
-  function logWork(minutes) {
-    if (!cfg().chrono || !st || !st.taskId || minutes < 1 || !S.task(st.taskId)) return;
-    S.addEntry(st.taskId, { minutes: minutes, note: 'Mode focus', source: 'timer' });
-  }
   function changed() { S.signal('focus-state', { active: !!st, taskId: st && st.taskId }); }
 
   /* --- Son et notification --------------------------------------------------------- */
@@ -82,7 +76,7 @@
     if (!st) return;
     if (st.phase === 'work') {
       var done = skipped ? Math.round((phaseMin('work') * 60000 - left()) / 60000) : phaseMin('work');
-      if (done >= 1) { S.addFocusSession(done, st.taskId); logWork(done); }
+      if (done >= 1) S.addFocusSession(done, st.taskId);
       st.cycle += 1;
       st.phase = st.cycle % cfg().every === 0 ? 'long' : 'short';
       st.endsAt = Date.now() + phaseMin(st.phase) * 60000;
@@ -118,7 +112,6 @@
     var n = st.cycle;
     if (st.phase === 'work' && !st.waiting) {
       var done = Math.round((phaseMin('work') * 60000 - left()) / 60000);
-      logWork(done);
       if (done >= 5) { S.addFocusSession(done, st.taskId); n += 1; }
     }
     st = null; write();
@@ -256,7 +249,6 @@
         '<div class="field focus-custom"><label class="label" for="fo-short">Petite pause (min)</label><input class="input" type="number" id="fo-short" name="short" min="1" max="30" value="' + c.short + '"></div>' +
         '<div class="field focus-custom"><label class="label" for="fo-long">Grande pause (min)</label><input class="input" type="number" id="fo-long" name="long" min="5" max="60" value="' + c.long + '"></div>' +
         '<div class="field focus-custom"><label class="label" for="fo-every">Grande pause toutes les</label><input class="input" type="number" id="fo-every" name="every" min="2" max="8" value="' + c.every + '"><p class="hint">sessions</p></div>' +
-        '<label class="check field--full"><input type="checkbox" name="chrono"' + (c.chrono ? ' checked' : '') + '><span>Ajouter le temps de concentration aux heures de la tâche (les pauses ne comptent pas)</span></label>' +
         '<label class="check field--full"><input type="checkbox" name="sound"' + (c.sound ? ' checked' : '') + '><span>Petit son à chaque fin de session et de pause</span></label>' +
         '</div>',
       onMount: function (form) {
@@ -270,7 +262,7 @@
       },
       onConfirm: function (form) {
         function n(v, d, a, b) { v = Math.round(+v); return v >= a && v <= b ? v : d; }
-        S.setFocusSettings({ work: n(form.work.value, 25, 5, 120), short: n(form.short.value, 5, 1, 30), long: n(form.long.value, 15, 5, 60), every: n(form.every.value, 4, 2, 8), chrono: form.chrono.checked, sound: form.sound.checked });
+        S.setFocusSettings({ work: n(form.work.value, 25, 5, 120), short: n(form.short.value, 5, 1, 30), long: n(form.long.value, 15, 5, 60), every: n(form.every.value, 4, 2, 8), sound: form.sound.checked });
         var id = form.task.value || null;
         setTimeout(function () { start(id); }, 30);
       }

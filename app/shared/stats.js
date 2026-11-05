@@ -76,11 +76,17 @@
     return m;
   }
 
+  // Heures saisies directement dans un compteur (sans tâche) : { id, date, categoryId, minutes, note }
+  function hourEntries(state, a, b) {
+    return (state.hours || []).filter(function (e) { return (!a || e.date >= a) && (!b || e.date <= b); });
+  }
+
   // Heures par catégorie, SÉPARÉES (jamais de total général)
   function minutesByCategory(state, a, b, withTimer) {
     var out = {};
     state.categories.forEach(function (c) { out[c.id] = 0; });
     state.tasks.forEach(function (t) { if (out[t.categoryId] != null) out[t.categoryId] += taskMinutes(state, t, a, b, withTimer); });
+    hourEntries(state, a, b).forEach(function (e) { if (out[e.categoryId] != null) out[e.categoryId] += e.minutes; });
     return out;
   }
 
@@ -92,20 +98,21 @@
       var g = poleOf(state, t);
       if (g && out[g] != null) out[g] += taskMinutes(state, t, a, b, withTimer);
     });
+    hourEntries(state, a, b).forEach(function (e) { var c = category(state, e.categoryId); if (c && out[c.group] != null) out[c.group] += e.minutes; });
     return out;
   }
 
   // Minutes par jour pour une catégorie : { 'YYYY-MM-DD': minutes }
   function dailyMinutes(state, catId, a, b, withTimer) {
-    return dailyFor(state, function (t) { return t.categoryId === catId; }, a, b, withTimer);
+    return dailyFor(state, function (t) { return t.categoryId === catId; }, a, b, withTimer, function (id) { return id === catId; });
   }
 
   // Minutes par jour pour un pôle (toutes ses catégories)
   function poleDailyMinutes(state, group, a, b, withTimer) {
-    return dailyFor(state, function (t) { return poleOf(state, t) === group; }, a, b, withTimer);
+    return dailyFor(state, function (t) { return poleOf(state, t) === group; }, a, b, withTimer, function (id) { var c = category(state, id); return !!c && c.group === group; });
   }
 
-  function dailyFor(state, keep, a, b, withTimer) {
+  function dailyFor(state, keep, a, b, withTimer, keepCat) {
     var out = {};
     D.eachDay(a, b).forEach(function (d) { out[d] = 0; });
     var today = D.today();
@@ -115,6 +122,7 @@
       t.timeEntries.forEach(function (e) { if (out[e.date] != null) out[e.date] += e.minutes; });
       if (withTimer && tm && tm.taskId === t.id && out[today] != null) out[today] += Math.floor(timerElapsed(tm) / 60000);
     });
+    if (keepCat) hourEntries(state, a, b).forEach(function (e) { if (out[e.date] != null && keepCat(e.categoryId)) out[e.date] += e.minutes; });
     return out;
   }
 
@@ -206,7 +214,7 @@
     POLES: POLES, POLE_LABEL: POLE_LABEL, PRIO_RANK: PRIO_RANK, TEN_HOURS_MS: TEN_HOURS_MS,
     timerElapsed: timerElapsed, isLongTimer: isLongTimer, timerEntries: timerEntries,
     isDone: isDone, isOverdue: isOverdue, category: category, poleOf: poleOf,
-    taskMinutes: taskMinutes, minutesByCategory: minutesByCategory, minutesByPole: minutesByPole,
+    taskMinutes: taskMinutes, hourEntries: hourEntries, minutesByCategory: minutesByCategory, minutesByPole: minutesByPole,
     dailyMinutes: dailyMinutes, poleDailyMinutes: poleDailyMinutes,
     goalFor: goalFor, persoSchedule: persoSchedule, persoGoal: persoGoal, weekPersoGoal: weekPersoGoal,
     overdue: overdue, dueBetween: dueBetween, summary: summary

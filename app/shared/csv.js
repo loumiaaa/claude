@@ -45,6 +45,8 @@
         if (t.categoryId !== c.id) return;
         (t.timeEntries || []).forEach(function (e) { if (e.date >= start && e.date <= end) list.push({ t: t, e: e }); });
       });
+      // Heures des compteurs (saisies sans tâche)
+      (state.hours || []).forEach(function (e) { if (e.categoryId === c.id && e.date >= start && e.date <= end) list.push({ t: { title: 'Compteur d’heures', client: '' }, e: e }); });
       if (!list.length) return;
       list.sort(function (a, b) {
         if (a.e.date !== b.e.date) return a.e.date < b.e.date ? -1 : 1;

@@ -151,3 +151,21 @@ test('habitudes : mesures (sommeil au moins 7 h, écran au plus 2 h, sans object
   const v = H.values(h.log, s, '2026-10-05', '2026-10-11');
   assert.deepEqual([v.count, v.avg, v.min, v.max], [2, 415, 380, 450]);
 });
+
+test('compteurs d’heures (sans tâche) : comptés par catégorie, par pôle, par jour, en CSV', () => {
+  const ST = require('../../shared/stats.js');
+  const CSV = require('../../shared/csv.js');
+  const d = M.normalize(state([task('t1', 'flowline', { timeEntries: [entry('2026-10-05', 60)] })], {
+    hours: [{ id: 'h1', date: '2026-10-05', categoryId: 'flowline', minutes: 420 }, { id: 'h2', date: '2026-10-10', categoryId: 'carnet', minutes: 240, note: 'Samedi' }, { date: 'x', minutes: 10 }, { date: '2026-10-06', categoryId: 'inconnue', minutes: 30 }]
+  }));
+  assert.equal(d.hours.length, 3);
+  assert.equal(d.hours[2].categoryId, 'flowline');                // catégorie inconnue : réaffectée
+  const byCat = ST.minutesByCategory(d, '2026-10-05', '2026-10-11');
+  assert.equal(byCat.flowline, 60 + 420 + 30);
+  assert.equal(byCat.carnet, 240);
+  assert.deepEqual(ST.minutesByPole(d, '2026-10-05', '2026-10-11'), { flowline: 510, 'auto-entreprise': 240 });
+  assert.equal(ST.dailyMinutes(d, 'flowline', '2026-10-05', '2026-10-11')['2026-10-05'], 480);
+  assert.equal(ST.persoGoal(d, '2026-10-10', '2026-10-10').minutes, 240);
+  const rows = CSV.rows(d, '2026-10-01', '2026-10-31');
+  assert.ok(rows.some((r) => r.join(';').includes('Compteur d’heures') && r.join(';').includes('Samedi')));
+});

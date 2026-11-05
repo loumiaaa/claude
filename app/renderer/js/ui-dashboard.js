@@ -132,13 +132,14 @@
       }
       if (running) note += ' Chrono en cours inclus.';
       return '<div class="hours-row">' +
-        '<div class="hours-row__head">' + U.catChip(c) + '<span class="hours-row__value">' + value + '</span></div>' + bar +
+        '<div class="hours-row__head">' + U.catChip(c) + '<span class="hours-row__value">' + value + '</span>' +
+          '<button type="button" class="btn btn--soft btn--icon btn--sm hours-row__add" data-add-hours="' + c.id + '" data-focus-key="addh-' + c.id + '" aria-label="Ajouter des heures pour ' + esc(c.name) + '">' + icon('plus') + '</button></div>' + bar +
         '<p class="hours-row__note">' + esc(note) + '</p></div>';
     }).join('');
     var perso = persoRow(Q.weekPersoGoal(D.today(), true));
     return '<section class="glass card hours-card" aria-labelledby="dh-hours">' +
       '<div class="card__header"><div><h2 class="card__title" id="dh-hours">Heures de la semaine</h2>' +
-      '<p class="card__subtitle">Chaque catégorie a son compteur, jamais mélangé.</p></div>' +
+      '<p class="card__subtitle">Tes compteurs : touche + pour ajouter tes heures.</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#recap">Détail' + icon('chevron-right') + '</a></div></div>' +
       '<div class="hours-rows">' + rows + perso + '</div>' +
       (hasFree && !perso ? '<p class="hours-card__foot">' + icon('heart') + 'Pas d’objectif pour le perso : ' + (persoDayName() ? 'le ' + persoDayName() : 'ce temps-là') + ' reste un plaisir.</p>' : '') + '</section>';
@@ -226,7 +227,7 @@
     var review = S.column('review');
     return '<section class="glass card doing-card" aria-labelledby="dh-doing">' +
       '<div class="card__header"><div><h2 class="card__title" id="dh-doing">Tes tâches en cours</h2>' +
-      '<p class="card__subtitle">◎ lance une session de concentration : le temps s’ajoute aux heures de la tâche.</p></div>' +
+      '<p class="card__subtitle">◎ lance une session de concentration sur une tâche.</p></div>' +
       '<div class="card__actions"><a class="btn btn--ghost btn--sm" href="#taches">Kanban' + icon('chevron-right') + '</a></div></div>' +
       (doing.length ? '<ul class="task-rows" role="list">' + doing.map(taskRow).join('') + '</ul>' +
         (review.length ? '<h3 class="subsection-title">' + icon('eye') + 'En validation, chez le client <span class="badge badge--neutral">' + review.length + '</span></h3>' +
@@ -528,6 +529,7 @@
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'timer') update('life');
       if (type === 'focus-state') { update('doing'); return; }
+      if (type === 'hours') { update('hours'); update('life'); return; }
       if (type === 'reset') { voice = null; el.innerHTML = ''; render(); return; }
       if (type === 'mood') { update('mood'); if (d.level) { anotherPhrase(); } return; }
       if (type === 'ui') { if (d.dashPeriod) update('recap'); return; }

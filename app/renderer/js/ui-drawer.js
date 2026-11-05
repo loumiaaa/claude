@@ -37,7 +37,7 @@
         '<div class="hours-hero__actions"><button type="button" class="btn btn--primary btn--sm" data-focus-chip data-focus-key="dr-start">' + icon('target') + 'Voir la concentration</button></div>';
     } else {
       ctl = '<div class="hours-hero__actions"><button type="button" class="btn btn--primary" data-focus-start="' + task.id + '" data-focus-key="dr-start"' + (task.status === 'done' ? ' disabled' : '') + '>' + icon('target') + 'Lancer un focus sur cette tâche</button></div>' +
-        '<p class="hint">Le temps de concentration s’ajoute aux heures de la tâche. Tu peux aussi ajouter du temps à la main.</p>';
+        '<p class="hint">Pour tes heures, utilise les compteurs de l’Accueil (+), ou ajoute du temps à cette tâche ci-dessous.</p>';
     }
     return '<div class="glass glass--nested hours-hero">' + head + ctl + '</div>';
   }

@@ -100,6 +100,7 @@
     if (p.kind === 'day') {
       var entries = [];
       S.get().tasks.forEach(function (t) { if (t.categoryId === c.id) t.timeEntries.forEach(function (e) { if (e.date === p.start) entries.push({ t: t, e: e }); }); });
+      S.hours().forEach(function (e) { if (e.categoryId === c.id && e.date === p.start) entries.push({ t: { title: e.note || 'Compteur d’heures' }, e: e }); });
       body = (hasGoal ? '<span class="progress progress--lg ' + progressCls(c) + '" style="--value:' + Math.min(100, Math.round(mins / goalTotal * 100)) + '" aria-hidden="true"></span>' : '') +
         (entries.length ? '<ul class="day-entries" role="list">' + entries.map(function (x) {
           return '<li><span class="day-entries__title">' + esc(x.t.title) + '</span><span class="day-entries__dur num">' + D.duration(x.e.minutes) + '</span></li>';
