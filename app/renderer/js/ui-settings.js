@@ -223,7 +223,7 @@
     if (!el) return;
     var html = '<header class="page-head"><div class="page-head__text"><p class="eyebrow">Ton espace, tes règles</p><h1 class="h1" id="h-settings" tabindex="-1">Réglages</h1></div></header>' +
       '<div class="settings-grid"><div class="settings-col">' + categoriesCard() + goalsCard() + '</div>' +
-      '<div class="settings-col">' + spacesCard() + themeCard() + remindersCard() + dataCard() + demoCard() + '</div></div>';
+      '<div class="settings-col">' + spacesCard() + (L.calendarUI ? L.calendarUI.settingsHTML() : '') + themeCard() + remindersCard() + dataCard() + demoCard() + '</div></div>';
     U.keepFocus(el, function () { el.innerHTML = html; });
     U.typo(el);
   }
@@ -435,7 +435,7 @@
     });
     S.subscribe(function (type) {
       if (L.app.view() !== 'settings') { el.dataset.stale = '1'; return; }
-      if (type === 'category' || type === 'settings' || type === 'reset') {
+      if (type === 'category' || type === 'settings' || type === 'reset' || type === 'calendar' || type === 'calendar-events') {
         var a = document.activeElement;
         if (a && a.hasAttribute && a.hasAttribute('data-cat-name')) return;   // pas de re-rendu pendant la saisie
         U.keepFocus(el, render);

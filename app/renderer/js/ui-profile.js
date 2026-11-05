@@ -72,7 +72,7 @@
     root.querySelectorAll('[data-avatar-pixel]').forEach(function (c, i) {
       var k = key + i;
       if (avatarCtrl[k]) { try { avatarCtrl[k].destroy(); } catch (e) { /* rien */ } }
-      if (window.PixelCast) avatarCtrl[k] = window.PixelCast.mount(c, S.me().character, { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle' });
+      if (window.PixelCast) avatarCtrl[k] = window.PixelCast.mount(c, S.me().character, { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle', extras: L.fun.wearing('me') });
     });
   }
   // Pastille de la barre latérale et de la barre du haut
@@ -206,7 +206,7 @@
     mountPixelAvatars(el, 'profile');
     el.querySelectorAll('[data-pet-pixel]').forEach(function (c, i) {
       if (avatarCtrl['pet' + i]) avatarCtrl['pet' + i].destroy();
-      if (window.PixelCast) avatarCtrl['pet' + i] = window.PixelCast.mount(c, 'memeow', { scale: 3, animation: 'idle' });
+      if (window.PixelCast) avatarCtrl['pet' + i] = window.PixelCast.mount(c, 'memeow', { scale: 3, animation: 'idle', extras: L.fun.wearing('memeow') });
     });
   }
 
@@ -384,8 +384,8 @@
       }
     });
     S.subscribe(function (type) {
-      if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type.indexOf('task') !== 0) return;
-      if (type === 'profile' || type === 'reset' || type === 'setup') refreshBrand();
+      if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type !== 'wardrobe' && type.indexOf('task') !== 0) return;
+      if (type === 'profile' || type === 'reset' || type === 'setup' || type === 'wardrobe') refreshBrand();
       if (L.app.view() !== 'profile') { el.dataset.stale = '1'; return; }
       U.keepFocus(el, render);
     });

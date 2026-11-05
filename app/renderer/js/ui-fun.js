@@ -31,10 +31,13 @@
   }
   function meowHTML(m) { return esc(m.text) + U.pixelImg(m.icon, 2, 'pixel-bubble__icon', ''); }
 
+  // Accessoires portés (garde-robe, débloqués avec les badges)
+  function wearing(who) { return L.badgesUI ? L.badgesUI.extras(who === 'memeow' ? 'memeow' : 'me') : []; }
+
   function mount(key, canvas, who, anim, scale) {
     if (casts[key]) { try { casts[key].destroy(); } catch (e) { /* rien */ } }
     if (!canvas || !window.PixelCast) return null;
-    casts[key] = window.PixelCast.mount(canvas, who, { scale: scale, animation: 'idle' });
+    casts[key] = window.PixelCast.mount(canvas, who, { scale: scale, animation: 'idle', extras: wearing(who) });
     if (anim && anim !== 'idle' && !reduced()) setTimeout(function () { if (casts[key]) casts[key].play(anim); }, 450);
     return casts[key];
   }
@@ -233,5 +236,5 @@
     window.addEventListener('hashchange', cancel);
   }
 
-  L.fun = { miniScene: miniScene, celebrate: celebrate, countUp: countUp, meow: meow, sidebarCat: sidebarCat, reveal: reveal, watchScroll: watchScroll, smoothWheel: smoothWheel };
+  L.fun = { wearing: wearing, miniScene: miniScene, celebrate: celebrate, countUp: countUp, meow: meow, sidebarCat: sidebarCat, reveal: reveal, watchScroll: watchScroll, smoothWheel: smoothWheel };
 })(window.Lamia = window.Lamia || {});

@@ -165,6 +165,8 @@
     },
 
     setFlag: function (k, v) { state.flags[k] = v; save(); },
+    // Prévient les vues sans rien enregistrer (ex. rendez-vous du calendrier relus)
+    signal: function (type, detail) { emit(type, detail, { noSave: true }); },
     setUI: function (patch) { Object.assign(state.settings.ui, patch); emit('ui', patch); },
     setSettings: function (patch) { Object.assign(state.settings, patch); emit('settings', patch); },
     setSchedule: function (group, patch) { Object.assign(state.settings.schedules[group], patch); emit('settings'); },
@@ -489,6 +491,109 @@
       emit('health', { kind: 'meals' }, { now: true });
       return src.length;
     },
+
+    /* Habitudes */
+    habits: function () {
+      if (!state.habits) state.habits = window.LamiaShared.habits.normalize(null);
+      return state.habits;
+    },
+    addHabit: function (data) {
+      var h = { id: uid('hab'), name: data.name, icon: data.icon || '✨', target: data.target || 1, unit: data.unit || '', days: data.days || [0, 1, 2, 3, 4, 5, 6], since: data.since || D.today(), archived: false };
+      store.habits().list.push(h);
+      emit('habits', { id: h.id }, { now: true });
+      return h;
+    },
+    updateHabit: function (id, patch) {
+      var h = store.habits().list.filter(function (x) { return x.id === id; })[0];
+      if (!h) return null;
+      Object.assign(h, patch);
+      emit('habits', { id: id }, { now: true });
+      return h;
+    },
+    removeHabit: function (id) {
+      var hs = store.habits();
+      hs.list = hs.list.filter(function (x) { return x.id !== id; });
+      Object.keys(hs.log).forEach(function (d) { delete hs.log[d][id]; if (!Object.keys(hs.log[d]).length) delete hs.log[d]; });
+      emit('habits', { id: id, removed: true });
+    },
+    moveHabit: function (id, delta) {
+      var list = store.habits().list, i = list.map(function (x) { return x.id; }).indexOf(id), j = i + delta;
+      if (i < 0 || j < 0 || j >= list.length) return;
+      list.splice(j, 0, list.splice(i, 1)[0]);
+      emit('habits', { id: id });
+    },
+    // Nombre fait un jour donné (0 = rien)
+    setHabitCount: function (id, date, n) {
+      var log = store.habits().log;
+      n = Math.max(0, Math.min(99, Math.round(n || 0)));
+      if (n) { log[date] = log[date] || {}; log[date][id] = n; }
+      else if (log[date]) { delete log[date][id]; if (!Object.keys(log[date]).length) delete log[date]; }
+      emit('habits', { id: id, date: date, count: n }, { now: true });
+    },
+
+    /* Mode focus */
+    focus: function () {
+      if (!state.focus) state.focus = window.LamiaShared.model.normalizeFocus(null);
+      return state.focus;
+    },
+    setFocusSettings: function (patch) { Object.assign(store.focus(), patch); emit('focus', { settings: true }); },
+    addFocusSession: function (minutes, taskId) {
+      store.focus().sessions.push({ date: D.today(), minutes: Math.max(1, Math.round(minutes)), taskId: taskId || null });
+      emit('focus', { session: true }, { now: true });
+    },
+
+    /* Bilans du dimanche */
+    reviews: function () {
+      if (!Array.isArray(state.reviews)) state.reviews = [];
+      return state.reviews;
+    },
+    review: function (week) { return store.reviews().filter(function (r) { return r.week === week; })[0] || null; },
+    saveReview: function (r) {
+      var list = store.reviews(), cur = store.review(r.week);
+      r.priorities = (r.priorities || []).filter(function (p) { return p.text && p.text.trim(); }).slice(0, 3).map(function (p) {
+        return { id: p.id || uid('prio'), text: p.text.trim(), taskId: p.taskId || null, done: !!p.done };
+      });
+      if (cur) Object.assign(cur, r); else list.push(r);
+      list.sort(function (a, b) { return a.week < b.week ? -1 : 1; });
+      emit('review', { week: r.week }, { now: true });
+      return store.review(r.week);
+    },
+    setPriorityDone: function (week, id, done) {
+      var r = store.review(week);
+      var p = r && r.priorities.filter(function (x) { return x.id === id; })[0];
+      if (!p) return;
+      p.done = !!done;
+      emit('review', { week: week, priority: id }, { now: true });
+    },
+    removeReview: function (week) {
+      state.reviews = store.reviews().filter(function (r) { return r.week !== week; });
+      emit('review', { week: week, removed: true });
+    },
+
+    /* Badges et accessoires */
+    badgesAt: function () {
+      if (!state.badges || !state.badges.at) state.badges = { at: {} };
+      return state.badges.at;
+    },
+    markBadges: function (ids) {
+      var at = store.badgesAt(), today = D.today();
+      ids.forEach(function (id) { if (!at[id]) at[id] = today; });
+      emit('badges', { ids: ids });
+    },
+    wardrobe: function () {
+      var pr = store.profile();
+      if (!pr.wardrobe) pr.wardrobe = { me: null, memeow: null };
+      return pr.wardrobe;
+    },
+    setWardrobe: function (who, item) { store.wardrobe()[who] = item || null; emit('wardrobe', { who: who, item: item }, { now: true }); },
+
+    /* Calendrier Apple (réglages) */
+    calendar: function () {
+      var s = state.settings;
+      if (!s.calendar) s.calendar = { url: '', show: true, feedToken: '' };
+      return s.calendar;
+    },
+    setCalendar: function (patch) { Object.assign(store.calendar(), patch); emit('calendar', patch, { now: true }); },
 
     setMoodNote: function (date, note) {
       var m = state.moods.filter(function (x) { return x.date === date; })[0];

@@ -10,10 +10,11 @@
    Module UMD (renderer + main + tests).
    ========================================================================== */
 (function (root, factory) {
-  var mod = factory();
+  var H = typeof require === 'function' && typeof module === 'object' ? require('./habits.js') : root.LamiaShared.habits;
+  var mod = factory(H);
   if (typeof module === 'object' && module.exports) module.exports = mod;
   else { root.LamiaShared = root.LamiaShared || {}; root.LamiaShared.model = mod; }
-})(typeof self !== 'undefined' ? self : this, function () {
+})(typeof self !== 'undefined' ? self : this, function (H) {
   'use strict';
 
   var SCHEMA_VERSION = 2;
@@ -59,6 +60,8 @@
       groupNames: { flowline: 'Flow Line', 'auto-entreprise': 'Auto-entreprise' },
       // Espaces visibles dans le menu
       spaces: { health: true, budget: true },
+      // Calendrier Apple : lien public du calendrier (lecture) et jeton du lien d'abonnement aux échéances
+      calendar: { url: '', show: true, feedToken: '' },
       ui: defaultUI()
     };
   }
@@ -174,6 +177,12 @@
     GROUPS.forEach(function (g) { s.groupNames[g] = typeof gn[g] === 'string' && gn[g].trim() ? gn[g] : ds.groupNames[g]; });
     var sp = s.spaces && typeof s.spaces === 'object' ? s.spaces : {};
     s.spaces = { health: sp.health !== false, budget: sp.budget !== false };
+    var cal = s.calendar && typeof s.calendar === 'object' ? s.calendar : {};
+    s.calendar = {
+      url: typeof cal.url === 'string' ? cal.url.trim().slice(0, 2000) : '',
+      show: cal.show !== false,
+      feedToken: typeof cal.feedToken === 'string' && /^[A-Za-z0-9]{24,64}$/.test(cal.feedToken) ? cal.feedToken : ''
+    };
     var ui = Object.assign(defaultUI(), s.ui || {});
     ui.filters = Object.assign(defaultUI().filters, ui.filters || {});
     ui.sort = Object.assign(defaultUI().sort, ui.sort || {});
@@ -220,9 +229,59 @@
     d.profile = normalizeProfile(d.profile);
     d.budget = normalizeBudget(d.budget);
     d.health = normalizeHealth(d.health);
+    d.habits = H.normalize(d.habits);
+    d.focus = normalizeFocus(d.focus);
+    d.reviews = normalizeReviews(d.reviews);
+    d.badges = normalizeBadges(d.badges);
     d.flags = Object.assign({}, def.flags, d.flags || {});
     d.reminderLog = d.reminderLog && typeof d.reminderLog === 'object' && !Array.isArray(d.reminderLog) ? d.reminderLog : {};
     return d;
+  }
+
+  /* --- Mode focus : réglages et sessions terminées ---------------------------- */
+  function normalizeFocus(f) {
+    f = f && typeof f === 'object' && !Array.isArray(f) ? f : {};
+    function n(v, d, min, max) { return typeof v === 'number' && v >= min && v <= max ? Math.round(v) : d; }
+    return {
+      work: n(f.work, 25, 5, 120),
+      short: n(f.short, 5, 1, 30),
+      long: n(f.long, 15, 5, 60),
+      every: n(f.every, 4, 2, 8),
+      chrono: f.chrono !== false,          // le chrono de la tâche suit les phases (pause pendant les pauses)
+      sound: f.sound !== false,
+      // Sessions de concentration terminées : { date, minutes, taskId }
+      sessions: (Array.isArray(f.sessions) ? f.sessions : []).filter(function (x) { return x && DATE_RE.test(x.date) && typeof x.minutes === 'number' && x.minutes > 0; })
+        .map(function (x) { return { date: x.date, minutes: Math.round(x.minutes), taskId: typeof x.taskId === 'string' ? x.taskId : null }; })
+    };
+  }
+
+  /* --- Bilans du dimanche ------------------------------------------------------ */
+  // { week: lundi 'YYYY-MM-DD', savedAt, proud, lesson, priorities: [{ id, text, taskId, done }] }
+  function normalizeReviews(list) {
+    var seen = {};
+    return (Array.isArray(list) ? list : []).filter(function (r) {
+      if (!r || typeof r !== 'object' || !DATE_RE.test(r.week) || seen[r.week]) return false;
+      seen[r.week] = 1;
+      return true;
+    }).map(function (r) {
+      return {
+        week: r.week,
+        savedAt: typeof r.savedAt === 'string' ? r.savedAt : null,
+        proud: typeof r.proud === 'string' ? r.proud : '',
+        lesson: typeof r.lesson === 'string' ? r.lesson : '',
+        priorities: (Array.isArray(r.priorities) ? r.priorities : []).filter(function (p) { return p && typeof p.text === 'string' && p.text.trim(); }).slice(0, 3).map(function (p, i) {
+          return { id: typeof p.id === 'string' && p.id ? p.id : 'prio-' + r.week + '-' + i, text: p.text.trim(), taskId: typeof p.taskId === 'string' ? p.taskId : null, done: !!p.done };
+        })
+      };
+    }).sort(function (a, b) { return a.week < b.week ? -1 : 1; });
+  }
+
+  /* --- Badges : date à laquelle chacun a été gagné ----------------------------- */
+  function normalizeBadges(b) {
+    var at = b && typeof b === 'object' && b.at && typeof b.at === 'object' ? b.at : {};
+    var out = {};
+    Object.keys(at).forEach(function (k) { if (DATE_RE.test(at[k])) out[k] = at[k]; });
+    return { at: out };
   }
 
   /* --- Validation (structure indispensable) -------------------------------- */
@@ -323,7 +382,9 @@
       concerts: arr(pr.concerts, function (x) { return obj(x) && typeof x.artist === 'string'; }),
       pets: fresh ? [{ id: 'pet-memeow', name: 'Memeow', species: 'Chatte', birth: '', traits: 'Tricolore tigrée (roux, noir, gris, brun), yeux verts. Dort sur le clavier, se lèche la patte et réclame ses croquettes.', photo: null }]
         : arr(pr.pets, function (x) { return obj(x) && typeof x.name === 'string'; }),
-      gallery: arr(pr.gallery, function (x) { return obj(x) && typeof x.src === 'string' && /^data:image\//.test(x.src); })
+      gallery: arr(pr.gallery, function (x) { return obj(x) && typeof x.src === 'string' && /^data:image\//.test(x.src); }),
+      // Accessoires pixel portés (débloqués avec les badges)
+      wardrobe: { me: obj(pr.wardrobe) && typeof pr.wardrobe.me === 'string' ? pr.wardrobe.me : null, memeow: obj(pr.wardrobe) && typeof pr.wardrobe.memeow === 'string' ? pr.wardrobe.memeow : null }
     };
   }
 
@@ -387,6 +448,6 @@
     DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
     defaultState: defaultState, defaultSettings: defaultSettings, defaultUI: defaultUI,
     versionOf: versionOf, migrate: migrate, normalize: normalize, validate: validate, summarize: summarize,
-    normalizeHealth: normalizeHealth, normalizeBudget: normalizeBudget, normalizeProfile: normalizeProfile, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
+    normalizeHealth: normalizeHealth, normalizeFocus: normalizeFocus, normalizeReviews: normalizeReviews, normalizeBudget: normalizeBudget, normalizeProfile: normalizeProfile, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
   };
 });

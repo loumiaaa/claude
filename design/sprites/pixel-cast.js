@@ -9,7 +9,7 @@
  *   PixelCast.size('lamia')         // { width, height } en pixels « art »
  *   PixelCast.icon('heart', 4)      // -> HTMLCanvasElement
  *   PixelCast.iconDataURL('heart', 4) // -> 'data:image/png;base64,...'
- *   Option de mount facultative : flip: true (miroir). Liseré en mode sombre : --pixel-cast-rim.
+ *   Options de mount facultatives : flip: true (miroir), extras: ['fleur'] (accessoires, cf. PixelCast.accessories). Liseré en mode sombre : --pixel-cast-rim.
  *
  * FORMAT DES SPRITES (détails dans design/sprites/README.md)
  * - Chaque personnage a une palette : un caractère = une couleur ('#RRGGBB' ou '#RRGGBBAA').
@@ -821,6 +821,70 @@
   };
 
   /* =======================================================================
+     1 bis. LES ACCESSOIRES (débloqués avec les badges)
+     Chaque accessoire suit le calque « head » de l'image : il bouge avec la tête
+     (respiration, saut, miaulement). Une pose sans « head » (Memeow qui dort)
+     ne le montre pas. x, y : position quand la tête n'est pas décalée.
+     ======================================================================= */
+  var ACC_PALETTE = {
+    o: '#2B2150', w: '#FFFFFF',
+    y: '#FFD24D', Y: '#FFF4C7', Q: '#E0A12A',                 // or
+    k: '#F2709A', K: '#C9487A', p: '#FFC2D6',                 // rose
+    v: '#7B61D9', V: '#5A43B5', l: '#A693F0',                 // violet (béret)
+    g: '#6BBF6A', G: '#3F8F48'                                // feuille
+  };
+  var PERSON_ACC = {
+    fleur: { x: 21, y: 2, rows: [
+      '.oo.oo.',
+      'okpokpo',
+      'okyYyko',
+      'okkokko',
+      '.oo.oo.'
+    ]},
+    beret: { x: 8, y: 0, rows: [
+      '.........oV.....',
+      '.....oooovvoo...',
+      '...oovvvvvvllvo.',
+      '..ovvvvvvvvvvlvo',
+      '.oVvvvvvvvvvvvvo',
+      '.oVVVVVVVVVVVVo.',
+      '..oooooooooooo..'
+    ]},
+    couronne: { x: 10, y: 0, rows: [
+      '.o...o...o.',
+      'oYo.oYo.oYo',
+      'oyyoyyyoyyo',
+      'oyykyyykyyo',
+      'oQQQQQQQQQo',
+      '.ooooooooo.'
+    ]}
+  };
+  var ACCESSORIES = {
+    lamia: PERSON_ACC,
+    garcon: PERSON_ACC,
+    memeow: {
+      noeud: { x: 8, y: 2, rows: [
+        '.oo.oo.',
+        'okpokpo',
+        'okkKkko',
+        '.oo.oo.'
+      ]},
+      collier: { x: 5, y: 13, rows: [
+        'oKKKKKKKKKKKKKo',
+        '......oyYo.....',
+        '.......oo......'
+      ]},
+      couronne: { x: 7, y: 0, rows: [
+        '.o..o..o.',
+        'oYooyooYo',
+        'oyykykyyo',
+        'oQQQQQQQo',
+        '.ooooooo.'
+      ]}
+    }
+  };
+
+  /* =======================================================================
      2. LES ICÔNES · 16 × 16
      ======================================================================= */
 
@@ -1128,11 +1192,15 @@
 
   var compiled = {};
 
-  function compileCharacter(id) {
-    if (compiled[id]) return compiled[id];
+  var accPal = null;
+  function compileCharacter(id, extras) {
+    extras = (extras || []).filter(function (x) { return ACCESSORIES[id] && ACCESSORIES[id][x]; });
+    var key = id + (extras.length ? '|' + extras.join(',') : '');
+    if (compiled[key]) return compiled[key];
     var def = CAST[id];
     if (!def) fail('personnage inconnu « ' + id + ' » (attendus : ' + Object.keys(CAST).join(', ') + ')');
     var pal = compilePalette(def.palette, id);
+    if (extras.length && !accPal) accPal = compilePalette(ACC_PALETTE, 'accessoires');
     var anims = {};
     Object.keys(def.animations).forEach(function (name) {
       var a = def.animations[name];
@@ -1141,10 +1209,16 @@
         var where = id + '.' + name + '[' + n + ']';
         var ms = Math.max(16, Math.round(+f[0] || 0));
         var buf = new Uint8ClampedArray(def.width * def.height * 4);
+        var anchor = null;
         parseLayers(f[1]).forEach(function (l) {
           var part = def.parts[l.name];
           if (!part) fail('calque inconnu « ' + l.name + ' » (' + where + ')');
           paint(buf, def.width, def.height, part.rows, pal, (part.x || 0) + l.dx, (part.y || 0) + l.dy, id + '.' + l.name);
+          if (l.name === 'head') anchor = l;
+        });
+        if (anchor) extras.forEach(function (x) {
+          var acc = ACCESSORIES[id][x];
+          paint(buf, def.width, def.height, acc.rows, accPal, acc.x + anchor.dx, acc.y + anchor.dy, id + '+' + x);
         });
         return { duration: ms, data: buf };
       });
@@ -1159,8 +1233,8 @@
         frames: frames
       };
     });
-    compiled[id] = { id: id, width: def.width, height: def.height, animations: anims, canvases: {} };
-    return compiled[id];
+    compiled[key] = { id: id, width: def.width, height: def.height, animations: anims, canvases: {} };
+    return compiled[key];
   }
 
   var compiledIcons = {};
@@ -1291,8 +1365,8 @@
   function mount(canvas, id, options) {
     if (!hasDOM()) fail('mount() a besoin d’un navigateur');
     if (!canvas || typeof canvas.getContext !== 'function') fail('mount() attend un élément <canvas>');
-    var ch = compileCharacter(id);
     var opts = options || {};
+    var ch = compileCharacter(id, opts.extras);
     var scale = toScale(opts.scale, 4);
     var flip = !!opts.flip;
 
@@ -1485,6 +1559,8 @@
   var PixelCast = {
     mount: mount,
     animations: Object.freeze(animations),
+    // Accessoires disponibles : { lamia: ['fleur', …], memeow: [...] } ; mount(…, { extras: ['fleur'] })
+    accessories: Object.freeze(Object.keys(ACCESSORIES).reduce(function (o, k) { o[k] = Object.freeze(Object.keys(ACCESSORIES[k])); return o; }, {})),
     size: size,
     icon: icon,
     iconDataURL: iconDataURL

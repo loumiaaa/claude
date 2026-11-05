@@ -498,6 +498,11 @@
           return { options: i.machine, messages: messages };
         });
       },
+      notify: function (o) {
+        if (!notifOn() || !o) return Promise.resolve({ shown: false });
+        try { new Notification(String(o.title || ''), { body: String(o.body || ''), icon: 'icons/icon-192.png', tag: 'lamia-focus' }); return Promise.resolve({ shown: true }); }
+        catch (e) { return Promise.resolve({ shown: false }); }
+      },
       testNotification: function () {
         if (!notifOn()) return Promise.resolve({ shown: false });
         try { new Notification('Les rappels sont prêts', { body: 'Tu recevras ici les rappels d’échéance. À très vite !', icon: 'icons/icon-192.png' }); return Promise.resolve({ shown: true }); }
@@ -566,8 +571,28 @@
         return Promise.resolve(replaceDoc(d, 'avant-import'));
       }
     },
+    // Calendrier Apple : lecture via le relais Supabase (fonction « calendar »)
+    calendar: {
+      cloud: function () { return mode === 'cloud' && !!session; },
+      ping: function () {
+        if (!CLOUD) return Promise.resolve(false);
+        return fetch(BASE_URL + '/functions/v1/calendar?ping=1', { headers: { apikey: CFG.supabaseAnonKey } })
+          .then(function (r) { return r.ok; }, function () { return null; });
+      },
+      fetch: function (url) {
+        if (!CLOUD || mode !== 'cloud' || !session) return Promise.resolve({ ok: false, error: 'Connecte-toi à ton compte (Réglages → Synchronisation) pour lire ton calendrier.' });
+        return accessToken().then(function (t) {
+          return fetch(BASE_URL + '/functions/v1/calendar', { method: 'POST', headers: { apikey: CFG.supabaseAnonKey, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url }) });
+        }).then(function (r) {
+          if (r.status === 404) return { ok: false, relay: 'missing', error: 'Le relais du calendrier n’est pas encore installé sur Supabase.' };
+          return r.json().catch(function () { return { ok: false, error: 'Réponse illisible du relais (erreur ' + r.status + ').' }; });
+        }, function () { return { ok: false, error: 'Pas de connexion Internet ?' }; });
+      },
+      feedUrl: function (token) { return CLOUD ? BASE_URL.replace(/^https:/, 'webcal:') + '/functions/v1/calendar?feed=' + encodeURIComponent(token) : ''; }
+    },
     io: {
       exportCsv: function (o) { return Promise.resolve(download(o.filename, o.content, 'text/csv;charset=utf-8')); },
+      exportIcs: function (o) { return Promise.resolve(download(o.filename, o.content, 'text/calendar;charset=utf-8')); },
       exportPdf: function () { window.print(); return Promise.resolve({ ok: true, path: null }); }
     },
     on: function (channel, fn) {

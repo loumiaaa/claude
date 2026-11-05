@@ -48,8 +48,8 @@
     try {
       if (cast.lamia) cast.lamia.destroy();
       if (cast.memeow) cast.memeow.destroy();
-      cast.lamia = window.PixelCast.mount(cl, S.me().character, { scale: narrow ? 3 : 4, animation: 'idle' });
-      cast.memeow = window.PixelCast.mount(cm, 'memeow', { scale: narrow ? 3 : 4, animation: 'idle' });
+      cast.lamia = window.PixelCast.mount(cl, S.me().character, { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('me') });
+      cast.memeow = window.PixelCast.mount(cm, 'memeow', { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('memeow') });
       cm.setAttribute('aria-hidden', 'true');
       setTimeout(function () {
         if (cast.lamia) cast.lamia.play(voice.lamiaAnimation || 'idle');
@@ -333,7 +333,8 @@
           '<div class="hero__text"><p class="eyebrow">' + esc(D.cap(D.long(today))) + ' · semaine ' + D.isoWeek(today) + '</p>' +
             '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour' + (S.me().name ? ' ' + esc(S.me().name) : '') + '</h1>' +
             '<p class="hero__lead" data-lead>' + esc(leadText(ctx)) + '</p>' +
-            '<div class="hero__actions"><button type="button" class="btn btn--secondary btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button>' +
+            '<div class="hero__actions"><button type="button" class="btn btn--primary btn--sm" data-focus-start>' + icon('target') + 'Mode focus</button>' +
+            '<button type="button" class="btn btn--secondary btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button>' +
             '<span class="hero__hint">Clique sur Memeow, elle adore ça.</span></div></div>' +
           '<div class="hero__stage" data-scene-slot></div>' +
         '</section>' +
@@ -437,7 +438,12 @@
     '</section>';
   }
   function lifeHTML() {
-    return lifeTiles() + '<div class="life-grid">' + (S.space('health') ? healthCard() : '') + (S.space('budget') ? budgetCard() : '') + profileCard() + '</div>';
+    return lifeTiles() + '<div class="life-grid">' +
+      (L.calendarUI ? L.calendarUI.cardHTML() : '') +
+      (L.reviewUI ? L.reviewUI.cardHTML() : '') +
+      (L.habitsUI ? L.habitsUI.todayHTML() : '') +
+      (S.space('health') ? healthCard() : '') + (S.space('budget') ? budgetCard() : '') + profileCard() +
+      (L.badgesUI ? L.badgesUI.cardHTML() : '') + '</div>';
   }
 
   // Re-rendu ciblé (la scène pixel n'est jamais reconstruite inutilement)
@@ -523,7 +529,7 @@
 
     S.subscribe(function (type, d) {
       // Prénom ou personnage changé : tout se redessine (titre, scène)
-      if (type === 'setup' || type === 'profile') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
+      if (type === 'setup' || type === 'profile' || type === 'wardrobe') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'timer') update('life');
       if (type === 'reset') { voice = null; el.innerHTML = ''; render(); return; }
@@ -531,7 +537,7 @@
       if (type === 'ui') { if (d.dashPeriod) update('recap'); return; }
       if (type === 'timer') { update('hours'); update('doing'); return; }
       if (type === 'settings' || type === 'category') { update(); return; }
-      if (type === 'budget' || type === 'health') { update('life'); return; }
+      if (['budget', 'health', 'habits', 'focus', 'review', 'badges', 'calendar', 'calendar-events'].indexOf(type) >= 0) { update('life'); return; }
       if (type.indexOf('task') === 0) {
         if (d.part === 'checklist') return;
         update();

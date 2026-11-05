@@ -151,6 +151,7 @@
       '</div>' +
       '<section class="glass card gantt-card" aria-label="Timeline">' + ganttHTML(p) + '</section>' +
       '<section class="plan-mobile" aria-label="Planning en liste">' + listHTML(p) + '</section>' +
+      (L.calendarUI ? L.calendarUI.planningHTML(p) : '') +
       '<section class="glass card unplanned" aria-labelledby="h-unplanned"><div class="card__header"><div><h2 class="card__title" id="h-unplanned">Non planifiées</h2>' +
         '<p class="card__subtitle">Sans date de début ni de fin : elles attendent leur moment.</p></div></div>' +
         (unplanned.length ? '<ul class="unplanned__list" role="list">' + unplanned.map(function (t) {

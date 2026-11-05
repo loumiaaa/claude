@@ -19,6 +19,7 @@ const { DataStore, writeAtomic } = require('./storage.js');
 const { DataLock } = require('./lock.js');
 const { SystemIntegration, AUMID } = require('./system.js');
 const proto = require('./protocol.js');
+const { fetchCalendar } = require('./calendar.js');
 
 const ARGS = process.argv.slice(1);
 const SMOKE = ARGS.includes('--smoke-test');
@@ -395,6 +396,12 @@ function registerIpc() {
     return { shown: S.system.notify('Les rappels sont prêts', 'Tu recevras ici les rappels d’échéance. À très vite, Lamia !') };
   });
 
+  // Notification système (mode focus) : seulement si les notifications sont activées sur ce PC
+  handle('app:notify', (o) => {
+    if (!S.system.options.windowsNotifications || !o || typeof o.title !== 'string') return { shown: false };
+    return { shown: S.system.notify(o.title.slice(0, 120), String(o.body || '').slice(0, 300)) };
+  });
+
   handle('data:save', (doc) => saveDoc(doc));
   ipcMain.on('data:save-sync', (e, doc) => {
     trace('save-sync');
@@ -464,6 +471,16 @@ function registerIpc() {
     S.writtenFiles.add(file);
     return { ok: true, path: file };
   });
+  handle('io:export-ics', async (o) => {
+    if (!o || typeof o.content !== 'string' || o.content.length > 5 * 1024 * 1024) return { ok: false, error: 'Contenu invalide.' };
+    const file = await askSavePath(cleanName(o.filename, '.ics'), [{ name: 'Calendrier (.ics)', extensions: ['ics'] }]);
+    if (!file) return { ok: false, canceled: true };
+    writeAtomic(file, o.content);
+    S.writtenFiles.add(file);
+    return { ok: true, path: file };
+  });
+  // Calendrier Apple : le main lit le lien public (pas de restriction CORS ici)
+  handle('calendar:fetch', (url) => fetchCalendar(url));
   handle('io:export-pdf', async (o) => {
     const name = cleanName(o && o.filename, '.pdf');
     const pdf = await S.win.webContents.printToPDF({ pageSize: 'A4', printBackground: true, preferCSSPageSize: true });

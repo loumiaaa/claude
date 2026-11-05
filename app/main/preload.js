@@ -18,7 +18,8 @@ contextBridge.exposeInMainWorld('lamia', {
     openDataFolder: () => invoke('app:open-data-folder'),
     showFile: (file) => invoke('app:show-file', file),
     setMachineOptions: (patch) => invoke('app:set-machine-options', patch),
-    testNotification: () => invoke('app:test-notification')
+    testNotification: () => invoke('app:test-notification'),
+    notify: (o) => invoke('app:notify', o)
   },
   data: {
     save: (doc) => invoke('data:save', doc),
@@ -37,7 +38,11 @@ contextBridge.exposeInMainWorld('lamia', {
   },
   io: {
     exportCsv: (o) => invoke('io:export-csv', o),
-    exportPdf: (o) => invoke('io:export-pdf', o)
+    exportPdf: (o) => invoke('io:export-pdf', o),
+    exportIcs: (o) => invoke('io:export-ics', o)
+  },
+  calendar: {
+    fetch: (url) => invoke('calendar:fetch', url)
   },
   on: (channel, callback) => {
     if (EVENTS.indexOf(channel) < 0 || typeof callback !== 'function') throw new Error('Canal non autorisé : ' + channel);

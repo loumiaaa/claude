@@ -31,6 +31,7 @@
         <a class="spacebar__item" href="#profil" data-space-tab="profile">Mon profil</a>
       </nav>
       <div class="shell-head__actions">
+        <button type="button" class="focus-chip" data-focus-chip hidden></button>
         <button type="button" class="btn btn--primary btn--sm" data-action="new-task"><span data-icon="plus"></span>Nouvelle tâche</button>
         <button type="button" class="btn btn--secondary btn--icon round-btn" data-action="cycle-theme" aria-label="Changer de thème"><span data-icon="moon"></span></button>
         <a class="btn btn--secondary btn--icon round-btn" href="#reglages" aria-label="Réglages"><span data-icon="settings"></span></a>
@@ -53,10 +54,10 @@
           <p class="nav-label">Accueil</p>
           <div class="nav-section__items" id="ns-home">
             <a class="nav-item" href="#dashboard" data-nav="dashboard"><span data-icon="dashboard"></span><span class="nav-item__label">Vue globale</span></a>
+            <a class="nav-item" href="#habitudes" data-nav="habits"><span data-icon="checklist"></span><span class="nav-item__label">Habitudes</span></a>
+            <a class="nav-item" href="#bilan" data-nav="review"><span data-icon="note"></span><span class="nav-item__label">Bilan du dimanche</span></a>
+            <a class="nav-item" href="#badges" data-nav="badges"><span data-icon="sparkle"></span><span class="nav-item__label">Badges</span></a>
             <a class="nav-item" href="#taches"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
-            <a class="nav-item" href="#sante" data-space-link="health"><span data-icon="heart"></span><span class="nav-item__label">Santé</span></a>
-            <a class="nav-item" href="#budget" data-space-link="budget"><span data-icon="wallet"></span><span class="nav-item__label">Budget</span></a>
-            <a class="nav-item" href="#profil"><span data-icon="user"></span><span class="nav-item__label">Mon profil</span></a>
           </div>
         </div>
         <div class="nav-section" data-section="prod">
@@ -100,6 +101,7 @@
         <span class="brand__mark" aria-hidden="true"><span data-icon="sparkle"></span></span>
         <span class="brand__text"><span class="brand__name" data-topbar-title>Dashboard</span><span class="brand__sub">Plateforme de suivi</span></span>
       </a>
+      <button type="button" class="focus-chip focus-chip--top" data-focus-chip hidden></button>
       <a class="btn btn--ghost btn--icon topbar__settings" href="#reglages" aria-label="Réglages"><span data-icon="settings"></span></a>
       <button type="button" class="btn btn--ghost btn--icon" data-action="cycle-theme" aria-label="Changer de thème"><span data-icon="moon"></span></button>
       <button type="button" class="btn btn--primary btn--icon" data-action="new-task" aria-label="Nouvelle tâche"><span data-icon="plus"></span></button>
@@ -108,6 +110,9 @@
     <main id="main" class="main" tabindex="-1">
       <div class="app-banners" id="app-banners" aria-live="polite"></div>
       <section class="view" id="view-dashboard" data-view="dashboard" aria-labelledby="h-dashboard"></section>
+      <section class="view" id="view-habits" data-view="habits" aria-labelledby="h-habits" hidden></section>
+      <section class="view" id="view-review" data-view="review" aria-labelledby="h-review" hidden></section>
+      <section class="view" id="view-badges" data-view="badges" aria-labelledby="h-badges" hidden></section>
       <section class="view" id="view-tasks" data-view="tasks" aria-labelledby="h-tasks" hidden></section>
       <section class="view" id="view-planning" data-view="planning" aria-labelledby="h-planning" hidden></section>
       <section class="view" id="view-recap" data-view="recap" aria-labelledby="h-recap" hidden></section>
@@ -130,8 +135,8 @@
     <nav class="glass glass--strong tabbar" aria-label="Navigation principale">
       <a class="tabbar__item" href="#dashboard" data-nav="dashboard" data-space="home"><span data-icon="dashboard"></span><span>Accueil</span></a>
       <a class="tabbar__item" href="#taches" data-space="home"><span data-icon="tasks"></span><span>Tâches</span></a>
-      <a class="tabbar__item" href="#sante" data-space="home" data-space-link="health"><span data-icon="heart"></span><span>Santé</span></a>
-      <a class="tabbar__item" href="#budget" data-space="home" data-space-link="budget"><span data-icon="wallet"></span><span>Budget</span></a>
+      <a class="tabbar__item" href="#habitudes" data-nav="habits" data-space="home"><span data-icon="checklist"></span><span>Habitudes</span></a>
+      <a class="tabbar__item" href="#bilan" data-nav="review" data-space="home"><span data-icon="note"></span><span>Bilan</span></a>
       <a class="tabbar__item" href="#dashboard" data-space="prod"><span data-icon="dashboard"></span><span>Accueil</span></a>
       <a class="tabbar__item" href="#taches" data-nav="tasks" data-space="prod"><span data-icon="tasks"></span><span>Tâches</span></a>
       <a class="tabbar__item" href="#planning" data-nav="planning" data-space="prod"><span data-icon="planning"></span><span>Planning</span></a>
@@ -159,6 +164,7 @@
   <div class="overlay" id="overlay-new" hidden></div>
   <div class="overlay overlay--drawer" id="overlay-task" hidden></div>
   <div class="overlay" id="overlay-dialog" hidden></div>
+  <div class="overlay overlay--focus" id="overlay-focus" hidden></div>
   <div class="toast-region" id="toasts" aria-live="polite" aria-relevant="additions"></div>
   <div class="sr-only" id="sr-live" aria-live="polite" aria-atomic="true"></div>
 
@@ -166,11 +172,14 @@
   <script src="design/phrases.js"></script>
   <script src="design/sprites/pixel-cast.js"></script>
   <script src="shared/dates.js"></script>
+  <script src="shared/habits.js"></script>
   <script src="shared/model.js"></script>
   <script src="shared/stats.js"></script>
   <script src="shared/reminders.js"></script>
   <script src="shared/csv.js"></script>
   <script src="shared/budget.js"></script>
+  <script src="shared/badges.js"></script>
+  <script src="shared/ics.js"></script>
   <script src="js/bridge.js"></script>
   <script src="js/store.js"></script>
   <script src="js/ui-common.js"></script>
@@ -189,6 +198,11 @@
   <script src="js/ui-budget.js"></script>
   <script src="js/ui-profile.js"></script>
   <script src="js/ui-setup.js"></script>
+  <script src="js/ui-habits.js"></script>
+  <script src="js/ui-focus.js"></script>
+  <script src="js/ui-review.js"></script>
+  <script src="js/ui-badges.js"></script>
+  <script src="js/ui-calendar.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
