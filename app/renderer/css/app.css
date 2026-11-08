@@ -3090,3 +3090,20 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .acc-table td:first-child:has(.acc-of-sel) .acc-in { padding-right: 70px; }
 .acc-of-sel { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); height: 28px; padding: 0 4px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--fs-xs); }
 @media (max-width: 600px) { .acc-table .acc-date { display: none; } .acc-table .acc-amt { width: 36%; } }
+
+/* Mes comptes : cases « passé » */
+.acc-table .acc-chk { width: 40px; padding-left: 6px; }
+.acc-check { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 2px solid color-mix(in srgb, var(--c) 45%, var(--color-border-strong)); border-radius: 7px; background: var(--color-surface); color: transparent; cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.acc-check .icon { width: 14px; height: 14px; }
+.acc-check:hover { border-color: var(--c); color: color-mix(in srgb, var(--c) 60%, transparent); }
+.acc-check:active { transform: scale(.9); }
+.acc-check.is-on { background: var(--c); border-color: var(--c); color: #fff; }
+.acc-table tr.is-paid .acc-in:not(:focus), .acc-table tr.is-paid .acc-txt, .acc-table tr.is-paid .num { color: var(--color-text-subtle); }
+.acc-table tr.is-paid td:nth-child(2) .acc-in:not(:focus), .acc-table tr.is-paid td:nth-child(2) .acc-txt { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--c) 60%, transparent); text-decoration-thickness: 2px; }
+.acc-card__passed { padding: 3px 10px; border-radius: var(--radius-pill); background: var(--color-surface-muted); font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.acc-card__passed.is-all { background: color-mix(in srgb, var(--acc-rest) 18%, transparent); color: color-mix(in srgb, var(--acc-rest) 70%, var(--color-text)); }
+/* La case libellé (pas forcément la 1re colonne) porte ↻, les pastilles et le menu 1/4 */
+.acc-table td:has(> .acc-rec, > .acc-dots, > .acc-of, > .acc-of-sel, > .acc-rec-toggle) { position: relative; }
+.acc-table td:has(> .acc-rec, > .acc-dots, > .acc-of, > .acc-rec-toggle) > .acc-in { padding-right: 64px; }
+.acc-table td:has(> .acc-of-sel) > .acc-in { padding-right: 70px; }
+.acc-table td.acc-chk { position: static; }

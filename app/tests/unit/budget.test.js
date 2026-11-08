@@ -119,3 +119,15 @@ test('catégories par défaut, catégories déjà utilisées gardées, enveloppe
   assert.equal(env[0].left, 10);
   assert.equal(env[0].pct, 80);
 });
+
+test('cases « passé » : dépenses ponctuelles et versements d’épargne aussi', () => {
+  const b = M.normalizeBudget({
+    entries: [{ id: 'e1', date: '2026-11-04', type: 'expense', label: 'Ongles', amount: 40 }],
+    paid: ['entry:e1:2026-11-04', 'dep:d1:2026-11-01', 'bill:b1:2026-11-05', 'autre:x:2026-11-01']
+  });
+  assert.deepEqual(b.paid, ['entry:e1:2026-11-04', 'dep:d1:2026-11-01', 'bill:b1:2026-11-05']);
+  const it = B.expenseItems(b, '2026-11-01', '2026-11-30')[0];
+  assert.equal(it.key, 'entry:e1:2026-11-04');
+  assert.equal(it.paid, true);
+  assert.equal(B.paidKey('deposit', 'd1', '2026-11-01'), 'dep:d1:2026-11-01');
+});

@@ -330,7 +330,7 @@
       // Catégories avec icône et plafond mensuel facultatif (enveloppe)
       categories: budgetCategories(b),
       // Prélèvements et échéances cochés « passés » : « bill:<id>:<date> » / « inst:<id>:<date> »
-      paid: (Array.isArray(b.paid) ? b.paid : []).filter(function (k, i, a) { return typeof k === 'string' && /^(bill|inst):.+:\d{4}-\d{2}-\d{2}$/.test(k) && a.indexOf(k) === i; })
+      paid: (Array.isArray(b.paid) ? b.paid : []).filter(function (k, i, a) { return typeof k === 'string' && /^(bill|inst|entry|dep):.+:\d{4}-\d{2}-\d{2}$/.test(k) && a.indexOf(k) === i; })
     };
   }
 

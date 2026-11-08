@@ -33,8 +33,10 @@
     return out;
   }
 
-  // Paiements cochés « passés » : clé « bill:<id>:<date> » ou « inst:<id>:<date> »
-  function paidKey(source, id, date) { return (source === 'bill' ? 'bill' : 'inst') + ':' + id + ':' + date; }
+  // Paiements cochés « passés » : « bill:<id>:<date> » (facture), « inst:<id>:<date> » (plusieurs fois),
+  // « entry:<id>:<date> » (dépense ponctuelle), « dep:<id>:<date> » (versement d'épargne)
+  var PAID_PREFIX = { bill: 'bill', installment: 'inst', inst: 'inst', entry: 'entry', deposit: 'dep', dep: 'dep' };
+  function paidKey(source, id, date) { return (PAID_PREFIX[source] || 'inst') + ':' + id + ':' + date; }
   function isPaid(paid, source, id, date) { return (paid || []).indexOf(paidKey(source, id, date)) >= 0; }
 
   // Échéancier d'un paiement en plusieurs fois (le dernier versement absorbe l'arrondi)
@@ -56,7 +58,7 @@
   // Tous les mouvements de dépense d'une période, avec leur origine
   function expenseItems(b, start, end) {
     var out = [];
-    b.entries.forEach(function (x) { if (x.type === 'expense' && within(x.date, start, end)) out.push({ date: x.date, label: x.label, amount: x.amount, category: x.category || 'Autre', source: 'entry', id: x.id }); });
+    b.entries.forEach(function (x) { if (x.type === 'expense' && within(x.date, start, end)) out.push({ date: x.date, label: x.label, amount: x.amount, category: x.category || 'Autre', source: 'entry', id: x.id, key: paidKey('entry', x.id, x.date), paid: isPaid(b.paid, 'entry', x.id, x.date) }); });
     b.bills.forEach(function (x) { billDates(x, start, end).forEach(function (d) { out.push({ date: d, label: x.label, amount: x.amount, category: x.category || 'Factures', source: 'bill', id: x.id, key: paidKey('bill', x.id, d), paid: isPaid(b.paid, 'bill', x.id, d) }); }); });
     b.installments.forEach(function (p) {
       schedule(p).forEach(function (s) { if (within(s.date, start, end)) out.push({ date: s.date, label: p.label + ' (' + s.n + '/' + s.of + ')', amount: s.amount, category: p.category || 'Paiements en plusieurs fois', source: 'installment', id: p.id, key: paidKey('inst', p.id, s.date), paid: isPaid(b.paid, 'inst', p.id, s.date) }); });

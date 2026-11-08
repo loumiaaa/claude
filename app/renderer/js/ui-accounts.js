@@ -40,10 +40,10 @@
   }
   function rec() { return '<span class="acc-rec" title="Revient tous les mois">↻</span>'; }
   // Un tableau dans une carte : icône pixel, titre, sous-total
-  function card(key, px, title, sum, cols, rows, extra) {
+  function card(key, px, title, sum, cols, rows, extra, headExtra) {
     var id = 'acc-t-' + key;
     return '<section class="acc-card acc-card--' + key + '" aria-labelledby="' + id + '">' +
-      '<header class="acc-card__head">' + U.px(px, 2) + '<h2 class="acc-card__title" id="' + id + '">' + esc(title) + '</h2>' +
+      '<header class="acc-card__head">' + U.px(px, 2) + '<h2 class="acc-card__title" id="' + id + '">' + esc(title) + '</h2>' + (headExtra || '') +
         (sum != null ? '<span class="acc-card__sum num">' + money(sum) + NB + '€</span>' : '') + '</header>' +
       '<table class="acc-table" aria-labelledby="' + id + '">' +
         (cols ? '<thead><tr>' + cols.map(function (c) { return '<th scope="col"' + (c[1] ? ' class="' + c[1] + '"' : '') + '>' + esc(c[0]) + '</th>'; }).join('') + '</tr></thead>' : '') +
@@ -87,6 +87,17 @@
     return out.filter(function (x, i) { return x.amount || x.m.start === m.start || i === 0; });
   }
 
+  /* --- Cases « passé » ------------------------------------------------------------------------- */
+  function check(key, paid, label) {
+    return '<td class="acc-chk"><button type="button" class="acc-check' + (paid ? ' is-on' : '') + '" data-acc-paid="' + esc(key) + '" aria-pressed="' + paid + '" aria-label="' + esc(label) + (paid ? ' : passé' : ' : pas encore passé') + '" data-focus-key="acc-paid-' + esc(key) + '">' + icon('check') + '</button></td>';
+  }
+  function passed(list) {
+    var n = list.filter(function (x) { return x.paid; }).length;
+    return list.length ? '<span class="acc-card__passed' + (n === list.length ? ' is-all' : '') + '" title="Dépenses passées">' + n + '/' + list.length + '</span>' : '';
+  }
+  // Versement d'épargne « du mois » saisi ici (on peut le cocher comme les dépenses)
+  function monthDeposit(m) { return B().deposits.filter(function (x) { return x.monthly && x.date === m.start; })[0] || null; }
+
   /* --- Rendu -------------------------------------------------------------------------------- */
   function sum(list) { return Math.round(list.reduce(function (a, x) { return a + x.amount; }, 0) * 100) / 100; }
   function render() {
@@ -95,6 +106,10 @@
     var totalExp = Math.round((d.expenses + d.savings) * 100) / 100, rest = Math.round((d.income - totalExp) * 100) / 100;
     var ledger = savingsLedger(m), saved = ledger.reduce(function (a, x) { return a + x.amount; }, 0);
     var sBills = sum(d.bills), sInst = sum(d.inst), sMisc = sum(d.misc);
+    var dep = monthDeposit(m), depKey = dep ? BG.paidKey('deposit', dep.id, dep.date) : null, depPaid = !!(dep && (B().paid || []).indexOf(depKey) >= 0);
+    var allExp = d.bills.concat(d.inst, d.misc);
+    var paidSum = sum(allExp.filter(function (x) { return x.paid; })) + (depPaid ? dep.amount : 0);
+    var toCome = Math.round((totalExp - paidSum) * 100) / 100;
 
     // Bandeau : entrées, dépenses, restant, et où part l'argent
     var parts = [['bills', 'Factures', sBills], ['inst', 'Plusieurs fois', sInst], ['misc', 'Diverses', sMisc], ['eco', 'Économies', d.savings], ['rest', 'Restant', Math.max(0, rest)]];
@@ -116,7 +131,7 @@
         '</div>' +
         '<div class="acc-hero__stats">' +
           '<div class="acc-stat acc-stat--in">' + U.px('coin', 2) + '<span class="acc-stat__label">Entrées</span><strong class="acc-stat__value num">' + money(d.income) + NB + '€</strong></div>' +
-          '<div class="acc-stat acc-stat--out">' + U.px('bell', 2) + '<span class="acc-stat__label">Dépenses</span><strong class="acc-stat__value num">' + money(totalExp) + NB + '€</strong>' + (pct != null ? '<span class="acc-stat__sub">' + pct + NB + '% de tes entrées</span>' : '') + '</div>' +
+          '<div class="acc-stat acc-stat--out">' + U.px('bell', 2) + '<span class="acc-stat__label">Dépenses</span><strong class="acc-stat__value num">' + money(totalExp) + NB + '€</strong>' + '<span class="acc-stat__sub">' + (paidSum ? money(paidSum) + NB + '€ déjà passés · ' + (toCome > 0 ? money(toCome) + NB + '€ à venir' : 'tout est passé') : pct != null ? pct + NB + '% de tes entrées' : '') + '</span></div>' +
           '<div class="acc-stat acc-stat--rest' + (rest < 0 ? ' is-neg' : '') + '">' + U.px(rest < 0 ? 'flame' : 'piggy', 2) + '<span class="acc-stat__label">Restant</span><strong class="acc-stat__value num">' + money(rest) + NB + '€</strong>' +
             '<span class="acc-stat__sub">' + (rest < 0 ? 'On ajuste en douceur le mois prochain' : rest > 0 ? 'Bien joué ✦' : 'Pile à l’équilibre') + '</span></div>' +
         '</div>' +
@@ -151,13 +166,13 @@
       return list.map(function (x) {
         var label = kind === 'installments' ? x.label.replace(/ \((\d+)\/(\d+)\)$/, '') : x.label;
         var nOf = kind === 'installments' ? (/\((\d+\/\d+)\)$/.exec(x.label) || [])[1] : '';
-        return '<tr><td>' + cellText(kind, x.id, 'label', label, '', 'Libellé') + (nOf ? dots(nOf) : '') + (kind === 'bills' ? rec() : '') + '</td>' +
+        return '<tr' + (x.paid ? ' class="is-paid"' : '') + '>' + check(x.key, !!x.paid, label) + '<td>' + cellText(kind, x.id, 'label', label, '', 'Libellé') + (nOf ? dots(nOf) : '') + (kind === 'bills' ? rec() : '') + '</td>' +
           '<td class="acc-amt">' + (kind === 'installments' ? '<span class="num">' + money(x.amount) + '</span>' : cellMoney(kind, x.id, 'amount', x.amount, 'Montant de ' + label)) + '</td>' +
           '<td class="acc-x">' + delBtn(kind, x.id, label) + '</td></tr>';
-      }).concat([newRow(kind === 'entries' ? 'expense' : kind === 'bills' ? 'bill' : 'installment', [['label', ph], ['amount', kind === 'installments' ? 'par mois' : '0,00']])]);
+      }).concat([newRow(kind === 'entries' ? 'expense' : kind === 'bills' ? 'bill' : 'installment', [['label', ph], ['amount', kind === 'installments' ? 'par mois' : '0,00']]).replace('<tr class="acc-new">', '<tr class="acc-new"><td class="acc-chk"></td>')]);
     }
     var misc = expRows(d.misc, 'entries', '+ Nouvelle dépense');
-    if (d.savings) misc.unshift('<tr class="acc-eco"><td><span class="acc-txt">' + U.px('piggy') + ' Économies du mois</span></td><td class="acc-amt"><span class="num">' + money(d.savings) + '</span></td><td class="acc-x"></td></tr>');
+    if (d.savings) misc.unshift('<tr class="acc-eco' + (depPaid ? ' is-paid' : '') + '">' + (dep ? check(depKey, depPaid, 'Économies du mois') : '<td class="acc-chk"></td>') + '<td><span class="acc-txt">' + U.px('piggy') + ' Économies du mois</span></td><td class="acc-amt"><span class="num">' + money(d.savings) + '</span></td><td class="acc-x"></td></tr>');
 
     var html =
       '<header class="page-head"><div class="page-head__text"><p class="eyebrow">Budget</p><h1 class="h1" id="h-accounts" tabindex="-1">Mes comptes</h1>' +
@@ -166,9 +181,9 @@
       '<div class="acc-sheet">' +
         '<div class="acc-col">' + entrees + eco + params + '</div>' +
         '<div class="acc-col">' +
-          card('bills', 'bell', 'Factures', sBills, null, expRows(d.bills, 'bills', '+ Nouvelle facture')) +
-          card('inst', 'calendar', 'Paiements en plusieurs fois', sInst, null, expRows(d.inst, 'installments', '+ Nouvel achat')) +
-          card('misc', 'gift', 'Dépenses diverses', Math.round((sMisc + d.savings) * 100) / 100, null, misc) +
+          card('bills', 'bell', 'Factures', sBills, null, expRows(d.bills, 'bills', '+ Nouvelle facture'), '', passed(d.bills)) +
+          card('inst', 'calendar', 'Paiements en plusieurs fois', sInst, null, expRows(d.inst, 'installments', '+ Nouvel achat'), '', passed(d.inst)) +
+          card('misc', 'gift', 'Dépenses diverses', Math.round((sMisc + d.savings) * 100) / 100, null, misc, '', passed(d.misc.concat(dep ? [{ paid: depPaid }] : []))) +
         '</div>' +
       '</div>';
     U.keepFocus(el, function () { el.innerHTML = html; });
@@ -303,6 +318,12 @@
         var k = +b.getAttribute('data-acc-month');
         anchor = k === 0 ? D.today() : (k < 0 ? D.addDays(month().start, -1) : D.addDays(month().end, 1));
         render();
+        return;
+      }
+      if ((b = e.target.closest('[data-acc-paid]'))) {
+        var key = b.getAttribute('data-acc-paid'), on = b.getAttribute('aria-pressed') !== 'true';
+        S.setBudgetPaid(key, on);
+        if (on) U.announce('Passé');
         return;
       }
       if ((b = e.target.closest('[data-acc-del]'))) { remove(b.getAttribute('data-acc-del'), b.getAttribute('data-id'), b); return; }
