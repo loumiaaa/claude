@@ -104,6 +104,11 @@
 
   function touch(t) { t.updatedAt = D.today(); }
 
+  function complete(doc) {
+    var M = window.LamiaShared && window.LamiaShared.model;
+    try { return M && doc && typeof doc === 'object' ? M.normalize(doc) : doc; } catch (e) { return doc; }
+  }
+
   // Chaque lundi, la colonne « Terminé » repart à zéro : les tâches bouclées
   // les semaines précédentes passent dans l'historique (rien n'est supprimé).
   function doneOn(t) { return t.completedAt || t.updatedAt || ''; }
@@ -133,7 +138,9 @@
   /* --- Actions ----------------------------------------------------------- */
   var store = {
     init: function (doc, opts) {
-      state = doc;
+      // Les champs facultatifs (profil, budget, habitudes…) sont toujours complétés :
+      // un premier lancement de l'application Windows / Mac arrive avec un document neuf
+      state = complete(doc);
       readOnly = !!(opts && opts.readOnly);
       freshUI(state);
       return state;
@@ -158,7 +165,7 @@
     // Remplacement complet (démo, import, restauration, rechargement après verrou)
     replace: function (doc) {
       clearTimeout(saveTimer); saveTimer = null; dirty = false;
-      state = doc;
+      state = complete(doc);
       freshUI(state);
       emit('reset', {}, { noSave: true });
       return true;

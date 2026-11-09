@@ -325,7 +325,7 @@
   function init() {
     if (!api) { bootError(new Error('cette page doit être ouverte dans l’application.')); return; }
     api.app.boot().then(function (res) {
-      try { start(res.doc, res.info); } catch (e) { recovery(e); }
+      try { start(res.doc, res.info); } catch (e) { if (window.console) console.error(e); recovery(e); }
     }, bootError);
   }
 
