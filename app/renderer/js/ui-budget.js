@@ -664,7 +664,8 @@
     var total = b.goals.reduce(function (a, g) { return a + BG.goalSaved(b, g.id, today); }, 0);
     var goals = b.goals.length ? '<div class="goal-grid">' + b.goals.map(function (g) {
       var pr = BG.goalProjection(b, g, today), saved = pr.saved, pct = g.target ? Math.max(0, Math.min(100, Math.round((saved / g.target) * 100))) : null;
-      var deps = b.deposits.filter(function (x) { return x.goalId === g.id; }).sort(function (a, c) { return a.date < c.date ? 1 : -1; });
+      // Les versements des mois à venir n'apparaissent qu'au début de leur mois
+      var deps = b.deposits.filter(function (x) { return x.goalId === g.id && x.date <= BG.savingsShownUntil(b, today); }).sort(function (a, c) { return a.date < c.date ? 1 : -1; });
       var plans = (b.plans || []).filter(function (x) { return x.goalId === g.id; });
       var proj = g.target ? (pr.reached ? 'Objectif atteint, bravo !' : pr.date ? 'À ce rythme (' + eur(pr.monthly) + '/mois), objectif atteint vers <strong>' + esc(D.monthYear(pr.date)) + '</strong>. Encore ' + eur(g.target - saved) + '.' : 'Encore ' + eur(g.target - saved) + '. Programme un versement automatique pour voir quand tu y seras.') : '';
       return '<section class="glass card goal-card" aria-labelledby="g-' + g.id + '"><div class="card__header"><div><h2 class="card__title" id="g-' + g.id + '">' + icon('piggy') + esc(g.name) + '</h2>' +
@@ -735,8 +736,7 @@
     bindCommon(el); bindStart(el); bindAdjust(el);
     bindAdd(el, function (k, v) { U.toast({ icon: 'check', title: { bills: 'Facture ajoutée', installments: 'Paiement ajouté', incomes: 'Revenu régulier ajouté' }[k] || 'Ajouté', text: v.label, duration: 3000 }); });
   });
-  // Ancienne page Épargne (cagnottes) : remplacée par ui-savings.js (épargne mois par mois)
-  L.budgetSavingsLegacy = makeView('savings', 'Épargne', renderSavings, function (el) {
+  L.views.savings = makeView('savings', 'Épargne', renderSavings, function (el) {
     bindCommon(el); bindSavings(el);
     bindAdd(el, function (k, v) {
       if (k === 'plans') { U.toast({ icon: 'check', title: 'Versement automatique activé', text: eur(v.amount) + ' le ' + v.day + ' de chaque mois', duration: 3500 }); return; }

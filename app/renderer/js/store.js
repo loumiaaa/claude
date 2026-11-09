@@ -438,22 +438,6 @@
       if (amount == null) delete b.adjust[key]; else b.adjust[key] = amount;
       emit('budget', { kind: 'adjust' }, { now: true });
     },
-    // Prévision d'une cagnotte : montant prévu par mois ; et valeur prévue d'un mois (null = automatique)
-    setGoalForecast: function (goalId, patch) {
-      var g = store.budget().goals.filter(function (x) { return x.id === goalId; })[0];
-      if (!g) return;
-      g.forecast = Object.assign({ monthly: null, months: {} }, g.forecast || {}, patch);
-      emit('budget', { kind: 'forecast', goalId: goalId }, { now: true });
-    },
-    setGoalForecastMonth: function (goalId, start, field, value) {
-      var g = store.budget().goals.filter(function (x) { return x.id === goalId; })[0];
-      if (!g) return;
-      g.forecast = Object.assign({ monthly: null, months: {} }, g.forecast || {});
-      var m = g.forecast.months[start] || {};
-      if (value == null) delete m[field]; else m[field] = value;
-      if (Object.keys(m).length) g.forecast.months[start] = m; else delete g.forecast.months[start];
-      emit('budget', { kind: 'forecast', goalId: goalId }, { now: true });
-    },
     // Remplace la liste des catégories du budget (icônes, plafonds)
     setBudgetCategories: function (list) { store.budget().categories = list; emit('budget', { kind: 'categories' }, { now: true }); },
     // Coche (ou décoche) un prélèvement / une échéance comme passé

@@ -310,7 +310,7 @@
     b = b && typeof b === 'object' && !Array.isArray(b) ? b : {};
     function arr(a) { return Array.isArray(a) ? a.filter(function (x) { return x && typeof x === 'object'; }) : []; }
     function amount(x) { return typeof x.amount === 'number' && isFinite(x.amount) && x.amount >= 0; }
-    return migrateForecast({
+    return {
       // Jour où commence le mois budgétaire (jour de paie), 1 à 28
       startDay: b.startDay >= 1 && b.startDay <= 28 ? Math.round(b.startDay) : 27,
       // Entrées et dépenses datées : { id, date, type: 'income'|'expense', label, amount, category }
@@ -320,11 +320,7 @@
       // Paiements en plusieurs fois : { id, label, total, count, first: 'YYYY-MM-DD', category }
       installments: arr(b.installments).filter(function (x) { return typeof x.label === 'string' && typeof x.total === 'number' && x.total > 0 && x.count >= 2 && DATE_RE.test(x.first); }),
       // Cagnottes d'épargne : { id, name, target? } et versements : { id, goalId, date, amount }
-      // Cagnottes : { id, name, target?, forecast?: { monthly, months: { 'YYYY-MM-DD': { in, out } } } }
-      goals: arr(b.goals).filter(function (x) { return typeof x.name === 'string'; }).map(function (g) {
-        if (g.forecast != null) g.forecast = cleanForecast(g.forecast);
-        return g;
-      }),
+      goals: arr(b.goals).filter(function (x) { return typeof x.name === 'string'; }),
       deposits: arr(b.deposits).filter(function (x) { return DATE_RE.test(x.date) && typeof x.goalId === 'string' && typeof x.amount === 'number' && isFinite(x.amount); }),
       // Revenus réguliers (paie) : { id, label, amount, day, since, category } ; montants corrigés d'un mois : { « inc:<id>:<date> » : montant }
       incomes: arr(b.incomes).filter(function (x) { return typeof x.label === 'string' && amount(x) && x.day >= 1 && x.day <= 31 && DATE_RE.test(x.since); }),
@@ -333,38 +329,9 @@
       plans: arr(b.plans).filter(function (x) { return typeof x.goalId === 'string' && amount(x) && x.day >= 1 && x.day <= 31 && DATE_RE.test(x.since); }),
       // Catégories avec icône et plafond mensuel facultatif (enveloppe)
       categories: budgetCategories(b),
-      // Ancienne prévision globale (avant les prévisions par cagnotte) : reprise ci-dessous
-      forecast: cleanForecast(b.forecast),
       // Prélèvements et échéances cochés « passés » : « bill:<id>:<date> » / « inst:<id>:<date> »
       paid: (Array.isArray(b.paid) ? b.paid : []).filter(function (k, i, a) { return typeof k === 'string' && /^(bill|inst|entry|dep):.+:\d{4}-\d{2}-\d{2}$/.test(k) && a.indexOf(k) === i; })
-    });
-  }
-
-  // Prévision d'épargne : montant prévu par mois par défaut, objectif, et mois modifiés à la main
-  // ({ 'YYYY-MM-DD' (début du mois) : { in, out } })
-  function cleanForecast(f) {
-    f = f && typeof f === 'object' && !Array.isArray(f) ? f : {};
-    var ok = function (v) { return typeof v === 'number' && isFinite(v) && v >= 0; }, months = {};
-    Object.keys(f.months && typeof f.months === 'object' ? f.months : {}).forEach(function (k) {
-      var x = f.months[k];
-      if (!DATE_RE.test(k) || !x || typeof x !== 'object') return;
-      var o = {};
-      if (ok(x.in)) o.in = x.in;
-      if (ok(x.out)) o.out = x.out;
-      if (Object.keys(o).length) months[k] = o;
-    });
-    return { monthly: ok(f.monthly) ? f.monthly : null, target: ok(f.target) && f.target > 0 ? f.target : null, months: months };
-  }
-  // La prévision globale d'avant passe dans la cagnotte « Épargne » (ou la première)
-  function migrateForecast(out) {
-    var f = out.forecast;
-    if (!f || (f.monthly == null && f.target == null && !Object.keys(f.months).length)) return out;
-    var g = out.goals.filter(function (x) { return x.name === 'Épargne'; })[0] || out.goals[0];
-    if (!g) { g = { id: 'goal-epargne', name: 'Épargne' }; out.goals.push(g); }
-    if (!g.forecast || (g.forecast.monthly == null && !Object.keys(g.forecast.months).length)) g.forecast = { monthly: f.monthly, months: f.months };
-    if (f.target && !g.target) g.target = f.target;
-    out.forecast = { monthly: null, target: null, months: {} };
-    return out;
+    };
   }
 
   /* Catégories du budget : liste par défaut, complétée par celles déjà utilisées */

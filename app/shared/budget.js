@@ -112,8 +112,11 @@
     return { start: start, end: end, label: label };
   }
 
+  // Un versement daté d'un mois à venir ne compte (et ne s'affiche) qu'une fois ce mois commencé
+  function savingsShownUntil(b, today) { return budgetMonth(today || D.today(), b.startDay).end; }
   function goalSaved(b, goalId, today) {
-    var t = today || D.today(), sum = b.deposits.reduce(function (a, x) { return x.goalId === goalId ? a + x.amount : a; }, 0);
+    var t = today || D.today(), until = savingsShownUntil(b, t);
+    var sum = b.deposits.reduce(function (a, x) { return x.goalId === goalId && x.date <= until ? a + x.amount : a; }, 0);
     planItems(b, '1900-01-01', t).forEach(function (x) { if (x.goalId === goalId) sum += x.amount; });
     return cents(sum);
   }
@@ -183,70 +186,6 @@
     return out;
   }
 
-  /* --- Épargne mois par mois : réel (passé) et prévision (à venir) ------------------- */
-  // Pour une cagnotte (opts.goalId) : le mois en cours et les mois passés montrent ce
-  // qui a vraiment été mis de côté / retiré (versements, retraits, versements
-  // automatiques) ; les mois à venir, la prévision du mois si elle a été saisie,
-  // sinon les versements automatiques, sinon le montant prévu par défaut de la
-  // cagnotte. Le solde s'additionne de mois en mois. L'objectif est celui de la cagnotte.
-  // Sans goalId : toutes les cagnottes additionnées (savingsAll).
-  // opts : { goalId, months (à venir, 12), today, from (1er mois affiché) }
-  function savingsFirst(b, goalId, end) {
-    var keep = function (x) { return !goalId || x.goalId === goalId; };
-    return (b.deposits || []).filter(keep).map(function (x) { return x.date; })
-      .concat((b.plans || []).filter(keep).map(function (p) { return p.since; }))
-      .filter(function (d) { return d <= end; }).sort()[0] || null;
-  }
-  function savingsMonths(b, opts) {
-    opts = opts || {};
-    var t = opts.today || D.today(), sd = b.startDay || 1, gid = opts.goalId || null;
-    var goal = gid ? (b.goals || []).filter(function (g) { return g.id === gid; })[0] || {} : null;
-    var fc = goal ? goal.forecast || {} : b.forecast || {};
-    var keep = function (x) { return !gid || x.goalId === gid; };
-    var cur = budgetMonth(t, sd);
-    var first = opts.from || savingsFirst(b, gid, cur.end);
-    var m = first && first < cur.start ? budgetMonth(first, sd) : cur, rows = [], balance = 0, guard = 0;
-    var last = budgetMonth(D.addMonths(cur.start, opts.months == null ? 12 : opts.months), sd);
-    var plans = function (a, z) { return planItems(b, a, z).filter(keep); };
-    while (m.start <= last.start && guard++ < 400) {
-      var future = m.start > cur.start, added = 0, removed = 0, over = (fc.months || {})[m.start] || null, auto = false;
-      if (!future) {
-        (b.deposits || []).forEach(function (x) { if (keep(x) && within(x.date, m.start, m.end)) { if (x.amount >= 0) added += x.amount; else removed -= x.amount; } });
-        plans(m.start, m.end).forEach(function (x) { added += x.amount; });
-      } else {
-        var planned = plans(m.start, m.end).reduce(function (a, x) { return a + x.amount; }, 0);
-        added = over && typeof over.in === 'number' ? over.in : planned || (typeof fc.monthly === 'number' ? fc.monthly : 0);
-        auto = !(over && typeof over.in === 'number');
-        removed = over && typeof over.out === 'number' ? over.out : 0;
-      }
-      added = cents(added); removed = cents(removed);
-      balance = cents(balance + added - removed);
-      rows.push({ start: m.start, end: m.end, future: future, current: m.start === cur.start, added: added, removed: removed, balance: balance, auto: future && auto });
-      m = budgetMonth(D.addDays(m.end, 1), sd);
-    }
-    var now = rows.filter(function (r) { return !r.future; }).pop();
-    var tg = goal ? goal.target : fc.target;
-    var target = typeof tg === 'number' && tg > 0 ? tg : null;
-    var reach = target ? rows.filter(function (r) { return r.balance >= target; })[0] || null : null;
-    return { rows: rows, balance: now ? now.balance : 0, target: target, reach: reach ? reach.start : null, end: rows.length ? rows[rows.length - 1].balance : 0, monthly: typeof fc.monthly === 'number' ? fc.monthly : null };
-  }
-  // Toutes les cagnottes additionnées, mois par mois (plus le détail de chacune)
-  function savingsAll(b, opts) {
-    opts = opts || {};
-    var t = opts.today || D.today(), cur = budgetMonth(t, b.startDay || 1);
-    var from = savingsFirst(b, null, cur.end) || cur.start;
-    var per = (b.goals || []).map(function (g) { return { goal: g, data: savingsMonths(b, { goalId: g.id, months: opts.months, today: t, from: from }) }; });
-    var base = savingsMonths(b, { goalId: '__aucune__', months: opts.months, today: t, from: from });
-    var rows = base.rows.map(function (r, i) {
-      var o = { start: r.start, end: r.end, future: r.future, current: r.current, added: 0, removed: 0, balance: 0, auto: true };
-      per.forEach(function (p) { var x = p.data.rows[i]; if (x) { o.added += x.added; o.removed += x.removed; o.balance += x.balance; } });
-      o.added = cents(o.added); o.removed = cents(o.removed); o.balance = cents(o.balance);
-      return o;
-    });
-    var now = rows.filter(function (r) { return !r.future; }).pop();
-    return { rows: rows, balance: now ? now.balance : 0, end: rows.length ? rows[rows.length - 1].balance : 0, target: null, reach: null, goals: per };
-  }
-
-  return { savingsMonths: savingsMonths, savingsAll: savingsAll, budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, paidKey: paidKey, isPaid: isPaid, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved,
+  return { savingsShownUntil: savingsShownUntil, budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, paidKey: paidKey, isPaid: isPaid, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved,
     incomeKey: incomeKey, incomeItems: incomeItems, planItems: planItems, forecast: forecast, categoryOf: categoryOf, envelopes: envelopes, monthEvents: monthEvents, goalProjection: goalProjection };
 });
