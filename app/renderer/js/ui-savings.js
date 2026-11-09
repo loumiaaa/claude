@@ -117,6 +117,27 @@
   /* --- Toutes les cagnottes -------------------------------------------------------------------- */
   // Versements automatiques en cours d'une cagnotte (par mois)
   function auto(goalId) { return (B().plans || []).filter(function (p) { return p.goalId === goalId && (!p.until || p.until >= D.today()); }).reduce(function (a, p) { return a + p.amount; }, 0); }
+  // Toutes les cagnottes, mois par mois : une colonne par cagnotte, le total du mois, le solde
+  function matrixHTML(sa) {
+    var firstFuture = sa.rows.filter(function (r) { return r.future; })[0];
+    var head = '<thead><tr><th scope="col">Mois</th>' + sa.goals.map(function (p) { return '<th scope="col" class="num">' + esc(p.goal.name) + '</th>'; }).join('') +
+      '<th scope="col" class="num sv-mx__tot">Total du mois</th><th scope="col" class="num">Solde</th></tr></thead>';
+    var body = sa.rows.map(function (r, i) {
+      var sep = r === firstFuture ? '<tr class="sv-sep"><th colspan="' + (sa.goals.length + 3) + '" scope="rowgroup">' + icon('calendar') + 'Prévision</th></tr>' : '';
+      var cells = sa.goals.map(function (p) {
+        var x = p.data.rows[i] || { added: 0, removed: 0, auto: true }, g = p.goal, label = g.name + ', ' + monthName(r);
+        var inp = r.future
+          ? '<input class="sv-in num' + (x.auto ? ' is-auto' : '') + '" data-goal="' + g.id + '" data-sv-month="' + r.start + '" data-f="in" inputmode="decimal" value="' + esc(x.auto ? '' : edit(x.added)) + '" placeholder="' + esc(money(x.added)) + '" aria-label="Prévu pour ' + esc(label) + '" data-focus-key="mx-' + g.id + '-' + r.start + '">'
+          : '<input class="sv-in num" data-goal="' + g.id + '" data-sv-real="' + r.start + '" data-f="in" inputmode="decimal" value="' + esc(edit(x.added)) + '" placeholder="0" aria-label="' + esc(label) + ', mis de côté" data-focus-key="mx-' + g.id + '-' + r.start + '">';
+        return '<td class="sv-add">' + inp + (x.removed ? '<span class="sv-mx__out" title="Retiré">−' + NB + money(x.removed) + '</span>' : '') + '</td>';
+      }).join('');
+      var net = Math.round((r.added - r.removed) * 100) / 100;
+      return sep + '<tr class="' + (r.future ? 'is-future' : '') + (r.current ? ' is-current' : '') + '"><th scope="row"><span class="sv-m-long">' + esc(monthName(r)) + '</span><span class="sv-m-short" aria-hidden="true">' + esc(shortMonth(r, true)) + '</span>' + (r.current ? ' <span class="sv-chip">ce mois-ci</span>' : '') + '</th>' +
+        cells + '<td class="num sv-mx__tot">' + (net > 0 ? '+' + NB : net < 0 ? '−' + NB : '') + money(Math.abs(net)) + NB + '€</td><td class="sv-bal num">' + money(r.balance) + NB + '€</td></tr>';
+    }).join('');
+    return '<div class="table-scroll"><table class="sv-table sv-mx">' + head + '<tbody>' + body + '</tbody></table></div>';
+  }
+
   function allView() {
     var b = B(), sa = BG.savingsAll(b, { months: horizon });
     var cards = sa.goals.map(function (p) {
@@ -133,12 +154,13 @@
         '<div class="sv-stat">' + U.px('chart', 2) + '<span class="sv-stat__label">Dans ' + horizon + ' mois</span><strong class="sv-stat__value num">' + money(sa.end) + NB + '€</strong><span class="sv-stat__sub">+' + NB + money(sa.end - sa.balance) + NB + '€ prévus</span></div>' +
         '<div class="sv-stat">' + U.px('target', 2) + '<span class="sv-stat__label">Ce mois-ci</span><strong class="sv-stat__value num">+' + NB + money((sa.rows.filter(function (r) { return r.current; })[0] || {}).added || 0) + NB + '€</strong><span class="sv-stat__sub">mis de côté, toutes cagnottes</span></div>' +
       '</section>' +
-      '<ul class="sv-goal-cards" role="list">' + cards + '</ul>' +
-      '<div class="sv-layout">' +
-        '<section class="glass card sv-card" aria-labelledby="sv-t"><div class="card__header"><div><h2 class="card__title" id="sv-t">' + U.px('calendar', 2) + 'Toutes · mois par mois</h2>' +
-          '<p class="card__subtitle">Les cagnottes additionnées. Pour modifier, ouvre une cagnotte.</p></div></div>' + tableHTML(sa, null) + '</section>' +
+      '<section class="glass card sv-card sv-card--wide" aria-labelledby="sv-t"><div class="card__header"><div><h2 class="card__title" id="sv-t">' + U.px('calendar', 2) + 'Mes épargnes mois par mois</h2>' +
+        '<p class="card__subtitle">Ce que tu as mis dans chaque cagnotte, mois après mois, et où tu en es. Touche un montant pour le modifier.</p></div></div>' + matrixHTML(sa) +
+        '<p class="hint sv-hint">Les mois à venir en italique suivent la prévision de chaque cagnotte. Pour un retrait, ouvre la cagnotte concernée.</p></section>' +
+      '<div class="sv-layout sv-layout--all">' +
         '<section class="glass card sv-card" aria-labelledby="sv-g"><div class="card__header"><div><h2 class="card__title" id="sv-g">' + U.px('chart', 2) + 'Solde total au fil des mois</h2>' +
           '<p class="card__subtitle">Plein : déjà fait · hachuré : prévision</p></div></div>' + chartHTML(sa) + '</section>' +
+        '<ul class="sv-goal-cards" role="list">' + cards + '</ul>' +
       '</div>';
   }
 
@@ -198,7 +220,7 @@
 
   /* --- Saisie ---------------------------------------------------------------------------------- */
   function commit(inp) {
-    var g = goal(current());
+    var g = goal(inp.getAttribute('data-goal') || current());
     if (!g) return;
     var raw = inp.value.trim(), n = raw === '' ? null : num(raw);
     if (n != null && (!(n >= 0) || n > 1e8)) { warn('Un montant, par exemple 250 ou 1 500.'); render(); return; }
@@ -207,7 +229,7 @@
     if (inp.hasAttribute('data-sv-target')) { S.updateBudget('goals', g.id, { target: n || null }); return; }
     if (inp.hasAttribute('data-sv-month')) { S.setGoalForecastMonth(g.id, inp.getAttribute('data-sv-month'), inp.getAttribute('data-f'), n); return; }
     if (inp.hasAttribute('data-sv-real')) {
-      var start = inp.getAttribute('data-sv-real'), r = BG.savingsMonths(B(), { goalId: g.id, months: 0 }).rows.filter(function (x) { return x.start === start; })[0];
+      var start = inp.getAttribute('data-sv-real'), r = BG.savingsMonths(B(), { goalId: g.id, months: 0, from: start }).rows.filter(function (x) { return x.start === start; })[0];
       if (r) setActual(g, r, inp.getAttribute('data-f'), n || 0);
     }
   }
@@ -219,7 +241,8 @@
       if (e.key !== 'Enter' || !e.target.classList.contains('sv-in')) return;
       e.preventDefault();
       // Entrée : on valide et on descend d'un mois, comme dans un tableur
-      var inp = e.target, f = inp.getAttribute('data-f'), all = [].slice.call(el.querySelectorAll('.sv-table .sv-in[data-f="' + f + '"]'));
+      var inp = e.target, f = inp.getAttribute('data-f'), gid = inp.getAttribute('data-goal');
+      var all = [].slice.call(el.querySelectorAll('.sv-table .sv-in[data-f="' + f + '"]' + (gid ? '[data-goal="' + gid + '"]' : '')));
       var next = all[all.indexOf(inp) + 1], key = next && next.getAttribute('data-focus-key');
       inp.blur();
       if (key) setTimeout(function () { var x = el.querySelector('[data-focus-key="' + key + '"]'); if (x) { x.focus(); x.select(); } }, 30);
