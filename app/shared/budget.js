@@ -183,6 +183,41 @@
     return out;
   }
 
-  return { budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, paidKey: paidKey, isPaid: isPaid, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved,
+  /* --- Épargne mois par mois : réel (passé) et prévision (à venir) ------------------- */
+  // Le mois en cours et les mois passés : ce qui a vraiment été mis de côté / retiré
+  // (versements, retraits, versements automatiques). Les mois à venir : la prévision
+  // du mois si elle a été saisie, sinon les versements automatiques, sinon le
+  // montant prévu par défaut. Le solde s'additionne de mois en mois.
+  // opts : { months (nombre de mois à venir, 12), today }
+  function savingsMonths(b, opts) {
+    opts = opts || {};
+    var t = opts.today || D.today(), sd = b.startDay || 1, fc = b.forecast || {};
+    var cur = budgetMonth(t, sd);
+    var first = (b.deposits || []).map(function (x) { return x.date; }).concat((b.plans || []).map(function (p) { return p.since; })).filter(function (d) { return d <= cur.end; }).sort()[0];
+    var m = first ? budgetMonth(first, sd) : cur, rows = [], balance = 0, guard = 0;
+    var last = budgetMonth(D.addMonths(cur.start, opts.months == null ? 12 : opts.months), sd);
+    while (m.start <= last.start && guard++ < 400) {
+      var future = m.start > cur.start, added = 0, removed = 0, over = (fc.months || {})[m.start] || null, auto = false;
+      if (!future) {
+        (b.deposits || []).forEach(function (x) { if (within(x.date, m.start, m.end)) { if (x.amount >= 0) added += x.amount; else removed -= x.amount; } });
+        planItems(b, m.start, m.end).forEach(function (x) { added += x.amount; });
+      } else {
+        var planned = planItems(b, m.start, m.end).reduce(function (a, x) { return a + x.amount; }, 0);
+        added = over && typeof over.in === 'number' ? over.in : planned || (typeof fc.monthly === 'number' ? fc.monthly : 0);
+        auto = !(over && typeof over.in === 'number');
+        removed = over && typeof over.out === 'number' ? over.out : 0;
+      }
+      added = cents(added); removed = cents(removed);
+      balance = cents(balance + added - removed);
+      rows.push({ start: m.start, end: m.end, future: future, current: m.start === cur.start, added: added, removed: removed, balance: balance, auto: future && auto });
+      m = budgetMonth(D.addDays(m.end, 1), sd);
+    }
+    var now = rows.filter(function (r) { return !r.future; }).pop();
+    var target = typeof fc.target === 'number' && fc.target > 0 ? fc.target : null;
+    var reach = target ? rows.filter(function (r) { return r.balance >= target; })[0] || null : null;
+    return { rows: rows, balance: now ? now.balance : 0, target: target, reach: reach ? reach.start : null, end: rows.length ? rows[rows.length - 1].balance : 0 };
+  }
+
+  return { savingsMonths: savingsMonths, budgetMonth: budgetMonth, cents: cents, billDates: billDates, schedule: schedule, installmentStatus: installmentStatus, paidKey: paidKey, isPaid: isPaid, expenseItems: expenseItems, summary: summary, goalSaved: goalSaved,
     incomeKey: incomeKey, incomeItems: incomeItems, planItems: planItems, forecast: forecast, categoryOf: categoryOf, envelopes: envelopes, monthEvents: monthEvents, goalProjection: goalProjection };
 });

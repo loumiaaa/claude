@@ -735,7 +735,8 @@
     bindCommon(el); bindStart(el); bindAdjust(el);
     bindAdd(el, function (k, v) { U.toast({ icon: 'check', title: { bills: 'Facture ajoutée', installments: 'Paiement ajouté', incomes: 'Revenu régulier ajouté' }[k] || 'Ajouté', text: v.label, duration: 3000 }); });
   });
-  L.views.savings = makeView('savings', 'Épargne', renderSavings, function (el) {
+  // Ancienne page Épargne (cagnottes) : remplacée par ui-savings.js (épargne mois par mois)
+  L.budgetSavingsLegacy = makeView('savings', 'Épargne', renderSavings, function (el) {
     bindCommon(el); bindSavings(el);
     bindAdd(el, function (k, v) {
       if (k === 'plans') { U.toast({ icon: 'check', title: 'Versement automatique activé', text: eur(v.amount) + ' le ' + v.day + ' de chaque mois', duration: 3500 }); return; }

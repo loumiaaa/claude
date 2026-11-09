@@ -329,6 +329,21 @@
       plans: arr(b.plans).filter(function (x) { return typeof x.goalId === 'string' && amount(x) && x.day >= 1 && x.day <= 31 && DATE_RE.test(x.since); }),
       // Catégories avec icône et plafond mensuel facultatif (enveloppe)
       categories: budgetCategories(b),
+      // Prévision d'épargne : montant prévu par mois par défaut, objectif, et mois modifiés à la main
+      // ({ 'YYYY-MM-DD' (début du mois) : { in, out } })
+      forecast: (function (f) {
+        f = f && typeof f === 'object' && !Array.isArray(f) ? f : {};
+        var ok = function (v) { return typeof v === 'number' && isFinite(v) && v >= 0; }, months = {};
+        Object.keys(f.months && typeof f.months === 'object' ? f.months : {}).forEach(function (k) {
+          var x = f.months[k];
+          if (!DATE_RE.test(k) || !x || typeof x !== 'object') return;
+          var o = {};
+          if (ok(x.in)) o.in = x.in;
+          if (ok(x.out)) o.out = x.out;
+          if (Object.keys(o).length) months[k] = o;
+        });
+        return { monthly: ok(f.monthly) ? f.monthly : null, target: ok(f.target) && f.target > 0 ? f.target : null, months: months };
+      })(b.forecast),
       // Prélèvements et échéances cochés « passés » : « bill:<id>:<date> » / « inst:<id>:<date> »
       paid: (Array.isArray(b.paid) ? b.paid : []).filter(function (k, i, a) { return typeof k === 'string' && /^(bill|inst|entry|dep):.+:\d{4}-\d{2}-\d{2}$/.test(k) && a.indexOf(k) === i; })
     };

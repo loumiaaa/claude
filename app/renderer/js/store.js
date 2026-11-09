@@ -431,6 +431,20 @@
       if (amount == null) delete b.adjust[key]; else b.adjust[key] = amount;
       emit('budget', { kind: 'adjust' }, { now: true });
     },
+    // Prévision d'épargne : montant par défaut, objectif ; et valeur prévue d'un mois (null = automatique)
+    setForecast: function (patch) {
+      var b = store.budget();
+      b.forecast = Object.assign({ monthly: null, target: null, months: {} }, b.forecast || {}, patch);
+      emit('budget', { kind: 'forecast' }, { now: true });
+    },
+    setForecastMonth: function (start, field, value) {
+      var b = store.budget();
+      b.forecast = Object.assign({ monthly: null, target: null, months: {} }, b.forecast || {});
+      var m = b.forecast.months[start] || {};
+      if (value == null) delete m[field]; else m[field] = value;
+      if (Object.keys(m).length) b.forecast.months[start] = m; else delete b.forecast.months[start];
+      emit('budget', { kind: 'forecast' }, { now: true });
+    },
     // Remplace la liste des catégories du budget (icônes, plafonds)
     setBudgetCategories: function (list) { store.budget().categories = list; emit('budget', { kind: 'categories' }, { now: true }); },
     // Coche (ou décoche) un prélèvement / une échéance comme passé

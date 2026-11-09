@@ -131,3 +131,24 @@ test('cases « passé » : dépenses ponctuelles et versements d’épargne auss
   assert.equal(it.paid, true);
   assert.equal(B.paidKey('deposit', 'd1', '2026-11-01'), 'dep:d1:2026-11-01');
 });
+
+test('épargne mois par mois : réel jusqu’au mois en cours, prévision ensuite, solde cumulé, objectif', () => {
+  const b = M.normalizeBudget({
+    startDay: 1,
+    goals: [{ id: 'g', name: 'Épargne' }],
+    deposits: [{ id: 'a', goalId: 'g', date: '2026-09-03', amount: 400 }, { id: 'b', goalId: 'g', date: '2026-10-02', amount: 250 }, { id: 'c', goalId: 'g', date: '2026-10-20', amount: -100 }, { id: 'd', goalId: 'g', date: '2026-11-05', amount: 300 }],
+    forecast: { monthly: 200, target: 1500, months: { '2027-01-01': { in: 0, out: 50 }, bad: { in: 1 } } }
+  });
+  assert.deepEqual(Object.keys(b.forecast.months), ['2027-01-01']);
+  const s = B.savingsMonths(b, { today: '2026-11-09', months: 4 });
+  const r = (start) => s.rows.find((x) => x.start === start);
+  assert.deepEqual([r('2026-09-01').added, r('2026-09-01').balance], [400, 400]);
+  assert.deepEqual([r('2026-10-01').added, r('2026-10-01').removed, r('2026-10-01').balance], [250, 100, 550]);
+  assert.equal(r('2026-11-01').current, true);
+  assert.equal(s.balance, 850);
+  assert.deepEqual([r('2026-12-01').future, r('2026-12-01').added, r('2026-12-01').auto, r('2026-12-01').balance], [true, 200, true, 1050]);
+  assert.deepEqual([r('2027-01-01').added, r('2027-01-01').removed, r('2027-01-01').balance], [0, 50, 1000]);
+  assert.equal(s.rows.length, 7);
+  assert.equal(s.reach, null);               // 1 400 € en mars : pas encore 1 500 €
+  assert.equal(B.savingsMonths(b, { today: '2026-11-09', months: 6 }).reach, '2027-04-01');
+});
