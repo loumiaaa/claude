@@ -3173,3 +3173,32 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .sv-goal .sv-in.sv-in--goal { width: 5.6ch; }
 .sv-m-short { display: none; }
 @media (max-width: 600px) { .sv-m-long { display: none; } .sv-m-short { display: inline; } .sv-default .sv-in { width: 96px; } }
+/* Épargne : onglets des cagnottes, cartes, versements automatiques */
+.sv-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-5); }
+.sv-tab { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 14px 6px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-medium); cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.sv-tab:hover { border-color: var(--color-border-strong); background: var(--color-hover); }
+.sv-tab strong { padding: 2px 8px; border-radius: var(--radius-pill); background: var(--color-surface-muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.sv-tab.is-on { border-color: var(--feature-bg, #1F1A3A); background: var(--feature-bg, #1F1A3A); color: #fff; }
+.sv-tab.is-on strong { background: rgba(255, 255, 255, .16); color: #fff; }
+.sv-tab--add { border-style: dashed; color: var(--color-text-muted); }
+.sv-tab--add .icon { width: 16px; height: 16px; }
+.sv-tab .px-ico--1 { margin-top: 0; }
+.sv-card .card__header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-2); }
+.sv-plans { margin: 0 0 var(--space-3); padding: 0; list-style: none; display: grid; gap: 6px; }
+.sv-plans li { display: flex; align-items: center; gap: var(--space-2); padding: 6px 10px; border-radius: var(--radius-md); background: var(--color-surface-muted); font-size: var(--fs-sm); }
+.sv-plans li span { flex: 1; min-width: 0; }
+.sv-plans .icon { width: 16px; height: 16px; color: var(--sv-deep); }
+.sv-ro { display: block; padding: 0 10px; text-align: right; font-weight: var(--fw-semibold); }
+.sv-add .sv-ro { color: color-mix(in srgb, var(--success) 80%, var(--color-text)); }
+.sv-out .sv-ro { color: color-mix(in srgb, var(--danger) 80%, var(--color-text)); }
+.sv-goal-cards { margin: 0 0 var(--space-5); padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-3); }
+.sv-goal-card { display: grid; gap: var(--space-2); width: 100%; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out); }
+.sv-goal-card:hover { border-color: var(--sv-deep); }
+.sv-goal-card__head { display: flex; align-items: center; gap: var(--space-2); }
+.sv-goal-card__head strong { flex: 1; min-width: 0; font-size: var(--fs-md); overflow-wrap: break-word; }
+.sv-goal-card__head .num { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: var(--fw-semibold); }
+.sv-goal-card__sub { font-size: var(--fs-xs); color: var(--color-text-muted); }
+.sv-empty { display: grid; justify-items: center; gap: var(--space-3); max-width: 520px; margin: 0 auto; padding: var(--space-8, 48px) var(--space-6); text-align: center; }
+.sv-empty .hint { margin: 0; }
+.sv-in.is-auto { padding-right: 14px; }
+.sv-in.is-auto::placeholder { padding-right: 2px; }
