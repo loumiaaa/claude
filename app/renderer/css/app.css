@@ -3109,5 +3109,10 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .acc-table td.acc-chk { position: static; }
 
 /* Mes comptes : remise à zéro du budget, en bas de page */
-.acc-reset { display: flex; justify-content: center; margin: var(--space-6, 24px) 0 var(--space-2, 8px); }
-.acc-reset .btn { color: var(--danger); }
+.acc-reset { display: flex; justify-content: center; margin: 24px 0 8px; }
+.acc-reset .btn { color: var(--color-danger, var(--danger)); }
+
+/* Épargne : versements / retraits datés d'un mois à venir, listés à part */
+.goal-upcoming__title { margin: 12px 0 0; font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-subtle); }
+.goal-upcoming li { opacity: .75; }
+.goal-upcoming li strong { font-style: italic; }

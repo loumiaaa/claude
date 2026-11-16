@@ -63,16 +63,28 @@
     var b = B();
     var incomes = BG.summary(b, m.start, m.end);
     var items = BG.expenseItems(b, m.start, m.end);
-    var savings = BG.summary(b, m.start, m.end).savings;
+    // Économies = ce qui est mis de côté ; un retrait de cagnotte revient dans les entrées d'argent
+    var savings = savingsIn(b, m.start, m.end), names = {};
+    b.goals.forEach(function (g) { names[g.id] = g.name; });
+    var back = (b.deposits || []).filter(function (x) { return x.amount < 0 && x.date >= m.start && x.date <= m.end; })
+      .map(function (x) { return { src: 'withdraw', id: x.id, label: 'Retrait d’épargne · ' + (names[x.goalId] || 'cagnotte'), date: x.date, amount: Math.round(-x.amount * 100) / 100 }; });
+    var backSum = back.reduce(function (a, x) { return a + x.amount; }, 0);
     return {
       incomes: (function () { var out = []; b.entries.forEach(function (x) { if (x.type === 'income' && x.date >= m.start && x.date <= m.end) out.push({ src: 'entry', id: x.id, label: x.label, date: x.date, amount: x.amount }); });
         (b.incomes || []).forEach(function (x) { BG.billDates({ day: x.day, every: 'month', since: x.since, until: x.until }, m.start, m.end).forEach(function (d) { var k = 'inc:' + x.id + ':' + d; out.push({ src: 'income', id: x.id, key: k, label: x.label, date: d, amount: typeof (b.adjust || {})[k] === 'number' ? b.adjust[k] : x.amount }); }); });
-        return out.sort(function (a, c) { return a.src === c.src ? (a.date < c.date ? -1 : 1) : a.src === 'income' ? -1 : 1; }); })(),
+        var rank = { income: 0, entry: 1, withdraw: 2 };
+        return out.concat(back).sort(function (a, c) { return a.src === c.src ? (a.date < c.date ? -1 : 1) : rank[a.src] - rank[c.src]; }); })(),
       bills: items.filter(function (x) { return x.source === 'bill'; }),
       inst: items.filter(function (x) { return x.source === 'installment'; }),
       misc: items.filter(function (x) { return x.source === 'entry'; }),
-      income: incomes.income, expenses: incomes.expenses, savings: savings
+      income: Math.round((incomes.income + backSum) * 100) / 100, expenses: incomes.expenses, savings: savings
     };
+  }
+
+  function savingsIn(b, start, end) {
+    var n = (b.deposits || []).reduce(function (a, x) { return x.amount > 0 && x.date >= start && x.date <= end ? a + x.amount : a; }, 0);
+    BG.planItems(b, start, end).forEach(function (x) { n += x.amount; });
+    return Math.round(n * 100) / 100;
   }
 
   // Économies mois par mois (depuis le premier versement), jusqu'au mois affiché
@@ -81,7 +93,7 @@
     if (!dates.length) return [{ m: m, amount: 0 }];
     var out = [], cur = BG.budgetMonth(dates[0], b.startDay), guard = 0;
     while (cur.start <= m.start && guard++ < 240) {
-      out.push({ m: cur, amount: BG.summary(b, cur.start, cur.end).savings });
+      out.push({ m: cur, amount: savingsIn(b, cur.start, cur.end) });
       cur = BG.budgetMonth(D.addDays(cur.end, 1), b.startDay);
     }
     return out.filter(function (x, i) { return x.amount || x.m.start === m.start || i === 0; });
@@ -104,7 +116,8 @@
     if (!el) return;
     var m = month(), d = data(m), today = D.today(), isNow = today >= m.start && today <= m.end;
     var totalExp = Math.round((d.expenses + d.savings) * 100) / 100, rest = Math.round((d.income - totalExp) * 100) / 100;
-    var ledger = savingsLedger(m), saved = ledger.reduce(function (a, x) { return a + x.amount; }, 0);
+    var ledger = savingsLedger(m), saved = Math.round(ledger.reduce(function (a, x) { return a + x.amount; }, 0) * 100) / 100;
+    var outSum = Math.round((B().deposits || []).reduce(function (a, x) { return x.amount < 0 && x.date >= ledger[0].m.start && x.date <= m.end ? a - x.amount : a; }, 0) * 100) / 100;
     var sBills = sum(d.bills), sInst = sum(d.inst), sMisc = sum(d.misc);
     var dep = monthDeposit(m), depKey = dep ? BG.paidKey('deposit', dep.id, dep.date) : null, depPaid = !!(dep && (B().paid || []).indexOf(depKey) >= 0);
     var allExp = d.bills.concat(d.inst, d.misc);
@@ -140,6 +153,12 @@
       '</section>';
 
     var inRows = d.incomes.map(function (x) {
+      if (x.src === 'withdraw') {
+        return '<tr class="acc-back"><td><span class="acc-txt">' + U.px('piggy') + ' ' + esc(x.label) + '</span></td>' +
+          '<td class="acc-date"><span class="acc-txt">' + esc(D.dayMonth(x.date)) + '</span></td>' +
+          '<td class="acc-amt"><span class="num">' + money(x.amount) + '</span></td>' +
+          '<td class="acc-x">' + delBtn('deposits', x.id, x.label) + '</td></tr>';
+      }
       var id = x.src === 'income' ? x.key : x.id;
       return '<tr><td>' + cellText(x.src === 'income' ? 'incomes' : 'entries', x.id, 'label', x.label, '', 'Source') + (x.src === 'income' ? rec() : '') + '</td>' +
         '<td class="acc-date">' + (x.src === 'entry' ? '<input class="acc-in" type="date" data-acc="entries" data-id="' + x.id + '" data-f="date" value="' + x.date + '" min="' + m.start + '" max="' + m.end + '" aria-label="Date" data-focus-key="acc-ed-' + x.id + '">' : '<span class="acc-txt">' + esc(D.dayMonth(x.date)) + '</span>') + '</td>' +
@@ -154,7 +173,7 @@
       return '<tr' + (cur ? ' class="is-current"' : '') + '><th scope="row" class="acc-month">' + esc(monthName(x.m)) + '</th>' +
         '<td class="acc-amt">' + (cur ? cellMoney('savings', m.start, 'amount', x.amount, 'Économies de ' + monthName(m)) : '<span class="num">' + money(x.amount) + '</span>') + '</td><td class="acc-x"></td></tr>';
     });
-    var eco = card('eco', 'piggy', 'Économies', saved, null, savRows, '<p class="acc-card__foot">Au total depuis ' + esc(monthName(ledger[0].m).toLowerCase()) + '</p>');
+    var eco = card('eco', 'piggy', 'Économies', saved, null, savRows, '<p class="acc-card__foot">Mis de côté depuis ' + esc(monthName(ledger[0].m).toLowerCase()) + (outSum ? ' · ' + money(outSum) + NB + '€ retirés depuis, reste ' + money(saved - outSum) + NB + '€' : '') + '</p>');
 
     var params = '<section class="acc-card acc-card--params" aria-labelledby="acc-t-params"><header class="acc-card__head">' + U.px('calendar', 2) + '<h2 class="acc-card__title" id="acc-t-params">Mon mois</h2></header>' +
       '<table class="acc-table"><tbody>' +
@@ -235,12 +254,12 @@
     if (!goal) goal = S.addBudget('goals', { name: SAVINGS_GOAL });
     var mine = b.deposits.filter(function (x) { return x.monthly && x.date >= m.start && x.date <= m.end; });
     var mineSum = mine.reduce(function (a, x) { return a + x.amount; }, 0);
-    var others = Math.round((BG.summary(b, m.start, m.end).savings - mineSum) * 100) / 100;
+    var others = Math.round((savingsIn(b, m.start, m.end) - mineSum) * 100) / 100;
     var want = Math.round((total - others) * 100) / 100;
     if (want < 0) {
       var names = {};
       b.goals.forEach(function (g) { names[g.id] = g.name; });
-      var list = b.deposits.filter(function (x) { return !x.monthly && x.date >= m.start && x.date <= m.end; })
+      var list = b.deposits.filter(function (x) { return !x.monthly && x.amount > 0 && x.date >= m.start && x.date <= m.end; })
         .map(function (x) { return money(x.amount) + ' € le ' + D.dayMonth(x.date) + ' (' + (names[x.goalId] || 'cagnotte') + ')'; })
         .concat((b.plans || []).filter(function (p) { return BG.billDates({ day: p.day, every: 'month', since: p.since, until: p.until }, m.start, m.end).length; })
           .map(function (p) { return money(p.amount) + ' € automatique le ' + p.day + ' (' + (names[p.goalId] || 'cagnotte') + ')'; }));
@@ -281,6 +300,14 @@
 
   function remove(t, id, btn) {
     var b = B(), m = month();
+    if (t === 'deposits') {
+      var w = b.deposits.filter(function (e) { return e.id === id; })[0];
+      if (!w) return;
+      var wc = JSON.parse(JSON.stringify(w));
+      S.removeBudget('deposits', id);
+      U.toast({ icon: 'trash', title: 'Retrait annulé', text: money(Math.abs(w.amount)) + NB + '€ restent dans la cagnotte.', duration: 5000, actions: [{ label: 'Annuler', fn: function () { delete wc.id; S.addBudget('deposits', wc); } }] });
+      return;
+    }
     if (t === 'entries') {
       var x = b.entries.filter(function (e) { return e.id === id; })[0];
       if (!x) return;

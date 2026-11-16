@@ -665,7 +665,13 @@
     var goals = b.goals.length ? '<div class="goal-grid">' + b.goals.map(function (g) {
       var pr = BG.goalProjection(b, g, today), saved = pr.saved, pct = g.target ? Math.max(0, Math.min(100, Math.round((saved / g.target) * 100))) : null;
       // Les versements des mois à venir n'apparaissent qu'au début de leur mois
-      var deps = b.deposits.filter(function (x) { return x.goalId === g.id && x.date <= BG.savingsShownUntil(b, today); }).sort(function (a, c) { return a.date < c.date ? 1 : -1; });
+      var until = BG.savingsShownUntil(b, today);
+      var deps = b.deposits.filter(function (x) { return x.goalId === g.id && x.date <= until; }).sort(function (a, c) { return a.date < c.date ? 1 : -1; });
+      // … mais restent visibles à part (« à venir ») pour pouvoir les corriger ou les annuler
+      var later = b.deposits.filter(function (x) { return x.goalId === g.id && x.date > until; }).sort(function (a, c) { return a.date < c.date ? -1 : 1; });
+      var depRow = function (x, soon) {
+        return '<li' + (soon ? ' class="is-upcoming"' : '') + '><span class="health-list__date">' + esc(D.cap(D.dayMonthLong(x.date))) + '</span><strong>' + (x.amount < 0 ? 'Retrait' : 'Versement') + (soon ? ' prévu' : '') + '</strong><span class="text-subtle"></span><span class="budget-amount ' + (x.amount < 0 ? '' : 'is-pos') + '">' + (x.amount < 0 ? '−' : '+') + NB + eur(Math.abs(x.amount)) + '</span>' + btns('deposits', x.id, x.amount < 0 ? 'ce retrait' : 'ce versement') + '</li>';
+      };
       var plans = (b.plans || []).filter(function (x) { return x.goalId === g.id; });
       var proj = g.target ? (pr.reached ? 'Objectif atteint, bravo !' : pr.date ? 'À ce rythme (' + eur(pr.monthly) + '/mois), objectif atteint vers <strong>' + esc(D.monthYear(pr.date)) + '</strong>. Encore ' + eur(g.target - saved) + '.' : 'Encore ' + eur(g.target - saved) + '. Programme un versement automatique pour voir quand tu y seras.') : '';
       return '<section class="glass card goal-card" aria-labelledby="g-' + g.id + '"><div class="card__header"><div><h2 class="card__title" id="g-' + g.id + '">' + icon('piggy') + esc(g.name) + '</h2>' +
@@ -680,9 +686,8 @@
         '<form class="deposit-form" data-b-form="deposits" data-goal="' + g.id + '" novalidate>' + fields(DEFS.deposits, null, 'd' + g.id) +
           '<button type="submit" class="btn btn--primary btn--sm" data-focus-key="ds-' + g.id + '">' + icon('plus') + 'Verser</button>' +
           '<button type="submit" class="btn btn--ghost btn--sm" data-withdraw formnovalidate data-focus-key="dw-' + g.id + '">' + icon('minus') + 'Retirer</button></form>' +
-        (deps.length ? '<ul class="health-list health-list--money" role="list">' + deps.slice(0, 12).map(function (x) {
-          return '<li><span class="health-list__date">' + esc(D.cap(D.dayMonthLong(x.date))) + '</span><strong>' + (x.amount < 0 ? 'Retrait' : 'Versement') + '</strong><span class="text-subtle"></span><span class="budget-amount ' + (x.amount < 0 ? '' : 'is-pos') + '">' + (x.amount < 0 ? '−' : '+') + NB + eur(Math.abs(x.amount)) + '</span>' + btns('deposits', x.id, 'ce versement') + '</li>';
-        }).join('') + '</ul>' : '') + '</section>';
+        (later.length ? '<p class="goal-upcoming__title">À venir · compté à partir de son mois</p><ul class="health-list health-list--money goal-upcoming" role="list">' + later.map(function (x) { return depRow(x, true); }).join('') + '</ul>' : '') +
+        (deps.length ? '<ul class="health-list health-list--money" role="list">' + deps.slice(0, 12).map(function (x) { return depRow(x, false); }).join('') + '</ul>' : '') + '</section>';
     }).join('') + '</div>' : '';
     el.innerHTML =
       head('Budget', 'Épargne', 'h-savings', 'Une cagnotte par projet : BTS, iPhone, vacances… Programme un versement automatique et vois quand tu atteindras ton objectif.') +
