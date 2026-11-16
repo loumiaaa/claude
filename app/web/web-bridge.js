@@ -517,6 +517,14 @@
         doc.meta.revision = current ? current.meta.revision : 0;
         return Promise.resolve(replaceDoc(doc, 'avant-demo'));
       },
+      // Remplace tout le document (ex. budget remis à zéro), après une copie de sécurité
+      replace: function (doc, kind) {
+        try {
+          var d = prepare(doc);
+          d.meta.revision = current ? current.meta.revision : 0;
+          return Promise.resolve(replaceDoc(d, 'avant-' + (kind || 'remplacement')));
+        } catch (e) { return Promise.resolve({ ok: false, error: e.message }); }
+      },
       retryLock: function () { return Promise.resolve({ ok: true, info: info() }); },
       forceLock: function () { return Promise.resolve({ ok: true, info: info() }); },
       reload: function () { return pull().then(function () { return { ok: true, doc: clone(current), info: info() }; }); }

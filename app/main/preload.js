@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('lamia', {
     save: (doc) => invoke('data:save', doc),
     saveSync: (doc) => ipcRenderer.sendSync('data:save-sync', doc),
     loadDemo: () => invoke('data:load-demo'),
+    replace: (doc, kind) => invoke('data:replace', { doc, kind }),
     retryLock: () => invoke('data:retry-lock'),
     forceLock: () => invoke('data:force-lock'),
     reload: () => invoke('data:reload')

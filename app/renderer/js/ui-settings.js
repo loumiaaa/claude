@@ -25,7 +25,7 @@
     quotidienne: 'Sauvegarde du jour', demo: 'Juste avant le chargement de la démo', 'avant-demo': 'Juste avant le chargement de la démo',
     import: 'Juste avant un import', 'avant-import': 'Juste avant un import', restauration: 'Juste avant une restauration', 'avant-restauration': 'Juste avant une restauration',
     conflit: 'Version de cet appareil, gardée lors d’une synchro', 'avant-synchro': 'Données de cet appareil avant la première synchro',
-    illisible: 'Copie illisible mise de côté', 'migration-v1': 'Avant la mise à jour du format'
+    illisible: 'Copie illisible mise de côté', 'avant-budget-zero': 'Juste avant la remise à zéro du budget', 'budget-zero': 'Juste avant la remise à zéro du budget','migration-v1': 'Avant la mise à jour du format'
   };
 
   function info() { return L.info || {}; }
@@ -173,7 +173,8 @@
       '<div class="btn-row">' +
         '<button type="button" class="btn btn--secondary btn--sm" data-data="export-json">' + icon('download') + 'Exporter une sauvegarde</button>' +
         '<button type="button" class="btn btn--secondary btn--sm" data-data="import">' + icon('upload') + 'Importer une sauvegarde</button>' +
-        '<button type="button" class="btn btn--ghost btn--sm" data-data="restore">' + icon('refresh') + 'Restaurer…</button></div>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-data="restore">' + icon('refresh') + 'Restaurer…</button>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-data="reset-budget">' + icon('trash') + 'Remettre le budget à zéro</button></div>' +
       '<p class="hint">' + (cloud ? 'Une sauvegarde par jour dans ton compte (30 jours), et des copies de sécurité sur cet appareil avant chaque import ou restauration.' : 'Exporter puis importer un .json permet de passer d’un appareil à l’autre.') + '</p>' +
       '<p class="hint text-subtle">Version ' + esc(i.version || '') + ' · ' + esc(i.host || '') + '</p></section>';
   }
@@ -200,7 +201,8 @@
         '<button type="button" class="btn btn--secondary btn--sm" data-data="open-folder">' + icon('folder') + 'Ouvrir le dossier</button>' +
         '<button type="button" class="btn btn--secondary btn--sm" data-data="export-json">' + icon('download') + 'Exporter une sauvegarde</button>' +
         '<button type="button" class="btn btn--secondary btn--sm" data-data="import">' + icon('upload') + 'Importer une sauvegarde</button>' +
-        '<button type="button" class="btn btn--ghost btn--sm" data-data="restore">' + icon('refresh') + 'Restaurer…</button></div>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-data="restore">' + icon('refresh') + 'Restaurer…</button>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-data="reset-budget">' + icon('trash') + 'Remettre le budget à zéro</button></div>' +
       '<p class="hint">Exporter puis importer un .json : pratique pour passer d’un PC à l’autre. Une copie de sécurité est faite avant chaque import ou restauration.</p>' +
       '<p class="hint text-subtle">Version ' + esc(i.version || '') + ' · ' + esc(i.host || '') + '</p></section>';
   }
@@ -330,6 +332,24 @@
     });
   }
 
+  // Budget remis à zéro (comptes, factures, paiements, épargne…) ; le reste ne bouge pas.
+  // Une copie de sécurité complète est faite juste avant (Restaurer… pour revenir en arrière).
+  function resetBudget(btn) {
+    if (readOnlyGuard()) return;
+    U.dialog({
+      title: 'Remettre le budget à zéro ?', returnTo: btn, danger: true, confirmLabel: 'Tout effacer dans le budget',
+      text: 'Revenus, dépenses, factures, paiements en plusieurs fois, cagnottes et versements d’épargne seront effacés. Tes tâches, heures, humeurs, habitudes et ta santé ne bougent pas. Une copie de sécurité complète est faite juste avant : tu pourras revenir en arrière avec « Restaurer… ».',
+      onConfirm: function () {
+        S.flush();
+        var doc = JSON.parse(JSON.stringify(S.get()));
+        doc.budget = L.shared.model.normalizeBudget(null);
+        api.data.replace(doc, 'budget-zero').then(function (res) {
+          applyReplaced(res, 'Budget remis à zéro', 'Tu repars d’une page blanche.');
+        }, function (e) { applyReplaced({ ok: false, error: e && e.message }); });
+      }
+    });
+  }
+
   function exportJson() {
     S.flush();
     api.backup.exportJson().then(function (res) {
@@ -417,6 +437,7 @@
         else if (a === 'export-json') exportJson();
         else if (a === 'import') importJson(b);
         else if (a === 'restore') restore(b);
+        else if (a === 'reset-budget') resetBudget(b);
         return;
       }
       if ((b = e.target.closest('[data-demo]'))) {

@@ -415,6 +415,16 @@ function registerIpc() {
     if (r.ok) nativeTheme.themeSource = themeOf(r.doc);
     return r;
   });
+  // Remplace tout le document depuis l'interface (ex. budget remis à zéro), après une copie de sécurité
+  handle('data:replace', (o) => {
+    const doc = o && o.doc, kind = o && o.kind;
+    if (S.readOnly) return { ok: false, readOnly: true };
+    if (!doc || typeof doc !== 'object') return { ok: false, error: 'Document manquant.' };
+    const k = typeof kind === 'string' && /^[a-z0-9-]{1,30}$/.test(kind) ? kind : 'remplacement';
+    const r = S.store.replace(doc, k);
+    if (r.ok) nativeTheme.themeSource = themeOf(r.doc);
+    return r;
+  });
   handle('data:retry-lock', () => relock(false));
   handle('data:force-lock', () => relock(true));
   handle('data:reload', () => {
