@@ -96,7 +96,7 @@
     return list.length ? '<span class="acc-card__passed' + (n === list.length ? ' is-all' : '') + '" title="Dépenses passées">' + n + '/' + list.length + '</span>' : '';
   }
   // Versement d'épargne « du mois » saisi ici (on peut le cocher comme les dépenses)
-  function monthDeposit(m) { return B().deposits.filter(function (x) { return x.monthly && x.date === m.start; })[0] || null; }
+  function monthDeposit(m) { var l = B().deposits.filter(function (x) { return x.monthly && x.date >= m.start && x.date <= m.end; }); return l.filter(function (x) { return x.date === m.start; })[0] || l[0] || null; }
 
   /* --- Rendu -------------------------------------------------------------------------------- */
   function sum(list) { return Math.round(list.reduce(function (a, x) { return a + x.amount; }, 0) * 100) / 100; }
@@ -225,16 +225,31 @@
   }
 
   // Économies du mois affiché : un versement « du mois » dans la cagnotte Épargne,
-  // ajusté pour que le total du mois corresponde au montant saisi
+  // ajusté pour que le total du mois corresponde au montant saisi.
+  // Tous les versements saisis ici dans la période comptent comme « les miens », même
+  // si leur date ne tombe plus pile sur le 1er jour (jour de début du mois changé).
   function setSavings(total) {
     var b = B(), m = month();
     var goal = b.goals.filter(function (g) { return g.name === SAVINGS_GOAL; })[0] || b.goals[0];
     if (!goal) goal = S.addBudget('goals', { name: SAVINGS_GOAL });
-    var mine = b.deposits.filter(function (x) { return x.monthly && x.date === m.start; })[0];
-    var others = BG.summary(b, m.start, m.end).savings - (mine ? mine.amount : 0);
+    var mine = b.deposits.filter(function (x) { return x.monthly && x.date >= m.start && x.date <= m.end; });
+    var mineSum = mine.reduce(function (a, x) { return a + x.amount; }, 0);
+    var others = Math.round((BG.summary(b, m.start, m.end).savings - mineSum) * 100) / 100;
     var want = Math.round((total - others) * 100) / 100;
-    if (want < 0) { warn('Ce mois-ci, ' + money(others) + ' € sont déjà mis de côté par ailleurs (versements automatiques, cagnottes).'); render(); return; }
-    if (mine) { if (want) S.updateBudget('deposits', mine.id, { amount: want }); else S.removeBudget('deposits', mine.id); }
+    if (want < 0) {
+      var names = {};
+      b.goals.forEach(function (g) { names[g.id] = g.name; });
+      var list = b.deposits.filter(function (x) { return !x.monthly && x.date >= m.start && x.date <= m.end; })
+        .map(function (x) { return money(x.amount) + ' € le ' + D.dayMonth(x.date) + ' (' + (names[x.goalId] || 'cagnotte') + ')'; })
+        .concat((b.plans || []).filter(function (p) { return BG.billDates({ day: p.day, every: 'month', since: p.since, until: p.until }, m.start, m.end).length; })
+          .map(function (p) { return money(p.amount) + ' € automatique le ' + p.day + ' (' + (names[p.goalId] || 'cagnotte') + ')'; }));
+      warn('Ce mois-ci, ' + money(others) + ' € sont déjà mis de côté dans l’onglet Épargne : ' + list.join(', ') + '.');
+      render(); return;
+    }
+    // Un seul versement « du mois », daté du début de la période
+    var keep = mine.filter(function (x) { return x.date === m.start; })[0] || mine[0];
+    mine.forEach(function (x) { if (x !== keep) S.removeBudget('deposits', x.id); });
+    if (keep) { if (want) S.updateBudget('deposits', keep.id, { amount: want }); else S.removeBudget('deposits', keep.id); }
     else if (want) S.addBudget('deposits', { goalId: goal.id, date: m.start, amount: want, monthly: true });
   }
 
