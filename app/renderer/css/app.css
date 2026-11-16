@@ -3107,3 +3107,7 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .acc-table td:has(> .acc-rec, > .acc-dots, > .acc-of, > .acc-rec-toggle) > .acc-in { padding-right: 64px; }
 .acc-table td:has(> .acc-of-sel) > .acc-in { padding-right: 70px; }
 .acc-table td.acc-chk { position: static; }
+
+/* Mes comptes : remise à zéro du budget, en bas de page */
+.acc-reset { display: flex; justify-content: center; margin: var(--space-6, 24px) 0 var(--space-2, 8px); }
+.acc-reset .btn { color: var(--danger); }

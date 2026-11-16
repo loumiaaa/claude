@@ -185,7 +185,8 @@
           card('inst', 'calendar', 'Paiements en plusieurs fois', sInst, null, expRows(d.inst, 'installments', '+ Nouvel achat'), '', passed(d.inst)) +
           card('misc', 'gift', 'Dépenses diverses', Math.round((sMisc + d.savings) * 100) / 100, null, misc, '', passed(d.misc.concat(dep ? [{ paid: depPaid }] : []))) +
         '</div>' +
-      '</div>';
+      '</div>' +
+      '<p class="acc-reset"><button type="button" class="btn btn--ghost btn--sm" data-acc-reset data-focus-key="acc-reset">' + icon('trash') + 'Remettre le budget à zéro</button></p>';
     U.keepFocus(el, function () { el.innerHTML = html; });
   }
 
@@ -329,6 +330,7 @@
     });
     el.addEventListener('click', function (e) {
       var b;
+      if ((b = e.target.closest('[data-acc-reset]'))) { if (L.resetBudget) L.resetBudget(b); return; }
       if ((b = e.target.closest('[data-acc-month]'))) {
         var k = +b.getAttribute('data-acc-month');
         anchor = k === 0 ? D.today() : (k < 0 ? D.addDays(month().start, -1) : D.addDays(month().end, 1));

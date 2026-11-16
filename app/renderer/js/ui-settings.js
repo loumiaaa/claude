@@ -467,5 +467,6 @@
   function show() { if (!el.firstChild || el.dataset.stale) { delete el.dataset.stale; render(); } }
 
   L.views = L.views || {};
+  L.resetBudget = resetBudget;
   L.views.settings = { mount: mount, render: render, show: show, title: 'Réglages' };
 })(window.Lamia = window.Lamia || {});
