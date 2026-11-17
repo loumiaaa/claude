@@ -577,6 +577,41 @@
     },
 
     /* Bilans du dimanche */
+    /* Notes rapides */
+    notes: function () {
+      if (!Array.isArray(state.notes)) state.notes = [];
+      return state.notes;
+    },
+    note: function (id) { return store.notes().filter(function (n) { return n.id === id; })[0] || null; },
+    addNote: function (data) {
+      var now = new Date(D.nowMs ? D.nowMs() : Date.now()).toISOString();
+      var n = { id: uid('note'), title: (data && data.title) || '', body: (data && data.body) || '', categoryId: (data && data.categoryId) || null, pinned: false, createdAt: now, updatedAt: now };
+      store.notes().unshift(n);
+      emit('notes', { id: n.id, created: true }, { now: true });
+      return n;
+    },
+    // opts.typing : saisie dans l'éditeur (la vue ne redessine que la liste)
+    updateNote: function (id, patch, opts) {
+      var n = store.note(id);
+      if (!n) return null;
+      Object.assign(n, patch);
+      if (!(opts && opts.keepDate)) n.updatedAt = new Date(D.nowMs ? D.nowMs() : Date.now()).toISOString();
+      emit('notes', { id: id, typing: !!(opts && opts.typing) });
+      return n;
+    },
+    removeNote: function (id) {
+      var list = store.notes(), i = list.map(function (n) { return n.id; }).indexOf(id);
+      if (i < 0) return null;
+      var n = list.splice(i, 1)[0];
+      emit('notes', { id: id, removed: true }, { now: true });
+      return { note: n, index: i };
+    },
+    restoreNote: function (saved) {
+      if (!saved || !saved.note || store.note(saved.note.id)) return;
+      store.notes().splice(Math.min(saved.index, store.notes().length), 0, saved.note);
+      emit('notes', { id: saved.note.id }, { now: true });
+    },
+
     reviews: function () {
       if (!Array.isArray(state.reviews)) state.reviews = [];
       return state.reviews;

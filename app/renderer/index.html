@@ -65,6 +65,7 @@
           <div class="nav-section__items" id="ns-prod">
             <a class="nav-item" href="#taches" data-nav="tasks"><span data-icon="tasks"></span><span class="nav-item__label">Suivi des tâches</span><span class="badge badge--soft" data-count="doing" aria-label="tâches en cours"></span></a>
             <a class="nav-item" href="#planning" data-nav="planning"><span data-icon="planning"></span><span class="nav-item__label">Planning</span></a>
+            <a class="nav-item" href="#notes" data-nav="notes"><span data-icon="note"></span><span class="nav-item__label">Notes</span></a>
             <a class="nav-item" href="#recap" data-nav="recap"><span data-icon="recap"></span><span class="nav-item__label">Récap</span></a>
           </div>
         </div>
@@ -111,6 +112,7 @@
     <main id="main" class="main" tabindex="-1">
       <div class="app-banners" id="app-banners" aria-live="polite"></div>
       <section class="view" id="view-dashboard" data-view="dashboard" aria-labelledby="h-dashboard"></section>
+      <section class="view" id="view-notes" data-view="notes" aria-labelledby="h-notes" hidden></section>
       <section class="view" id="view-habits" data-view="habits" aria-labelledby="h-habits" hidden></section>
       <section class="view" id="view-review" data-view="review" aria-labelledby="h-review" hidden></section>
       <section class="view" id="view-badges" data-view="badges" aria-labelledby="h-badges" hidden></section>
@@ -139,9 +141,10 @@
       <a class="tabbar__item" href="#taches" data-space="home"><span data-icon="tasks"></span><span>Tâches</span></a>
       <a class="tabbar__item" href="#habitudes" data-nav="habits" data-space="home"><span data-icon="checklist"></span><span>Habitudes</span></a>
       <a class="tabbar__item" href="#bilan" data-nav="review" data-space="home"><span data-icon="note"></span><span>Bilan</span></a>
-      <a class="tabbar__item" href="#dashboard" data-space="prod"><span data-icon="dashboard"></span><span>Accueil</span></a>
+
       <a class="tabbar__item" href="#taches" data-nav="tasks" data-space="prod"><span data-icon="tasks"></span><span>Tâches</span></a>
       <a class="tabbar__item" href="#planning" data-nav="planning" data-space="prod"><span data-icon="planning"></span><span>Planning</span></a>
+      <a class="tabbar__item" href="#notes" data-nav="notes" data-space="prod"><span data-icon="note"></span><span>Notes</span></a>
       <a class="tabbar__item" href="#recap" data-nav="recap" data-space="prod"><span data-icon="recap"></span><span>Récap</span></a>
       <a class="tabbar__item" href="#sante" data-nav="health" data-space="health"><span data-icon="heart"></span><span>Santé</span></a>
       <a class="tabbar__item" href="#corps" data-nav="body" data-space="health"><span data-icon="trend"></span><span>Corps</span></a>
@@ -207,6 +210,7 @@
   <script src="js/ui-review.js"></script>
   <script src="js/ui-badges.js"></script>
   <script src="js/ui-calendar.js"></script>
+  <script src="js/ui-notes.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

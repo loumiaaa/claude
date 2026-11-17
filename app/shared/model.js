@@ -235,6 +235,7 @@
     d.habits = H.normalize(d.habits);
     d.focus = normalizeFocus(d.focus);
     d.reviews = normalizeReviews(d.reviews);
+    d.notes = normalizeNotes(d.notes, catIds);
     d.badges = normalizeBadges(d.badges);
     d.flags = Object.assign({}, def.flags, d.flags || {});
     d.reminderLog = d.reminderLog && typeof d.reminderLog === 'object' && !Array.isArray(d.reminderLog) ? d.reminderLog : {};
@@ -260,6 +261,28 @@
 
   /* --- Bilans du dimanche ------------------------------------------------------ */
   // { week: lundi 'YYYY-MM-DD', savedAt, proud, lesson, priorities: [{ id, text, taskId, done }] }
+  /* --- Notes rapides (réunions, idées…) -------------------------------------- */
+  // { id, title, body, categoryId (ou null), pinned, createdAt, updatedAt (ISO) }
+  function normalizeNotes(list, catIds) {
+    var seen = {};
+    return (Array.isArray(list) ? list : []).filter(function (n) {
+      if (!n || typeof n !== 'object' || typeof n.id !== 'string' || !n.id || seen[n.id]) return false;
+      seen[n.id] = 1;
+      return true;
+    }).map(function (n) {
+      var created = typeof n.createdAt === 'string' && !isNaN(Date.parse(n.createdAt)) ? n.createdAt : new Date(0).toISOString();
+      return {
+        id: n.id,
+        title: typeof n.title === 'string' ? n.title.slice(0, 200) : '',
+        body: typeof n.body === 'string' ? n.body.slice(0, 100000) : '',
+        categoryId: typeof n.categoryId === 'string' && (!catIds || catIds.indexOf(n.categoryId) >= 0) ? n.categoryId : null,
+        pinned: !!n.pinned,
+        createdAt: created,
+        updatedAt: typeof n.updatedAt === 'string' && !isNaN(Date.parse(n.updatedAt)) ? n.updatedAt : created
+      };
+    });
+  }
+
   function normalizeReviews(list) {
     var seen = {};
     return (Array.isArray(list) ? list : []).filter(function (r) {
@@ -451,6 +474,6 @@
     DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
     defaultState: defaultState, defaultSettings: defaultSettings, defaultUI: defaultUI,
     versionOf: versionOf, migrate: migrate, normalize: normalize, validate: validate, summarize: summarize,
-    normalizeHealth: normalizeHealth, normalizeFocus: normalizeFocus, normalizeReviews: normalizeReviews, normalizeBudget: normalizeBudget, normalizeProfile: normalizeProfile, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
+    normalizeHealth: normalizeHealth, normalizeFocus: normalizeFocus, normalizeReviews: normalizeReviews, normalizeNotes: normalizeNotes, normalizeBudget: normalizeBudget, normalizeProfile: normalizeProfile, MEAL_SLOTS: MEAL_SLOTS, MEASURES: MEASURES
   };
 });
