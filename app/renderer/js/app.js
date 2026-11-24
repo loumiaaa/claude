@@ -367,7 +367,7 @@
     counts();
     renderBanners();
 
-    S.subscribe(function (type) {
+    S.subscribe(function (type, detail) {
       if (type === 'timer' || type.indexOf('task') === 0 || type === 'reset') { L.chrono.render(); counts(); }
       if (type === 'reset') { applyTheme(); U.$$('.view').forEach(function (v) { v.dataset.stale = '1'; }); go(current); }
       if (type === 'save-error') renderBanners();
@@ -376,6 +376,7 @@
         if (SPACES[current] && !S.space(SPACES[current])) location.hash = 'dashboard';
       }
       if (type === 'setup') { U.$$('.view').forEach(function (v) { v.dataset.stale = '1'; }); go(current); }
+      if (type === 'ui' && detail && detail.cast) { U.$$('.view').forEach(function (v) { if (v.getAttribute('data-view') !== 'settings') v.dataset.stale = '1'; }); if (L.fun.remountCasts) L.fun.remountCasts(); }
       if (type === 'read-only') U.toast({ icon: 'eye', title: 'Lecture seule', text: 'Cette modification n’est pas enregistrée : l’application est ouverte sur un autre PC.', duration: 6000 });
     });
     var lastOk = true;

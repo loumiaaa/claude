@@ -184,7 +184,7 @@
       say.classList.remove('pixel-bubble--pop'); void say.offsetWidth; say.classList.add('pixel-bubble--pop');
       if (window.PixelCast) {
         if (cast) { try { cast.destroy(); } catch (e) { /* rien */ } }
-        cast = window.PixelCast.mount(box.querySelector('.focus__cat'), 'memeow', { scale: 4, animation: m.anim === 'sleep' ? 'sleep' : 'idle', extras: L.badgesUI ? L.badgesUI.extras('memeow') : [] });
+        cast = L.ui.castMount(box.querySelector('.focus__cat'), 'memeow', { scale: 4, animation: m.anim === 'sleep' ? 'sleep' : 'idle', extras: L.badgesUI ? L.badgesUI.extras('memeow') : [] });
         if (m.anim !== 'sleep' && !U.reducedMotion()) setTimeout(function () { if (cast) cast.play(m.anim); }, 300);
       }
     }

@@ -90,7 +90,7 @@
     U.keepFocus(el, function () { el.innerHTML = html; });
     if (window.PixelCast) U.$$('[data-wr-cast]', el).forEach(function (c) {
       var it = c.getAttribute('data-wr-item');
-      casts.push(window.PixelCast.mount(c, c.getAttribute('data-wr-cast'), { scale: 2, animation: 'idle', extras: it ? [it] : [] }));
+      casts.push(L.ui.castMount(c, c.getAttribute('data-wr-cast'), { scale: 2, animation: 'idle', extras: it ? [it] : [] }));
     });
   }
 

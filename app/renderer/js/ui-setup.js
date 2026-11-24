@@ -118,7 +118,7 @@
     if (!window.PixelCast) return;
     ov.querySelectorAll('[data-s-cast]').forEach(function (c) {
       var id = c.getAttribute('data-s-cast');
-      casts[id] = window.PixelCast.mount(c, id, { scale: 3, animation: 'idle' });
+      casts[id] = L.ui.castMount(c, id, { scale: 3, animation: 'idle' });
     });
   }
 

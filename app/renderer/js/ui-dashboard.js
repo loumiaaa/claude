@@ -48,8 +48,8 @@
     try {
       if (cast.lamia) cast.lamia.destroy();
       if (cast.memeow) cast.memeow.destroy();
-      cast.lamia = window.PixelCast.mount(cl, S.me().character, { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('me') });
-      cast.memeow = window.PixelCast.mount(cm, 'memeow', { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('memeow') });
+      cast.lamia = L.ui.castMount(cl, S.me().character, { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('me') });
+      cast.memeow = L.ui.castMount(cm, 'memeow', { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('memeow') });
       cm.setAttribute('aria-hidden', 'true');
       setTimeout(function () {
         if (cast.lamia) cast.lamia.play(voice.lamiaAnimation || 'idle');
@@ -526,6 +526,8 @@
     S.subscribe(function (type, d) {
       // Prénom ou personnage changé : tout se redessine (titre, scène)
       if (type === 'setup' || type === 'profile' || type === 'wardrobe') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
+      // Personnages passés en pixel art ou en 3D : la scène garde ses textes, les personnages changent
+      if (type === 'ui' && d && d.cast) { if (el.querySelector('.scene')) mountCast(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'timer') update('life');
       if (type === 'focus-state') { update('doing'); return; }

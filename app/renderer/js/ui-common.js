@@ -47,6 +47,20 @@
     return '<span class="chip chip--cat ' + (DA_CHIPS[c.color] || '') + ' ' + hue(c) + (extra ? ' ' + extra : '') + '">' + esc(c.name) + '</span>';
   }
 
+  // Personnages : 3D « chibi » si choisi dans Réglages → Apparence (et si le navigateur
+  // sait afficher de la 3D), sinon pixel art. Même interface : play(), stop(), destroy().
+  function cast3d() {
+    var st = L.store && L.store.get();
+    return !!(st && st.settings && st.settings.ui && st.settings.ui.cast === '3d');
+  }
+  function castMount(canvas, id, opts) {
+    if (!canvas) return null;
+    if (cast3d() && window.Chibi3D && window.Chibi3D.supports(id)) {
+      var o = Object.assign({}, opts, { fallback: function () { if (window.PixelCast) window.PixelCast.mount(canvas, id, opts); } });
+      return window.Chibi3D.mount(canvas, id, o);
+    }
+    return window.PixelCast ? window.PixelCast.mount(canvas, id, opts) : null;
+  }
   function catDot(c) { return '<span class="cat-dot ' + hue(c) + '" aria-hidden="true"></span>'; }
 
   function statusChip(s) { return '<span class="chip chip--' + s + '">' + esc(L.q.statusLabel(s)) + '</span>'; }
@@ -427,6 +441,7 @@
 
   L.ui = {
     esc: esc, icon: icon, $: $, $$: $$, plural: plural, NB: NB, typo: typo, typoString: typoString,
+    castMount: castMount, cast3d: cast3d,
     PALETTE: PALETTE, hue: hue, catChip: catChip, catDot: catDot, statusChip: statusChip, prio: prio, tags: tags,
     progress: progress, due: due, dueBadge: dueBadge,
     pixelURL: pixelURL, pixelImg: pixelImg, px: px, MOODS: MOODS, moodLabel: moodLabel,

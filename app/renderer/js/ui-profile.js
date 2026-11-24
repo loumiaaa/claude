@@ -62,7 +62,7 @@
   }
 
   /* --- Avatar : la photo, sinon le personnage pixel choisi ------------------------ */
-  var CHARACTERS = [['lamia', 'Cheveux noirs bouclés, lunettes rose gold'], ['garcon', 'Cheveux bruns, raie au milieu, lunettes argent, barbe']];
+  var CHARACTERS = [['lamia', 'Cheveux bruns bouclés aux pointes caramel, couettes, lunettes rose gold'], ['garcon', 'Cheveux bruns, raie au milieu, lunettes argent, barbe']];
   function avatarHTML(cls) {
     var ph = P().photo;
     var inner = ph ? '<img class="avatar-img" src="' + ph + '" alt="">' : '<canvas class="avatar-pixel" data-avatar-pixel aria-hidden="true"></canvas>';
@@ -72,7 +72,7 @@
     root.querySelectorAll('[data-avatar-pixel]').forEach(function (c, i) {
       var k = key + i;
       if (avatarCtrl[k]) { try { avatarCtrl[k].destroy(); } catch (e) { /* rien */ } }
-      if (window.PixelCast) avatarCtrl[k] = window.PixelCast.mount(c, S.me().character, { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle', extras: L.fun.wearing('me') });
+      if (window.PixelCast) avatarCtrl[k] = L.ui.castMount(c, S.me().character, { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle', extras: L.fun.wearing('me') });
     });
   }
   // Pastille de la barre latérale et de la barre du haut
@@ -206,7 +206,7 @@
     mountPixelAvatars(el, 'profile');
     el.querySelectorAll('[data-pet-pixel]').forEach(function (c, i) {
       if (avatarCtrl['pet' + i]) avatarCtrl['pet' + i].destroy();
-      if (window.PixelCast) avatarCtrl['pet' + i] = window.PixelCast.mount(c, 'memeow', { scale: 3, animation: 'idle', extras: L.fun.wearing('memeow') });
+      if (window.PixelCast) avatarCtrl['pet' + i] = L.ui.castMount(c, 'memeow', { scale: 3, animation: 'idle', extras: L.fun.wearing('memeow') });
     });
   }
 
@@ -383,7 +383,8 @@
         if (g) U.dialog({ title: g.caption || 'Photo', confirmLabel: 'Fermer', returnTo: b, body: '<img class="gallery__big" src="' + g.src + '" alt="' + esc(g.caption || '') + '">' });
       }
     });
-    S.subscribe(function (type) {
+    S.subscribe(function (type, d) {
+      if (type === 'ui' && d && d.cast) { refreshBrand(); el.dataset.stale = '1'; if (L.app.view() === 'profile') U.keepFocus(el, render); return; }
       if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type !== 'wardrobe' && type.indexOf('task') !== 0) return;
       if (type === 'profile' || type === 'reset' || type === 'setup' || type === 'wardrobe') refreshBrand();
       if (L.app.view() !== 'profile') { el.dataset.stale = '1'; return; }
