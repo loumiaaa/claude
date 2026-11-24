@@ -104,12 +104,7 @@
         [['light', 'sun', 'Clair'], ['dark', 'moon', 'Sombre'], ['system', 'settings', 'Système']].map(function (o) {
           return '<button type="button" class="segmented__item" data-theme-set="' + o[0] + '" data-focus-key="th-' + o[0] + '" aria-pressed="' + (th === o[0]) + '">' + icon(o[1]) + o[2] + '</button>';
         }).join('') + '</div>' +
-      '<p class="label st-cast__label" id="st-cast">Personnages</p>' +
-      '<div class="segmented segmented--block" role="group" aria-labelledby="st-cast">' +
-        [['pixel', 'sparkle', 'Pixel art'], ['3d', 'user', 'Pixel 3D']].map(function (o) {
-          return '<button type="button" class="segmented__item" data-cast-set="' + o[0] + '" data-focus-key="cast-' + o[0] + '" aria-pressed="' + ((S.get().settings.ui.cast === '3d' ? '3d' : 'pixel') === o[0]) + '">' + icon(o[1]) + o[2] + '</button>';
-        }).join('') + '</div>' +
-      '<p class="hint">En pixel 3D, toi et Memeow devenez des petits personnages en cubes, qui gardent les mêmes animations. Elles s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
+      '<p class="hint">Les animations des personnages et de Memeow s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
   }
 
   function sw(attr, on, label, hint, disabled) {
@@ -443,13 +438,6 @@
         else if (a === 'import') importJson(b);
         else if (a === 'restore') restore(b);
         else if (a === 'reset-budget') resetBudget(b);
-        return;
-      }
-      if ((b = e.target.closest('[data-cast-set]'))) {
-        var cv = b.getAttribute('data-cast-set');
-        S.setUI({ cast: cv });
-        U.$$('[data-cast-set]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-        U.toast({ icon: 'sparkle', title: cv === '3d' ? 'Personnages en pixel 3D' : 'Personnages en pixel art', text: cv === '3d' ? 'Va voir l’accueil : toi et Memeow êtes en cubes.' : 'Retour au pixel art.', duration: 3500 });
         return;
       }
       if ((b = e.target.closest('[data-demo]'))) {

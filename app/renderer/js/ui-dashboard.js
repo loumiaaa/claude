@@ -526,8 +526,6 @@
     S.subscribe(function (type, d) {
       // Prénom ou personnage changé : tout se redessine (titre, scène)
       if (type === 'setup' || type === 'profile' || type === 'wardrobe') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
-      // Personnages passés en pixel art ou en 3D : la scène garde ses textes, les personnages changent
-      if (type === 'ui' && d && d.cast) { if (el.querySelector('.scene')) mountCast(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'timer') update('life');
       if (type === 'focus-state') { update('doing'); return; }

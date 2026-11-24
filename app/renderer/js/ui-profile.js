@@ -383,8 +383,7 @@
         if (g) U.dialog({ title: g.caption || 'Photo', confirmLabel: 'Fermer', returnTo: b, body: '<img class="gallery__big" src="' + g.src + '" alt="' + esc(g.caption || '') + '">' });
       }
     });
-    S.subscribe(function (type, d) {
-      if (type === 'ui' && d && d.cast) { refreshBrand(); el.dataset.stale = '1'; if (L.app.view() === 'profile') U.keepFocus(el, render); return; }
+    S.subscribe(function (type) {
       if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type !== 'wardrobe' && type.indexOf('task') !== 0) return;
       if (type === 'profile' || type === 'reset' || type === 'setup' || type === 'wardrobe') refreshBrand();
       if (L.app.view() !== 'profile') { el.dataset.stale = '1'; return; }

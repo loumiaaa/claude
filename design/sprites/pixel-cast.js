@@ -2300,7 +2300,7 @@
       cast: CAST,
       icons: ICONS,
       iconNames: function () { return Object.keys(ICONS.sprites); },
-      // extras : accessoires portés (aussi utilisé par le rendu voxel, design/3d/voxel3d.js)
+      // extras : accessoires portés
       animation: function (id, name, extras) {
         var a = compileCharacter(id, extras).animations[name];
         if (!a) fail('animation inconnue « ' + name + ' » pour ' + id);
