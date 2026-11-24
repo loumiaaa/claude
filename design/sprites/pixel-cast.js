@@ -470,15 +470,15 @@
       q: '#E9A0B4', // intérieur des oreilles
       M: '#5A2342', // bouche ouverte
       t: '#F27F9C', // langue
-      b: '#8C7BE8', // gamelle violette
-      B: '#6553C4', // gamelle, ombre
-      v: '#C4B8FF', // gamelle, reflet
+      b: '#7FA6E8', // gamelle bleue
+      B: '#5578C4', // gamelle, ombre
+      v: '#BCD3FF', // gamelle, reflet
       c: '#B8763A', // croquette
       C: '#875125', // croquette, ombre
       h: '#C9CDE2', // clavier, interstices
       H: '#F7F8FD', // touches du clavier
       j: '#A3A8C6', // clavier, tranche
-      z: '#8B79F2', // « z » du sommeil
+      z: '#6F97E8', // « z » du sommeil
       '%': '#2B215030' // ombre portée
     },
     parts: {
@@ -2300,10 +2300,11 @@
       cast: CAST,
       icons: ICONS,
       iconNames: function () { return Object.keys(ICONS.sprites); },
-      animation: function (id, name) {
-        var a = compileCharacter(id).animations[name];
+      // extras : accessoires portés (aussi utilisé par le rendu voxel, design/3d/voxel3d.js)
+      animation: function (id, name, extras) {
+        var a = compileCharacter(id, extras).animations[name];
         if (!a) fail('animation inconnue « ' + name + ' » pour ' + id);
-        return { loop: a.loop, next: a.next, repeat: a.repeat, still: a.still, frames: a.frames };
+        return { loop: a.loop, next: a.next, repeat: a.repeat, still: a.still, blink: a.blink, frames: a.frames };
       },
       iconPixels: function (name) { return compileIcon(name); }
     })
