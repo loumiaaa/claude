@@ -35,7 +35,7 @@ La petite scène du tableau de bord : Lamia et sa chatte Memeow, leurs animation
 
 | Personnage | Taille « art » | Animation | Images | Comportement |
 |---|---|---|---|---|
-| Lamia | 32 × 48 | `idle` | 8 | boucle : respiration, une boucle de cheveux bouge, clignement |
+| Lamia | 32 × 48 | `idle` | 8 | boucle : respiration, les couettes rebondissent, clignement |
 | | | `wave` | 9 | coucou de la main, puis `idle` |
 | | | `cheer` | 7 | bras levés, petits sauts, étincelles, puis `idle` |
 | | | `typing` | 9 | dessine un cœur sur sa tablette graphique au stylet, puis `idle` |
@@ -69,7 +69,7 @@ blink: { y: 11, rows: [
 ]},
 ```
 
-Calques de Lamia : `shadow`, `hairBack` (boucles derrière les épaules), `legs` (jean et Converse), `torso`, `head` (visage, lunettes, boucles de devant), `arms`, `armsWaveA/B`, `armsUp`, `armsTablet`, `pen`, `tablet0`…`tablet4` (le cœur qui se dessine), `curl`, `blink`, `eyesHappy`, `eyesDown`, `mouthOpen`, `mouthFocus`, `sparkA/B`.
+Calques de Lamia : `shadow`, `hairBack` (cheveux lâchés derrière les épaules, pointes caramel), `legs` (jean et Converse), `torso`, `head` (visage, lunettes, couettes et mèches de devant), `arms`, `armsWaveA/B`, `armsUp`, `armsTablet`, `pen`, `tablet0`…`tablet4` (le cœur qui se dessine), `curl`, `blink`, `eyesHappy`, `eyesDown`, `mouthOpen`, `mouthFocus`, `sparkA/B`.
 Calques de Memeow : `shadow`, `body`, `bodyPaw`, `head`, `tailA/B/C`, `blink`, `eyesUp`, `eyesSquint`, `earTwitch`, `mouthMeow`, `tongue`, `pawUp`, `bowl`, `keyboard`, `sleepBody`, `sleepBodyIn`, `sleepHead`, `sleepTail`, `zA/B/C`.
 
 **3. Les animations** : une image = `[durée en ms, 'calques empilés']`. Le premier calque est au fond. `nom@dx,dy` décale un calque (`head@0,1` : la tête descend d'un pixel pour la respiration ; `body@-3,0` : Memeow se pousse pour laisser la place à la gamelle).

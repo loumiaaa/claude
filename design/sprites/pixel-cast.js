@@ -29,18 +29,23 @@
   var CAST = {};
 
   /* ---------------------------------------------------------------------
-     LAMIA · 32 × 48
+     LAMIA · 32 × 48 — cheveux bruns, pointes caramel, deux couettes hautes
+     (élastiques roses) et le reste des cheveux lâchés dans le dos.
      --------------------------------------------------------------------- */
   CAST.lamia = {
     width: 32,
     height: 48,
     palette: {
       o: '#2B2150', // contour indigo
-      O: '#130F21', // contour des cheveux (le plus sombre)
-      A: '#1C1830', // cheveux, ombre (sépare les boucles)
-      a: '#28233F', // cheveux, base (noir bleuté)
-      b: '#3C4581', // cheveux, reflet bleu nuit
-      c: '#6D80C6', // cheveux, brillance
+      O: '#2A1A12', // contour des cheveux (le plus sombre)
+      A: '#3D2517', // cheveux, ombre
+      a: '#583624', // cheveux, base (brun)
+      b: '#74482E', // cheveux, reflet
+      c: '#9A6743', // cheveux, brillance
+      q: '#BC834E', // pointes caramel
+      Q: '#966135', // pointes caramel, ombre
+      p: '#DFAA6E', // pointes caramel, lumière
+      k: '#F27BA8', // élastiques des couettes (et dessin, étincelles)
       s: '#F9DCCB', // peau
       S: '#EBB49E', // peau, ombre
       r: '#F4A3A6', // joues
@@ -61,7 +66,6 @@
       d: '#36305C', // tablette graphique
       D: '#DCE9FF', // écran de la tablette
       n: '#F2F1FA', // stylet
-      k: '#F27BA8', // rose (dessin, étincelles)
       y: '#FFCF4D', // étincelle dorée
       Y: '#FFF7D6', // étincelle, cœur lumineux
       '%': '#2B215030' // ombre portée au sol
@@ -274,39 +278,32 @@
         '.....................osso.......',
         '......................oo........'
       ]},
+      // Les couettes rebondissent : leurs pointes s'allongent d'un pixel
       curl: { y: 11, rows: [
-        '.........................Aa.....',
-        '..............................bO',
-        '............................A...',
-        '........................Aa..b.AO',
-        '...........................aaaO_',
-        '...........................Aa...',
-        '.........................Aa.AAO_',
-        '..............................bO',
-        '............................A...',
-        '...............................O'
+        '...pq......................qp...',
+        '...OO......................OO...'
       ]},
       shadow: { y: 46, rows: [
         '.......%%%%%%%%%%%%%%%%%%.......',
         '........%%%%%%%%%%%%%%%%........'
       ]},
       hairBack: { y: 16, rows: [
-        '..OOOOOOOOOOOOOOOOOOOOOOOOOOOOO.',
-        '.OaabbabaaaAAAAAAAAAAAaaababbaaO',
-        '..ObaaaAaAAAAAAAAAAAAAAAaAaaabO.',
-        '.OaaaAAbaaAAAAAAAAAAAAAaabAAaaaO',
-        'OaaaAbbaaaAAAAAAAAAAAAAaaabbAaaO',
-        '.OAAbaaaAAAAAAAAAAAAAAAAAaaabAAO',
-        '..ObaaAAbbaAAAAAAAAAAAabbAAaabO.',
-        '.OaabbabaaaAAAAAAAAAAAaaababbaaO',
-        '..ObaaaAaAAAAAAAAAAAAAAAaAaaabO.',
-        '.OaaaAAbaaAAAAAAAAAAAAAaabAAaaaO',
-        'OaaaAbbaaaOOOOOOOOOOOOOaaabbAaaO',
-        '.OAAbaaaOO.............OOaaabAAO',
-        '..ObaaAO.................OAaabO.',
-        '.OaabbO...................ObbaaO',
-        '..OOaaaO.................OaaaOO.',
-        '....OOO...................OOO...'
+        '....Oaaa................aaaO....',
+        '...Oaaba................abaaO...',
+        '...OaAba................abAaO...',
+        '..OaabaA................AabaaO..',
+        '..OabaAa................aAabaO..',
+        '..OaAaab................baaAaO..',
+        '..OaabaA................AabaaO..',
+        '..OAabaa................aabaAO..',
+        '..OaqaAa................aAaqaO..',
+        '..OqaqaA................AaqaqO..',
+        '..OqqQqa................aqQqqO..',
+        '..OpqqQq................qQqqpO..',
+        '...OpqqQ................QqqpO...',
+        '...OppqO................OqppO...',
+        '....OpO..................OpO....',
+        '.....O....................O.....'
       ]},
       legs: { y: 30, rows: [
         '..........oijjjjJjjjJo..........',
@@ -356,28 +353,28 @@
       ]},
       head: { y: 0, rows: [
         '................................',
-        '............OOOOOOOO............',
-        '..........OOabcccbbaOOOO........',
-        '........OOaaaabbaabbSaaaOO......',
-        '.......OaaaabbaabbaaSaaabaO.....',
-        '......OaaabbaabbaaaOssOaabbO....',
-        '.....OaabbaabbaaaOOssssOaaAO....',
-        '....ObbaaabbaOOOsssssssOaabO....',
-        '....OaaaAbaOOsssssOOOssOAaaaO...',
-        '.OOOAaAAaOOssssssssssssOAAAO.OOO',
-        'OaaabaabbOGgggssssGgggsabbaaOaaO',
-        '.OAbaabaagseesggggseesgaaabaabAO',
-        '..OaaAAaAgswesgssgswesgAAaAAaaO.',
-        '.OaaabbabgseesgssgseesgababbaaaO',
-        '..OAbaabasggggssssggggsaabaaOAO.',
-        '.ObaAaAAasrrssSssSssrrsAaAAO.ObO',
-        'OaaabaabbAsssssmmsssssAabbaaOaaO',
-        '.OAbaabaaO.ssssssssss.OaaabaabAO',
-        '..OaaAAaO...ssssssss...OOaAAaaO.',
-        '.OaaabbO....ooSSSSoo.....ObbaaaO',
-        '..OOOaaaO...............OaaaOOO.',
-        '.....OOO.................OOO....',
-        '................................'
+        '..OOOO.....OOOOOOOOOO.....OOOO..',
+        '.ObbaaO..OOabbcAAcbbaOO..OaabbO.',
+        'ObbaaAakkabbcbaAAabcbbakkaAaabbO',
+        'OabaAaakkaabbaaAAaabbaakkaaAabaO',
+        'OaAbaO.OaabbaaaAAaaabbaaO.OabAaO',
+        'OaAabO.OabbaAssssssAabbaO.ObaAaO',
+        'OqaAaO.OaabAssssssssAbaaO.OaAaqO',
+        'OpqaqO.OaaAssssssssssAaaO.OqaqpO',
+        '.OpqQO.OaAssssssssssssAaO.OQqpO.',
+        '..OqpOOaasGgggssssGgggsaaOOpqO..',
+        '...OO.OaagseesggggseesgaaO.OO...',
+        '......OaagswesgssgswesgaaO......',
+        '......OabgseesgssgseesgbaO......',
+        '.....OaaAsggggssssggggsAaaO.....',
+        '.....OaAasrrssSssSssrrsaAaO.....',
+        '.....OabaAsssssmmsssssAabaO.....',
+        '.....OAaaO.ssssssssss.OaaAO.....',
+        '.....Oaab...ssssssss...baaO.....',
+        '.....Oqaa...ooSSSSoo...aaqO.....',
+        '.....Oqqa..............aqqO.....',
+        '.....Opqq..............qqpO.....',
+        '......OOO..............OOO......'
       ]},
       blink: { y: 11, rows: [
         '..........ssss....ssss..........',
@@ -830,7 +827,7 @@
     o: '#2B2150', w: '#FFFFFF',
     y: '#FFD24D', Y: '#FFF4C7', Q: '#E0A12A',                 // or
     k: '#F2709A', K: '#C9487A', p: '#FFC2D6',                 // rose
-    v: '#7B61D9', V: '#5A43B5', l: '#A693F0',                 // violet (béret)
+    v: '#5F8FDB', V: '#4170BA', l: '#9CC0F2',                 // bleu ciel (béret)
     g: '#6BBF6A', G: '#3F8F48'                                // feuille
   };
   var PERSON_ACC = {
