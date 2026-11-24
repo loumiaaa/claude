@@ -499,8 +499,10 @@
   function goalsSummary() {
     var gs = B().goals;
     if (!gs.length) return empty('Crée une cagnotte (BTS, iPhone…) dans Épargne.');
+    // Comme sur la page Épargne : l'état des cagnottes au dernier jour de la période choisie
+    var p = period(), today = D.today(), ref = today >= p.start && today <= p.end ? today : p.end;
     return '<ul class="goal-list" role="list">' + gs.map(function (g) {
-      var pr = BG.goalProjection(B(), g), pct = g.target ? Math.max(0, Math.min(100, Math.round((pr.saved / g.target) * 100))) : null;
+      var pr = BG.goalProjection(B(), g, ref), pct = g.target ? Math.max(0, Math.min(100, Math.round((pr.saved / g.target) * 100))) : null;
       return '<li><div class="goal-list__head"><strong>' + esc(g.name) + '</strong><span>' + eur(pr.saved) + (g.target ? ' / ' + eur(g.target) : '') + '</span></div>' +
         (pct != null ? '<div class="progress" style="--value:' + pct + '" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + esc(g.name) + '"></div>' : '') +
         (pr.date ? '<p class="hint">Objectif atteint vers ' + esc(D.monthYear(pr.date)) + (pr.auto ? ' · ' + eur(pr.monthly) + '/mois automatiques' : '') + '</p>' : pr.reached ? '<p class="hint">Objectif atteint, bravo !</p>' : '') + '</li>';
@@ -661,11 +663,16 @@
   /* === 4. Épargne ========================================================================== */
   function renderSavings(el) {
     var b = B(), p = period(), s = BG.summary(b, p.start, p.end), today = D.today();
-    var total = b.goals.reduce(function (a, g) { return a + BG.goalSaved(b, g.id, today); }, 0);
+    // Les cagnottes suivent la période choisie : son dernier jour (passé : ce qui était
+    // épargné ; à venir : le prévu, versements programmés et automatiques compris)
+    var isNow = today >= p.start && today <= p.end, ref = isNow ? today : p.end, future = p.start > today;
+    var nowUntil = BG.savingsShownUntil(b, today);
+    var refLabel = isNow ? '' : (future ? 'prévu au ' : 'au ') + D.dayMonthLong(ref);
+    var total = b.goals.reduce(function (a, g) { return a + BG.goalSaved(b, g.id, ref); }, 0);
     var goals = b.goals.length ? '<div class="goal-grid">' + b.goals.map(function (g) {
-      var pr = BG.goalProjection(b, g, today), saved = pr.saved, pct = g.target ? Math.max(0, Math.min(100, Math.round((saved / g.target) * 100))) : null;
+      var pr = BG.goalProjection(b, g, ref), saved = pr.saved, pct = g.target ? Math.max(0, Math.min(100, Math.round((saved / g.target) * 100))) : null;
       // Les versements des mois à venir n'apparaissent qu'au début de leur mois
-      var until = BG.savingsShownUntil(b, today);
+      var until = BG.savingsShownUntil(b, ref);
       var deps = b.deposits.filter(function (x) { return x.goalId === g.id && x.date <= until; }).sort(function (a, c) { return a.date < c.date ? 1 : -1; });
       // … mais restent visibles à part (« à venir ») pour pouvoir les corriger ou les annuler
       var later = b.deposits.filter(function (x) { return x.goalId === g.id && x.date > until; }).sort(function (a, c) { return a.date < c.date ? -1 : 1; });
@@ -675,7 +682,7 @@
       var plans = (b.plans || []).filter(function (x) { return x.goalId === g.id; });
       var proj = g.target ? (pr.reached ? 'Objectif atteint, bravo !' : pr.date ? 'À ce rythme (' + eur(pr.monthly) + '/mois), objectif atteint vers <strong>' + esc(D.monthYear(pr.date)) + '</strong>. Encore ' + eur(g.target - saved) + '.' : 'Encore ' + eur(g.target - saved) + '. Programme un versement automatique pour voir quand tu y seras.') : '';
       return '<section class="glass card goal-card" aria-labelledby="g-' + g.id + '"><div class="card__header"><div><h2 class="card__title" id="g-' + g.id + '">' + icon('piggy') + esc(g.name) + '</h2>' +
-          '<p class="card__subtitle">' + eur(saved) + (g.target ? ' sur ' + eur(g.target) + ' · ' + pct + NB + '%' : ' épargnés') + '</p></div>' + btns('goals', g.id, g.name) + '</div>' +
+          '<p class="card__subtitle">' + eur(saved) + (g.target ? ' sur ' + eur(g.target) + ' · ' + pct + NB + '%' : ' épargnés') + (refLabel ? ' · ' + esc(refLabel) : '') + '</p></div>' + btns('goals', g.id, g.name) + '</div>' +
         (pct != null ? '<div class="progress" style="--value:' + pct + '" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="Progression ' + esc(g.name) + '"></div>' : '') +
         (proj ? '<p class="goal-proj">' + proj + '</p>' : '') +
         (plans.length ? '<ul class="plan-list" role="list">' + plans.map(function (pl) {
@@ -686,13 +693,13 @@
         '<form class="deposit-form" data-b-form="deposits" data-goal="' + g.id + '" novalidate>' + fields(DEFS.deposits, null, 'd' + g.id) +
           '<button type="submit" class="btn btn--primary btn--sm" data-focus-key="ds-' + g.id + '">' + icon('plus') + 'Verser</button>' +
           '<button type="submit" class="btn btn--ghost btn--sm" data-withdraw formnovalidate data-focus-key="dw-' + g.id + '">' + icon('minus') + 'Retirer</button></form>' +
-        (later.length ? '<p class="goal-upcoming__title">À venir · compté à partir de son mois</p><ul class="health-list health-list--money goal-upcoming" role="list">' + later.map(function (x) { return depRow(x, true); }).join('') + '</ul>' : '') +
-        (deps.length ? '<ul class="health-list health-list--money" role="list">' + deps.slice(0, 12).map(function (x) { return depRow(x, false); }).join('') + '</ul>' : '') + '</section>';
+        (later.length ? '<p class="goal-upcoming__title">' + (ref < today ? 'Après cette période' : 'À venir · compté à partir de son mois') + '</p><ul class="health-list health-list--money goal-upcoming" role="list">' + later.map(function (x) { return depRow(x, x.date > nowUntil); }).join('') + '</ul>' : '') +
+        (deps.length ? '<ul class="health-list health-list--money" role="list">' + deps.slice(0, 12).map(function (x) { return depRow(x, x.date > nowUntil); }).join('') + '</ul>' : '') + '</section>';
     }).join('') + '</div>' : '';
     el.innerHTML =
       head('Budget', 'Épargne', 'h-savings', 'Une cagnotte par projet : BTS, iPhone, vacances… Programme un versement automatique et vois quand tu atteindras ton objectif.') +
       periodBar() +
-      '<div class="kpi-row kpi-row--2">' + tile('piggy', 'Épargné sur la période', eur(s.savings)) + tile('wallet', 'Total de toutes les cagnottes', eur(total), U.plural(b.goals.length, 'cagnotte')) + '</div>' +
+      '<div class="kpi-row kpi-row--2">' + tile('piggy', 'Épargné sur la période', eur(s.savings)) + tile('wallet', 'Total de toutes les cagnottes', eur(total), U.plural(b.goals.length, 'cagnotte') + (refLabel ? ' · ' + refLabel : '')) + '</div>' +
       (goals || empty('Pas encore de cagnotte. Crée la première ci-dessous.')) +
       card('sv-add', 'Nouvelle cagnotte', '', addForm('goals', 'g', 'Créer'));
   }
