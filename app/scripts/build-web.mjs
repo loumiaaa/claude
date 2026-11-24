@@ -44,7 +44,7 @@ const csp = "default-src 'none'; script-src 'self'; style-src 'self'; style-src-
 html = html.replace(/<meta http-equiv="Content-Security-Policy" content="[^"]*">/, `<meta http-equiv="Content-Security-Policy" content="${csp}">`);
 html = html.replace('</title>', `</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#3B2F9E">
+  <meta name="theme-color" content="#2F5C9E">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
