@@ -29,8 +29,9 @@
   var CAST = {};
 
   /* ---------------------------------------------------------------------
-     LAMIA · 32 × 48 — cheveux bruns, pointes caramel, deux couettes hautes
-     (élastiques roses) et le reste des cheveux lâchés dans le dos.
+     LAMIA · 32 × 48 — cheveux bruns, pointes caramel. Deux couettes attachées en
+     haut de la tête (élastiques roses) qui tombent dans le dos, et le reste des
+     cheveux lâché derrière (calque hairBack, sous le corps).
      --------------------------------------------------------------------- */
   CAST.lamia = {
     width: 32,
@@ -278,32 +279,48 @@
         '.....................osso.......',
         '......................oo........'
       ]},
-      // Les couettes rebondissent : leurs pointes s'allongent d'un pixel
-      curl: { y: 11, rows: [
-        '...pq......................qp...',
+      // Les couettes rebondissent : leurs pointes descendent d'un pixel
+      curl: { y: 32, rows: [
+        '...pp......................pp...',
         '...OO......................OO...'
       ]},
       shadow: { y: 46, rows: [
         '.......%%%%%%%%%%%%%%%%%%.......',
         '........%%%%%%%%%%%%%%%%........'
       ]},
-      hairBack: { y: 16, rows: [
-        '....Oaaa................aaaO....',
-        '...Oaaba................abaaO...',
-        '...OaAba................abAaO...',
-        '..OaabaA................AabaaO..',
-        '..OabaAa................aAabaO..',
-        '..OaAaab................baaAaO..',
-        '..OaabaA................AabaaO..',
-        '..OAabaa................aabaAO..',
-        '..OaqaAa................aAaqaO..',
-        '..OqaqaA................AaqaqO..',
-        '..OqqQqa................aqQqqO..',
-        '..OpqqQq................qQqqpO..',
-        '...OpqqQ................QqqpO...',
-        '...OppqO................OqppO...',
-        '....OpO..................OpO....',
-        '.....O....................O.....'
+      hairBack: { y: 1, rows: [
+        '................................',
+        '.....OabaAO..........OAabaO.....',
+        '....OabaAO............OAabaO....',
+        '...OabaAO..............OAabaO...',
+        '..OabaAO................OAabaO..',
+        '..OabaAO................OAabaO..',
+        '..OabaAO................OAabaO..',
+        '..OabaAO................OAabaO..',
+        '.OabaAO..................OAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OabaAOaAAaAAaAAaAAaAAaAAOAabaO.',
+        '.OaqaQOaAAaAAaAAaAAaAAaAAOQaqaO.',
+        '.OaqaQOQAAQAAQAAQAAQAAQAAOQaqaO.',
+        '.OaqaQOQAAQAAQAAQAAQAAQAAOQaqaO.',
+        '.OqpqQOqQQqQQqQQqQQqQQqQQOQqpqO.',
+        '.OqpqQOqQQqQQqQQqQQqQQqQQOQqpqO.',
+        '.OqpqQOpqqpqqpqqpqqpqqpqqOQqpqO.',
+        '.OqpqQOpqqpqqpqqpqqpqqpqqOQqpqO.',
+        '.OppqqOpqqpqqpqqpqqpqqpqqOqqppO.',
+        '.OppqqOO.O.O.O.O.O.O.O.O.OqqppO.',
+        '..OppqO..................OqppO..',
+        '..OppqO..................OqppO..',
+        '..OppO....................OppO..',
+        '...OO......................OO...'
       ]},
       legs: { y: 30, rows: [
         '..........oijjjjJjjjJo..........',
@@ -352,29 +369,28 @@
         '........oo............oo........'
       ]},
       head: { y: 0, rows: [
-        '................................',
-        '..OOOO.....OOOOOOOOOO.....OOOO..',
-        '.ObbaaO..OOabbcAAcbbaOO..OaabbO.',
-        'ObbaaAakkabbcbaAAabcbbakkaAaabbO',
-        'OabaAaakkaabbaaAAaabbaakkaaAabaO',
-        'OaAbaO.OaabbaaaAAaaabbaaO.OabAaO',
-        'OaAabO.OabbaAssssssAabbaO.ObaAaO',
-        'OqaAaO.OaabAssssssssAbaaO.OaAaqO',
-        'OpqaqO.OaaAssssssssssAaaO.OqaqpO',
-        '.OpqQO.OaAssssssssssssAaO.OQqpO.',
-        '..OqpOOaasGgggssssGgggsaaOOpqO..',
-        '...OO.OaagseesggggseesgaaO.OO...',
+        '......OOO..............OOO......',
+        '.....ObbaO..OOOOOOOO..OabbO.....',
+        '.....OabAaOOabcAAcbaOOaAbaO.....',
+        '......OkkaabbcbAAbcbbaakkO......',
+        '......OkkabbaabAAbaabbakkO......',
+        '......OaaabbaaaAAaaabbaaaO......',
+        '......OaabbaAssssssAabbaaO......',
+        '......OaabaAssssssssAabaaO......',
+        '......OaabAssssssssssAbaaO......',
+        '......OaaAssssssssssssAaaO......',
+        '......OaasGgggssssGgggsaaO......',
+        '......OabgseesggggseesgbaO......',
         '......OaagswesgssgswesgaaO......',
-        '......OabgseesgssgseesgbaO......',
-        '.....OaaAsggggssssggggsAaaO.....',
-        '.....OaAasrrssSssSssrrsaAaO.....',
-        '.....OabaAsssssmmsssssAabaO.....',
-        '.....OAaaO.ssssssssss.OaaAO.....',
-        '.....Oaab...ssssssss...baaO.....',
-        '.....Oqaa...ooSSSSoo...aaqO.....',
-        '.....Oqqa..............aqqO.....',
-        '.....Opqq..............qqpO.....',
-        '......OOO..............OOO......'
+        '......OaAgseesgssgseesgAaO......',
+        '......OAasggggssssggggsaAO......',
+        '......ObasrrssSssSssrrsabO......',
+        '......OaaAsssssmmsssssAaaO......',
+        '......OaaO.ssssssssss.OaaO......',
+        '......Oqa...ssssssss...aqO......',
+        '......Oqq...ooSSSSoo...qqO......',
+        '......Oqp..............pqO......',
+        '.......OO..............OO.......'
       ]},
       blink: { y: 11, rows: [
         '..........ssss....ssss..........',
