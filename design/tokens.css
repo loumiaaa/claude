@@ -129,9 +129,9 @@
   --status-review: #F29BBE;
   --status-review-soft: #FDE7F0;
   --status-review-ink: #9E2E5C;     /* ajout */
-  --status-paused: #A3AFC2;
-  --status-paused-soft: #ECEFF4;
-  --status-paused-ink: #4A5568;
+  --status-paused: #E3A94A;
+  --status-paused-soft: #FBF0DC;
+  --status-paused-ink: #7A4E0B;
   --status-done: #5FC197;
   --status-done-soft: #E2F5EC;
   --status-done-ink: #1B6B4B;       /* ajout */
@@ -334,9 +334,9 @@
     --status-review: #F49AC1;
     --status-review-soft: rgba(244, 154, 193, 0.18);
     --status-review-ink: #FBD3E5;
-    --status-paused: #8C99AD;
-    --status-paused-soft: rgba(140, 153, 173, 0.18);
-    --status-paused-ink: #D3DAE5;
+    --status-paused: #E8B04B;
+    --status-paused-soft: rgba(232, 176, 75, 0.16);
+    --status-paused-ink: #F6D9A2;
     --status-done: #5ED6A0;
     --status-done-soft: rgba(94, 214, 160, 0.15);
     --status-done-ink: #AEF0D1;
@@ -449,9 +449,9 @@
   --status-review: #F49AC1;
   --status-review-soft: rgba(244, 154, 193, 0.18);
   --status-review-ink: #FBD3E5;
-  --status-paused: #8C99AD;
-  --status-paused-soft: rgba(140, 153, 173, 0.18);
-  --status-paused-ink: #D3DAE5;
+  --status-paused: #E8B04B;
+  --status-paused-soft: rgba(232, 176, 75, 0.16);
+  --status-paused-ink: #F6D9A2;
   --status-done: #5ED6A0;
   --status-done-soft: rgba(94, 214, 160, 0.15);
   --status-done-ink: #AEF0D1;

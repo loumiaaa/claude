@@ -2338,6 +2338,13 @@ button.tabbar__item { border: 0; background: transparent; font-family: inherit; 
 
 /* Kanban : colonnes posées sur le panneau, fiches blanches */
 .kanban__col.glass { background: var(--col-bg); border-color: transparent; box-shadow: none; }
+/* Chaque colonne prend la couleur de son statut : fond doux, liseré vif en haut */
+.kanban__col.glass.kanban__col--todo { background: var(--status-todo-soft); box-shadow: inset 0 3px 0 var(--status-todo); }
+.kanban__col.glass.kanban__col--doing { background: var(--status-doing-soft); box-shadow: inset 0 3px 0 var(--status-doing); }
+.kanban__col.glass.kanban__col--paused { background: var(--status-paused-soft); box-shadow: inset 0 3px 0 var(--status-paused); }
+.kanban__col.glass.kanban__col--review { background: var(--status-review-soft); box-shadow: inset 0 3px 0 var(--status-review); }
+.kanban__col.glass.kanban__col--done { background: var(--status-done-soft); box-shadow: inset 0 3px 0 var(--status-done); }
+.kanban__col .kanban__title .chip { --chip-bg: var(--color-surface); }
 .kanban__col .glass--nested { background: var(--glass-bg); }
 
 /* Mobile : pas de cadre, l'en-tête et la colonne laissent la place à la barre du haut */
