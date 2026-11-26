@@ -19,7 +19,7 @@
 
   var SCHEMA_VERSION = 2;
   var GROUPS = ['flowline', 'auto-entreprise'];
-  var STATUSES = ['todo', 'doing', 'review', 'done'];
+  var STATUSES = ['todo', 'doing', 'paused', 'review', 'done'];   // paused : en pause (ni relance, ni retard)
   var PRIORITIES = ['low', 'normal', 'high', 'urgent'];
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   var CHARACTERS = ['lamia', 'garcon'];

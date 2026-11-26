@@ -82,6 +82,7 @@
     return '<p class="kanban__empty">' + {
       todo: 'Rien en attente. Une idée ? Le bouton + est là pour ça.',
       doing: 'Glisse ici la tâche du moment.',
+      paused: 'Une tâche qui attend (un retour, une idée qui mûrit) ? Mets-la ici : elle ne te relancera pas.',
       review: 'Rien chez le client pour l’instant.',
       done: 'Les victoires de la semaine arriveront ici. La colonne repart à zéro chaque lundi.'
     }[status] + '</p>';

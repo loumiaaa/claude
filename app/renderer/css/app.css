@@ -602,9 +602,9 @@ h1[tabindex="-1"]:focus { outline: none; }
 /* Kanban */
 .kanban {
   display: grid;
-  grid-template-columns: repeat(4, minmax(232px, 1fr));
+  grid-template-columns: repeat(5, minmax(196px, 1fr));
   align-items: start;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 .kanban__col {
   display: flex;
@@ -1356,7 +1356,7 @@ h1[tabindex="-1"]:focus { outline: none; }
   .filters__clear { grid-column: 1 / -1; margin: 0; }
 
   .kanban {
-    grid-template-columns: repeat(4, minmax(280px, 82vw));
+    grid-template-columns: repeat(5, minmax(280px, 82vw));
     margin: -8px calc(var(--gutter-mobile) * -1) -32px;
     padding: 8px var(--gutter-mobile) 40px;
     scroll-padding: 0 var(--gutter-mobile);

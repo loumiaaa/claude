@@ -16,7 +16,7 @@
   var NB = D.NBSP;
 
   function isDue(t, today) {
-    if (!t || t.status === 'done' || !t.endDate || !t.reminder || !(t.reminder.daysBefore >= 0)) return false;
+    if (!t || t.status === 'done' || t.status === 'paused' || !t.endDate || !t.reminder || !(t.reminder.daysBefore >= 0)) return false;
     if (!D.valid(t.endDate)) return false;
     return D.addDays(t.endDate, -t.reminder.daysBefore) <= today && t.endDate >= today;
   }

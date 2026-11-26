@@ -648,6 +648,7 @@ button.chip[aria-pressed="true"] {
 .chip--todo   { --chip-bg: var(--status-todo-soft);   --chip-ink: var(--status-todo-ink);   --chip-dot: var(--status-todo); }
 .chip--doing  { --chip-bg: var(--status-doing-soft);  --chip-ink: var(--status-doing-ink);  --chip-dot: var(--status-doing); }
 .chip--review { --chip-bg: var(--status-review-soft); --chip-ink: var(--status-review-ink); --chip-dot: var(--status-review); }
+.chip--paused { --chip-bg: var(--status-paused-soft); --chip-ink: var(--status-paused-ink); --chip-dot: var(--status-paused); }
 .chip--done   { --chip-bg: var(--status-done-soft);   --chip-ink: var(--status-done-ink);   --chip-dot: var(--status-done); }
 
 /* Badge : compteur ou mini-libellé */

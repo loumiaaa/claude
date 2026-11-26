@@ -77,6 +77,8 @@
     if (!t.endDate) return null;
     var today = D.today();
     if (t.status === 'done') return { tone: 'done', text: D.dayMonth(t.endDate), long: 'Échéance ' + D.short(t.endDate) };
+    // En pause : la date reste visible, sans relance ni « à replanifier »
+    if (t.status === 'paused') return { tone: 'normal', text: D.dayMonth(t.endDate), long: 'Échéance ' + D.dayMonthLong(t.endDate) + ' (en pause)' };
     var n = D.diff(today, t.endDate);
     if (n < 0) return { tone: 'late', text: 'À replanifier', long: 'Échéance passée (' + D.short(t.endDate) + '), à replanifier' };
     if (n === 0) return { tone: 'today', text: 'Aujourd’hui', long: 'Échéance aujourd’hui' };

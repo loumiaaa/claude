@@ -692,6 +692,7 @@
   var STATUS = [
     { id: 'todo', label: 'Pas commencé' },
     { id: 'doing', label: 'En cours' },
+    { id: 'paused', label: 'En pause' },
     { id: 'review', label: 'En validation' },
     { id: 'done', label: 'Terminé' }
   ];

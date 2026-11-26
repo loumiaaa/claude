@@ -52,7 +52,8 @@
 
   /* --- Tâches ---------------------------------------------------------------- */
   function isDone(t) { return t.status === 'done'; }
-  function isOverdue(t, ref) { return !isDone(t) && !!t.endDate && t.endDate < (ref || D.today()); }
+  function isPaused(t) { return t.status === 'paused'; }
+  function isOverdue(t, ref) { return !isDone(t) && !isPaused(t) && !!t.endDate && t.endDate < (ref || D.today()); }
 
   function category(state, id) {
     for (var i = 0; i < state.categories.length; i++) if (state.categories[i].id === id) return state.categories[i];
@@ -182,7 +183,7 @@
   }
 
   function dueBetween(state, a, b) {
-    return state.tasks.filter(function (t) { return !isDone(t) && t.endDate && t.endDate >= a && t.endDate <= b; })
+    return state.tasks.filter(function (t) { return !isDone(t) && !isPaused(t) && t.endDate && t.endDate >= a && t.endDate <= b; })
       .sort(function (x, y) { return x.endDate < y.endDate ? -1 : x.endDate > y.endDate ? 1 : PRIO_RANK[x.priority] - PRIO_RANK[y.priority]; });
   }
 
