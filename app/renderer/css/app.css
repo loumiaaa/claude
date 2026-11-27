@@ -3256,3 +3256,18 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .ico--s3.ico--mood-1, .ico--s3.ico--mood-2, .ico--s3.ico--mood-3, .ico--s3.ico--mood-4, .ico--s3.ico--mood-5 { background: var(--color-surface-muted); }
 .chart__ico { stroke: currentColor; color: var(--color-text-muted); }
 .chart__ico.ico--mood-5 { color: var(--accent); }
+
+/* Contraste entre les blocs (mode clair) : panneau gris plus marqué, cartes
+   blanches détachées par un fin contour et une ombre douce */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --page-bg: #DCDFE4; --panel-bg: #E9EBEF; --col-bg: #E2E5EA; --color-track: #E3E6EB;
+  --card-line: rgba(17, 19, 24, 0.07); --card-shadow: 0 1px 2px rgba(17, 19, 24, 0.05), 0 8px 20px -12px rgba(17, 19, 24, 0.18);
+} }
+:root[data-theme="light"] {
+  --page-bg: #DCDFE4; --panel-bg: #E9EBEF; --col-bg: #E2E5EA; --color-track: #E3E6EB;
+  --card-line: rgba(17, 19, 24, 0.07); --card-shadow: 0 1px 2px rgba(17, 19, 24, 0.05), 0 8px 20px -12px rgba(17, 19, 24, 0.18);
+}
+.view .glass.card, .view .stat.glass, .view .glass.stat, .view .badge-card, .view .goal-card, .view .acc-card, .view .hcard, .view .profile-card, .view .notes-side, .view .notes-editor, .view .mini-quote, .kanban__col .task-card {
+  border: 1px solid var(--card-line, transparent);
+  box-shadow: var(--card-shadow, none);
+}
