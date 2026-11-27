@@ -242,7 +242,7 @@ function createWindow() {
     show: false,
     title: 'Plateforme de suivi - Lamia',
     icon: ICON,
-    backgroundColor: dark ? '#0E1116' : '#E9F1FC',
+    backgroundColor: dark ? '#0E1116' : '#E6E7EA',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

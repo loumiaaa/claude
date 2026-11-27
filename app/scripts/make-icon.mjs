@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Génère l'icône de l'application à partir du sprite pixel art de Memeow
-// (design/sprites/png/memeow-idle.png, 1re image), sur un fond vitré arrondi
-// bleu-violet de la charte. Sans dépendance : décodeur/encodeur PNG et
-// conteneur ICO (des PNG dans un ICO, Windows Vista et suivants) écrits ici.
+// Génère les icônes de l'application à partir de la marque (design/brand/app-icon.png :
+// étincelle blanche au trait sur un carré bleu électrique arrondi, 1024 px).
+// Sans dépendance : décodeur/encodeur PNG et conteneur ICO (des PNG dans un ICO,
+// Windows Vista et suivants) écrits ici ; réduction par moyenne de zone (lissée).
 //
 // Sorties :
 //   build/icon.ico          exe (electron-builder) : 16, 24, 32, 48, 64, 128, 256 px
 //   main/assets/icon.ico    fenêtre et zone de notification (Windows)
 //   main/assets/icon.png    fenêtre et notifications (Linux), 256 px
-//   build/icon-preview.png  planche de contrôle (non embarquée)
-// Le sprite n'est jamais lissé : agrandissement (ou réduction) au plus proche voisin.
+//   build/icon-mac.png      Mac, 1024 px
+//   web/icons/icon-180.png, icon-192.png, icon-512.png, icon-maskable-512.png (site, iPhone)
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -18,7 +18,8 @@ import zlib from 'node:zlib';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const appDir = resolve(here, '..');
-const SPRITE = resolve(appDir, '..', 'design', 'sprites', 'png', 'memeow-idle.png');
+const MASTER = resolve(appDir, '..', 'design', 'brand', 'app-icon.png');
+const MASKABLE = resolve(appDir, '..', 'design', 'brand', 'app-icon-maskable.png');
 export const SIZES = [16, 24, 32, 48, 64, 128, 256];
 
 /* --- PNG ------------------------------------------------------------------ */
@@ -100,10 +101,7 @@ export function readIco(buf) {
   });
 }
 
-/* --- Dessin ------------------------------------------------------------------ */
-function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
-const TOP = hex('#B9CCFF'), MID = hex('#9C8BF2'), BOTTOM = hex('#5B47D0'), EDGE = hex('#3B2F9E');
-
+/* --- Réduction (moyenne de zone, alpha prémultiplié) ------------------------- */
 function blend(dst, i, [r, g, b], a) {
   const da = dst[i + 3] / 255, oa = a + da * (1 - a);
   if (oa <= 0) return;
@@ -112,65 +110,32 @@ function blend(dst, i, [r, g, b], a) {
   dst[i + 2] = Math.round((b * a + dst[i + 2] * da * (1 - a)) / oa);
   dst[i + 3] = Math.round(oa * 255);
 }
-
-// Couverture d'un carré arrondi (anticrénelage par sur-échantillonnage 4×4)
-function coverage(x, y, x0, y0, x1, y1, r) {
-  let hit = 0;
-  for (let sy = 0; sy < 4; sy++) for (let sx = 0; sx < 4; sx++) {
-    const px = x + (sx + 0.5) / 4, py = y + (sy + 0.5) / 4;
-    if (px < x0 || px > x1 || py < y0 || py > y1) continue;
-    const cx = Math.min(Math.max(px, x0 + r), x1 - r), cy = Math.min(Math.max(py, y0 + r), y1 - r);
-    if ((px - cx) ** 2 + (py - cy) ** 2 <= r * r) hit++;
-  }
-  return hit / 16;
-}
-
-function mix(a, b, t) { return a.map((v, i) => Math.round(v + (b[i] - v) * t)); }
-
-// Recadrages du sprite (1re image de memeow-idle, 32 × 24) : corps entier ou tête
-const CROPS = { body: { x: 2, y: 1, w: 25, h: 23 }, head: { x: 2, y: 1, w: 20, h: 13 } };
-
-function drawIcon(sprite, size) {
-  const data = Buffer.alloc(size * size * 4);
-  const m = size <= 24 ? 0 : Math.max(1, Math.round(size * 0.04));
-  const x0 = m, y0 = m, x1 = size - m, y1 = size - m, r = (x1 - x0) * 0.24;
-  // Fond vitré : dégradé bleu → violet, bord lumineux en haut, liseré foncé
+export function downscale(img, size) {
+  const out = Buffer.alloc(size * size * 4), k = img.width / size;
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    const cov = coverage(x, y, x0, y0, x1, y1, r);
-    if (!cov) continue;
-    const t = (x + y) / (2 * size);
-    const col = t < 0.5 ? mix(TOP, MID, t / 0.5) : mix(MID, BOTTOM, (t - 0.5) / 0.5);
-    const i = (y * size + x) * 4;
-    blend(data, i, col, cov);
-    const inner = coverage(x, y, x0 + 1, y0 + 1, x1 - 1, y1 - 1, Math.max(0, r - 1));
-    if (cov - inner > 0.05 && size >= 32) blend(data, i, y < size / 2 ? [255, 255, 255] : EDGE, (cov - inner) * (y < size / 2 ? 0.75 : 0.55));
-    const gloss = 1 - (y - y0) / ((y1 - y0) * 0.6);
-    if (gloss > 0 && size >= 32) blend(data, i, [255, 255, 255], 0.22 * gloss * gloss * inner);   // reflet laiteux, en fondu
+    const x0 = x * k, x1 = (x + 1) * k, y0 = y * k, y1 = (y + 1) * k;
+    let r = 0, g = 0, b = 0, a = 0, w = 0;
+    for (let sy = Math.floor(y0); sy < Math.ceil(y1); sy++) for (let sx = Math.floor(x0); sx < Math.ceil(x1); sx++) {
+      const wx = Math.min(sx + 1, x1) - Math.max(sx, x0), wy = Math.min(sy + 1, y1) - Math.max(sy, y0), ww = wx * wy;
+      const i = (sy * img.width + sx) * 4, al = img.data[i + 3] / 255;
+      r += img.data[i] * al * ww; g += img.data[i + 1] * al * ww; b += img.data[i + 2] * al * ww; a += al * ww; w += ww;
+    }
+    const o = (y * size + x) * 4;
+    if (a > 0) { out[o] = Math.round(r / a); out[o + 1] = Math.round(g / a); out[o + 2] = Math.round(b / a); }
+    out[o + 3] = Math.round(a / w * 255);
   }
-  // Memeow, au plus proche voisin
-  const crop = size === 48 || size <= 24 ? CROPS.head : CROPS.body;
-  const avail = (x1 - x0) * (crop === CROPS.head ? 0.95 : 0.9);
-  let k = avail / Math.max(crop.w, crop.h);
-  if (k >= 1) k = Math.floor(k);
-  const dw = Math.round(crop.w * k), dh = Math.round(crop.h * k);
-  const ox = Math.round((size - dw) / 2), oy = Math.round((size - dh) / 2 + (crop === CROPS.body ? size * 0.02 : 0));
-  for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) {
-    const sx = crop.x + Math.min(crop.w - 1, Math.floor(x / k)), sy = crop.y + Math.min(crop.h - 1, Math.floor(y / k));
-    const si = (sy * sprite.width + sx) * 4;
-    const a = sprite.data[si + 3] / 255;
-    if (!a) continue;
-    const dx = ox + x, dy = oy + y;
-    if (dx < 0 || dy < 0 || dx >= size || dy >= size) continue;
-    blend(data, (dy * size + dx) * 4, [sprite.data[si], sprite.data[si + 1], sprite.data[si + 2]], a);
-  }
-  return { width: size, height: size, data };
+  return { width: size, height: size, data: out };
 }
-
+function rgba(img) {
+  if (img.data.length === img.width * img.height * 4) return img;
+  const out = Buffer.alloc(img.width * img.height * 4);      // RVB → RVBA opaque
+  for (let i = 0, j = 0; j < out.length; i += 3, j += 4) { out[j] = img.data[i]; out[j + 1] = img.data[i + 1]; out[j + 2] = img.data[i + 2]; out[j + 3] = 255; }
+  return { width: img.width, height: img.height, data: out };
+}
 export function makeIcons() {
-  const sprite = decodePng(readFileSync(SPRITE));
-  return SIZES.map((size) => ({ size, png: encodePng(drawIcon(sprite, size)), raw: drawIcon(sprite, size) }));
+  const master = rgba(decodePng(readFileSync(MASTER)));
+  return SIZES.map((size) => { const raw = downscale(master, size); return { size, png: encodePng(raw), raw }; });
 }
-
 function preview(icons) {
   // Planche : chaque taille à l'échelle 1 puis agrandie ×4 (contrôle visuel)
   const W = 1500, H = 1100, out = Buffer.alloc(W * H * 4, 255);
@@ -196,6 +161,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     writeFileSync(p, ico);
   }
   writeFileSync(resolve(appDir, 'main', 'assets', 'icon.png'), icons.find((i) => i.size === 256).png);
+  const master = rgba(decodePng(readFileSync(MASTER))), mask = rgba(decodePng(readFileSync(MASKABLE)));
+  writeFileSync(resolve(appDir, 'build', 'icon-mac.png'), encodePng(master));
+  for (const n of [180, 192, 512]) writeFileSync(resolve(appDir, 'web', 'icons', 'icon-' + n + '.png'), encodePng(downscale(master, n)));
+  writeFileSync(resolve(appDir, 'web', 'icons', 'icon-maskable-512.png'), encodePng(downscale(mask, 512)));
   if (process.argv.includes('--preview')) writeFileSync(resolve(process.argv[process.argv.indexOf('--preview') + 1] || resolve(appDir, 'build', 'icon-preview.png')), preview(icons));
   console.log(`[make-icon] icon.ico (${SIZES.join(', ')} px, ${(ico.length / 1024).toFixed(1)} Ko) et icon.png 256 px générés`);
 }

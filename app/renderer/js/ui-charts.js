@@ -215,9 +215,7 @@
     }
     for (var lv = 1; lv <= 5; lv++) {
       s += '<line class="chart__grid' + (lv === 1 ? ' chart__grid--base' : '') + '" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(lv) + '" y2="' + y(lv) + '"/>';
-      var url = L.ui.pixelURL('mood-' + lv, 1);
-      if (url) s += '<image href="' + url + '" x="' + (pad.l - 26) + '" y="' + (y(lv) - 8) + '" width="16" height="16" class="pixelated"><title>' + esc(L.ui.moodLabel(lv)) + '</title></image>';
-      else s += text(pad.l - 10, y(lv) + 4, String(lv), 'chart__tick', 'end');
+      s += '<g><title>' + esc(L.ui.moodLabel(lv)) + '</title>' + L.ui.chartIcon('mood-' + lv, pad.l - 26, y(lv) - 8, 16) + '</g>';
     }
     // Segments (un jour sans humeur = un trou, pas un zéro)
     var segs = [], cur = [];

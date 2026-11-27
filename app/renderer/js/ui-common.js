@@ -3,7 +3,7 @@
    - gabarits (chips, priorités, étiquettes, échéances, durées) ;
    - couches : modales et tiroir (focus piégé puis restitué, Échap, inert) ;
    - menus contextuels (« Déplacer vers… »), toasts, annonces lecteur d'écran ;
-   - icônes pixel PixelCast avec repli si un nom manque encore.
+   - icônes illustratives au trait (design/icons.js).
    ========================================================================== */
 (function (L) {
   'use strict';
@@ -89,28 +89,21 @@
       '<span>' + esc(d.text) + '</span><span class="sr-only">, ' + esc(d.long) + '</span></span>';
   }
 
-  /* --- Icônes pixel (PixelCast) ------------------------------------------ */
-  var pixelCache = {};
-  var FALLBACK = { 'mood-1': 'mood', 'mood-2': 'mood', 'mood-3': 'mood', 'mood-4': 'mood', 'mood-5': 'mood', heart: 'heart', fish: 'sparkle', zzz: 'moon', kibble: 'coffee', star: 'sparkle', note: 'note' };
-
-  function pixelURL(name, scale) {
-    var k = name + '@' + scale;
-    if (pixelCache[k] !== undefined) return pixelCache[k];
-    try { pixelCache[k] = window.PixelCast.iconDataURL(name, scale); }
-    catch (e) { pixelCache[k] = null; }
-    return pixelCache[k];
-  }
-
-  // <img> pixel net (les icônes font 16 × 16 « pixels art »)
+  /* --- Icônes illustratives (au trait, dessinées pour la plateforme) ------------
+     scale 1 : icône dans le texte ; 2 : pastille ronde (cartes) ; 3 : grande pastille. */
+  var ICO_SIZE = { 1: 18, 2: 20, 3: 26 };
   function pixelImg(name, scale, cls, alt) {
-    var url = pixelURL(name, scale);
-    var size = 16 * scale;
-    if (!url) return '<span class="pixel-fallback ' + (cls || '') + '" style="--size:' + size + 'px" aria-hidden="' + (alt ? 'false' : 'true') + '">' + icon(FALLBACK[name] || 'sparkle', { title: alt || '' }) + '</span>';
-    return '<img class="pixelated ' + (cls || '') + '" src="' + url + '" width="' + size + '" height="' + size + '" alt="' + esc(alt || '') + '">';
+    var s = scale >= 3 ? 3 : scale >= 2 ? 2 : 1;
+    var n = window.LamiaIcons && window.LamiaIcons.has(name) ? name : 'sparkle';
+    var mood = /^mood-[1-5]$/.test(name) ? ' ico--' + name : '';
+    return '<span class="ico ico--s' + s + mood + ' ' + (cls || '') + '"' + (alt ? '' : ' aria-hidden="true"') + '>' + icon(n, { size: ICO_SIZE[s], title: alt || '' }) + '</span>';
   }
-
-  // Icône pixel de l'interface (remplace les emojis) : scale 1 = 16 px, 2 = 32 px
-  function px(name, scale, alt) { return pixelImg(name, scale || 1, 'px-ico px-ico--' + (scale || 1), alt || ''); }
+  function px(name, scale, alt) { return pixelImg(name, scale || 1, 'px-ico', alt || ''); }
+  // Icône pour un graphique SVG (humeurs de la courbe) : <svg> imbriqué, placé en x, y
+  function chartIcon(name, x, y, size) {
+    var svg = icon(name, { size: size || 16 });
+    return svg.replace('<svg ', '<svg x="' + x + '" y="' + y + '" class="chart__ico ico--' + name + '" ');
+  }
 
   /* --- Humeur ------------------------------------------------------------ */
   var MOODS = [
@@ -431,7 +424,7 @@
     esc: esc, icon: icon, $: $, $$: $$, plural: plural, NB: NB, typo: typo, typoString: typoString,
     PALETTE: PALETTE, hue: hue, catChip: catChip, catDot: catDot, statusChip: statusChip, prio: prio, tags: tags,
     progress: progress, due: due, dueBadge: dueBadge,
-    pixelURL: pixelURL, pixelImg: pixelImg, px: px, MOODS: MOODS, moodLabel: moodLabel,
+    pixelImg: pixelImg, px: px, chartIcon: chartIcon, MOODS: MOODS, moodLabel: moodLabel,
     announce: announce, toast: toast, openLayer: openLayer, closeLayer: closeLayer, topLayer: topLayer, focusables: focusables,
     dialog: dialog, openMenu: openMenu, closeMenu: closeMenu, debounce: debounce, keepFocus: keepFocus,
     reducedMotion: reducedMotion, download: download
