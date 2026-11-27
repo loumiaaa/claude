@@ -3195,3 +3195,54 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
 .celebrate { align-items: center; }
 .celebrate__icon { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); }
 .celebrate__text { padding-bottom: 0; }
+
+/* ==========================================================================
+   THÈME « BLEU ÉLECTRIQUE & NOIR »
+   Gris clair, cartes blanches, bleu électrique pour l'action, noir pour ce qui
+   est mis en avant (menu actif, bandeaux). Barres hachurées, gros chiffres.
+   ========================================================================== */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --accent: #1764F2; --accent-hover: #0F52D1; --accent-soft: #E7EFFF; --accent-contrast: #FFFFFF;
+  --color-text: #111318; --color-text-muted: #5B616B; --color-text-subtle: #6A707A;
+  --color-border: rgba(17, 19, 24, 0.08); --color-border-strong: rgba(17, 19, 24, 0.16);
+  --color-hover: rgba(17, 19, 24, 0.05); --color-pressed: rgba(17, 19, 24, 0.09);
+  --color-track: #ECEDF0; --color-selection: rgba(23, 100, 242, 0.18); --control-border: #8A9099;
+  --page-bg: #E6E7EA; --shell-bg: #FFFFFF; --panel-bg: #F2F3F5; --col-bg: #ECEDF0;
+  --nav-active-bg: #111214; --nav-active-ink: #FFFFFF;
+  --tab-flat: #1764F2; --feature-flat: #111214; --progress-flat: #1764F2;
+  --feature-muted: rgba(255, 255, 255, 0.78);
+  --glass-bg-strong: #F4F5F7; --glass-bg-tint-blue: #EEF3FF; --glass-bg-tint-violet: #F4F5F7;
+} }
+:root[data-theme="light"] {
+  --accent: #1764F2; --accent-hover: #0F52D1; --accent-soft: #E7EFFF; --accent-contrast: #FFFFFF;
+  --color-text: #111318; --color-text-muted: #5B616B; --color-text-subtle: #6A707A;
+  --color-border: rgba(17, 19, 24, 0.08); --color-border-strong: rgba(17, 19, 24, 0.16);
+  --color-hover: rgba(17, 19, 24, 0.05); --color-pressed: rgba(17, 19, 24, 0.09);
+  --color-track: #ECEDF0; --color-selection: rgba(23, 100, 242, 0.18); --control-border: #8A9099;
+  --page-bg: #E6E7EA; --shell-bg: #FFFFFF; --panel-bg: #F2F3F5; --col-bg: #ECEDF0;
+  --nav-active-bg: #111214; --nav-active-ink: #FFFFFF;
+  --tab-flat: #1764F2; --feature-flat: #111214; --progress-flat: #1764F2;
+  --feature-muted: rgba(255, 255, 255, 0.78);
+  --glass-bg-strong: #F4F5F7; --glass-bg-tint-blue: #EEF3FF; --glass-bg-tint-violet: #F4F5F7;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --accent: #5B8CFF; --accent-hover: #7AA2FF; --accent-soft: rgba(91, 140, 255, 0.16); --accent-contrast: #0B1020;
+  --tab-flat: #1764F2; --progress-flat: #5B8CFF; --feature-flat: #1D1F24;
+} }
+:root[data-theme="dark"] {
+  --accent: #5B8CFF; --accent-hover: #7AA2FF; --accent-soft: rgba(91, 140, 255, 0.16); --accent-contrast: #0B1020;
+  --tab-flat: #1764F2; --progress-flat: #5B8CFF; --feature-flat: #1D1F24;
+}
+/* Onglet actif en bleu : texte blanc dans les deux thèmes */
+.spacebar__item[aria-current="page"] { color: #FFFFFF; }
+
+/* Barres hachurées (progression, barres des graphiques) */
+.progress::after { background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 3px, transparent 3px 7px), var(--progress-fill); }
+.bars__bar--in, .bars__bar--out, .acc-bar__seg { background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0 3px, transparent 3px 7px); }
+
+/* Gros chiffres, plus légers */
+.stat__value { font-weight: var(--fw-medium, 500); letter-spacing: -0.02em; }
+.display, .h1 { letter-spacing: -0.025em; }
+/* Liens d'en-tête de carte (« Voir », « Commencer »…) : pilules à contour */
+.card__header .btn--ghost.btn--sm:not(.btn--icon) { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding-inline: 14px; }
+.card__header .btn--ghost.btn--sm:not(.btn--icon):hover { background: var(--color-hover); }
