@@ -104,7 +104,7 @@
         [['light', 'sun', 'Clair'], ['dark', 'moon', 'Sombre'], ['system', 'settings', 'Système']].map(function (o) {
           return '<button type="button" class="segmented__item" data-theme-set="' + o[0] + '" data-focus-key="th-' + o[0] + '" aria-pressed="' + (th === o[0]) + '">' + icon(o[1]) + o[2] + '</button>';
         }).join('') + '</div>' +
-      '<p class="hint">Les animations des personnages et de Memeow s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
+      '<p class="hint">Les petites animations s’arrêtent si « Réduire les animations » est activé dans ton système.</p></section>';
   }
 
   function sw(attr, on, label, hint, disabled) {

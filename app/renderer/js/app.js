@@ -347,7 +347,6 @@
     applyPersona();
     L.fun.watchScroll();
     L.fun.smoothWheel();
-    L.fun.sidebarCat();
     L.focus.sync();
     L.calendarUI.start();
     // Le chrono par tâche n'existe plus : un chrono resté en route est arrêté et enregistré

@@ -1,6 +1,6 @@
 /* ==========================================================================
    Plateforme de suivi - Lamia — Maquette · Dashboard
-   Accueil, scène pixel (Lamia & Memeow + bulles LamiaVoice), heures de la
+   Accueil, phrase du jour (LamiaVoice), heures de la
    semaine par catégorie (jamais additionnées), humeur, tâches en cours avec
    ▶ (chrono en 2 clics), échéances et « à replanifier », récap express.
    ========================================================================== */
@@ -9,87 +9,29 @@
 
   var D = L.dates, S = L.store, U = L.ui, Q = L.q;
   var esc = U.esc, icon = U.icon, NB = D.NBSP;
-  var el = null, cast = { lamia: null, memeow: null }, voice = null, narrowMQ = null;
+  var el = null, voice = null;
 
   /* --- Voix --------------------------------------------------------------- */
   function pickVoice() {
     try { voice = window.LamiaVoice.pick(Q.voiceContext()); }
-    catch (e) { voice = { lamia: 'Belle journée à toi, Lamia.', memeow: { text: 'Meew !', icon: 'heart' }, lamiaAnimation: 'wave', memeowAnimation: 'idle' }; }
+    catch (e) { voice = { lamia: 'Belle journée à toi.' }; }
     return voice;
   }
 
-  function memeowSays(text, ic) {
-    return esc(text) + U.pixelImg(ic, 2, 'pixel-bubble__icon', iconAlt(ic));
+  // Phrase du jour (encouragement), dans l'encadré clair du bandeau d'accueil
+  function quoteHTML() {
+    return '<figure class="hero-quote"><span class="hero-quote__mark" aria-hidden="true">“</span>' +
+      '<blockquote class="hero-quote__text" data-quote aria-live="polite">' + esc(voice.lamia) + '</blockquote></figure>';
   }
-
-  function iconAlt(ic) {
-    return { heart: 'un cœur', fish: 'un poisson', zzz: 'zZz', kibble: 'des croquettes', star: 'une étoile', note: 'une note de musique' }[ic] || '';
+  function setQuote() {
+    var q = el && el.querySelector('[data-quote]');
+    if (!q) return;
+    q.textContent = voice.lamia;
+    U.typo(q);
+    var f = q.closest('.hero-quote');
+    if (f && !U.reducedMotion()) { f.classList.remove('is-new'); void f.offsetWidth; f.classList.add('is-new'); }
   }
-
-  function sceneHTML() {
-    var narrow = narrowMQ && narrowMQ.matches, me = S.me(), who = me.name || 'Ton personnage';
-    return '<div class="pixel-stage scene">' +
-      '<div class="scene__say scene__say--lamia"><p class="pixel-bubble ' + (narrow ? 'pixel-bubble--tail-bottom' : 'pixel-bubble--tail-left') + ' pixel-bubble--pop" data-bubble="lamia" aria-live="polite">' +
-        '<span class="sr-only">' + esc(who) + ' dit : </span><span data-say>' + esc(voice.lamia) + '</span></p></div>' +
-      '<canvas class="scene__sprite scene__sprite--lamia" data-sprite="lamia" aria-label="' + esc(who) + ', en pixel art"></canvas>' +
-      '<div class="scene__memeow">' +
-        '<div class="scene__say scene__say--memeow"><p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop" data-bubble="memeow" aria-live="polite">' +
-          '<span class="sr-only">Memeow répond : </span><span data-say>' + memeowSays(voice.memeow.text, voice.memeow.icon) + '</span></p></div>' +
-        '<button type="button" class="scene__cat" data-memeow aria-label="Memeow, la chatte' + (me.generic ? ' mascotte' : ' de Lamia') + '. Clique pour qu’elle réagisse">' +
-          '<canvas class="scene__sprite scene__sprite--memeow" data-sprite="memeow" aria-hidden="true"></canvas></button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function mountCast() {
-    var narrow = narrowMQ && narrowMQ.matches;
-    var cl = el.querySelector('[data-sprite="lamia"]');
-    var cm = el.querySelector('[data-sprite="memeow"]');
-    try {
-      if (cast.lamia) cast.lamia.destroy();
-      if (cast.memeow) cast.memeow.destroy();
-      cast.lamia = L.ui.castMount(cl, S.me().character, { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('me') });
-      cast.memeow = L.ui.castMount(cm, 'memeow', { scale: narrow ? 3 : 4, animation: 'idle', extras: L.fun.wearing('memeow') });
-      cm.setAttribute('aria-hidden', 'true');
-      setTimeout(function () {
-        if (cast.lamia) cast.lamia.play(voice.lamiaAnimation || 'idle');
-        if (cast.memeow) cast.memeow.play(voice.memeowAnimation || 'idle');
-      }, 500);
-    } catch (e) { if (window.console) console.error(e); }
-  }
-
-  function bubblePop(which, html) {
-    var b = el.querySelector('[data-bubble="' + which + '"]');
-    if (!b) return;
-    b.querySelector('[data-say]').innerHTML = html;
-    U.typo(b);
-    b.classList.remove('pixel-bubble--pop');
-    void b.offsetWidth;
-    b.classList.add('pixel-bubble--pop');
-  }
-
-  function anotherPhrase() {
-    pickVoice();
-    bubblePop('lamia', esc(voice.lamia));
-    bubblePop('memeow', memeowSays(voice.memeow.text, voice.memeow.icon));
-    if (cast.lamia) cast.lamia.play(voice.lamiaAnimation || 'idle');
-    if (cast.memeow) cast.memeow.play(voice.memeowAnimation || 'idle');
-  }
-
-  var lastMeew = null;
-  function petMemeow() {
-    var anims = ['lick', 'hungry', 'meow'];
-    var anim = anims[Math.floor(Math.random() * anims.length)];
-    var pool = [];
-    try {
-      var all = window.LamiaVoice.phrases.memeow;
-      Object.keys(all).forEach(function (k) { all[k].forEach(function (r) { if (r.animation === anim && r.text !== lastMeew) pool.push(r); }); });
-    } catch (e) { pool = []; }
-    var r = pool.length ? pool[Math.floor(Math.random() * pool.length)] : { text: 'Meew !', icon: anim === 'hungry' ? 'kibble' : 'heart' };
-    lastMeew = r.text;
-    bubblePop('memeow', memeowSays(U.typoString(r.text), r.icon));
-    if (cast.memeow) cast.memeow.play(anim);
-  }
+  function anotherPhrase() { pickVoice(); setQuote(); }
 
   /* --- Cartes ------------------------------------------------------------- */
   function leadText(ctx) {
@@ -322,7 +264,6 @@
     var ctx = Q.voiceContext();
     var today = D.today();
     if (!voice) pickVoice();
-    var hadScene = !!el.querySelector('.scene');
     var html =
       '<div class="dash-grid">' +
         '<section class="glass card hero">' +
@@ -330,9 +271,8 @@
             '<h1 class="display" id="h-dashboard" tabindex="-1">Bonjour' + (S.me().name ? ' ' + esc(S.me().name) : '') + '</h1>' +
             '<p class="hero__lead" data-lead>' + esc(leadText(ctx)) + '</p>' +
             '<div class="hero__actions"><button type="button" class="btn btn--primary btn--sm" data-focus-start>' + icon('target') + 'Mode focus</button>' +
-            '<button type="button" class="btn btn--secondary btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button>' +
-            '<span class="hero__hint">Clique sur Memeow, elle adore ça.</span></div></div>' +
-          '<div class="hero__stage" data-scene-slot></div>' +
+            '<button type="button" class="btn btn--secondary btn--sm" data-another>' + icon('refresh') + 'Une autre phrase</button></div></div>' +
+          '<div class="hero__stage">' + quoteHTML() + '</div>' +
         '</section>' +
         '<div data-dash-life class="dash-life">' + lifeHTML() + '</div>' +
         '<h2 class="dash-section">' + icon('tasks') + 'Productivité</h2>' +
@@ -342,13 +282,7 @@
         '<div data-dash-doing class="dash-doing">' + doingCard() + '</div>' +
         '<div data-dash-due class="dash-due">' + dueCard() + '</div>' +
       '</div>';
-    var scene = hadScene ? el.querySelector('.scene') : null;
-    U.keepFocus(el, function () {
-      el.innerHTML = html;
-      var slot = el.querySelector('[data-scene-slot]');
-      if (scene) slot.appendChild(scene);
-      else { slot.innerHTML = sceneHTML(); mountCast(); }
-    });
+    U.keepFocus(el, function () { el.innerHTML = html; });
     U.typo(el);
   }
 
@@ -498,21 +432,11 @@
 
   function mount(node) {
     el = node;
-    narrowMQ = window.matchMedia('(max-width: 640px)');
-    var wasNarrow = narrowMQ.matches;
-    var onNarrow = function () {
-      if (narrowMQ.matches === wasNarrow) return;
-      wasNarrow = narrowMQ.matches;
-      var s = el.querySelector('.scene');
-      if (s) { s.outerHTML = sceneHTML(); mountCast(); }
-    };
-    if (narrowMQ.addEventListener) narrowMQ.addEventListener('change', onNarrow);
 
     el.addEventListener('click', function (e) {
       var b;
       if (e.target.closest('[data-another]')) { anotherPhrase(); return; }
       if ((b = e.target.closest('[data-dash-expense]')) && L.budgetQuick) { L.budgetQuick.open('expense', b); return; }
-      if (e.target.closest('[data-memeow]')) { petMemeow(); return; }
       if ((b = e.target.closest('[data-dash-period]'))) { S.setUI({ dashPeriod: b.getAttribute('data-dash-period') }); return; }
       if ((b = e.target.closest('[data-replan]'))) { replan(b.getAttribute('data-task'), b.getAttribute('data-replan'), b); return; }
       if (e.target.closest('[data-mood-edit]')) { L.mood.open({ returnTo: e.target.closest('button') }); return; }
@@ -524,8 +448,8 @@
     });
 
     S.subscribe(function (type, d) {
-      // Prénom ou personnage changé : tout se redessine (titre, scène)
-      if (type === 'setup' || type === 'profile' || type === 'wardrobe') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
+      // Prénom changé : tout se redessine (titre)
+      if (type === 'setup' || type === 'profile') { voice = null; el.innerHTML = ''; if (L.app.view() === 'dashboard') render(); return; }
       if (L.app.view() !== 'dashboard') { el.dataset.stale = '1'; if (type === 'mood') voice = null; return; }
       if (type === 'timer') update('life');
       if (type === 'focus-state') { update('doing'); return; }
@@ -548,11 +472,11 @@
   function show() {
     if (!el.querySelector('.dash-grid') || el.dataset.stale) {
       delete el.dataset.stale;
-      if (!voice) { pickVoice(); if (el.querySelector('.scene')) { bubblePop('lamia', esc(voice.lamia)); bubblePop('memeow', memeowSays(voice.memeow.text, voice.memeow.icon)); } }
+      if (!voice) { pickVoice(); setQuote(); }
       if (el.querySelector('.dash-grid')) update(); else render();
     }
   }
 
   L.views = L.views || {};
-  L.views.dashboard = { mount: mount, render: render, show: show, anotherPhrase: anotherPhrase, petMemeow: petMemeow, title: 'Accueil' };
+  L.views.dashboard = { mount: mount, render: render, show: show, anotherPhrase: anotherPhrase, title: 'Accueil' };
 })(window.Lamia = window.Lamia || {});

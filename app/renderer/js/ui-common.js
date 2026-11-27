@@ -47,11 +47,6 @@
     return '<span class="chip chip--cat ' + (DA_CHIPS[c.color] || '') + ' ' + hue(c) + (extra ? ' ' + extra : '') + '">' + esc(c.name) + '</span>';
   }
 
-  // Personnages pixel : point de montage unique (play(), stop(), destroy())
-  function castMount(canvas, id, opts) {
-    if (!canvas || !window.PixelCast) return null;
-    return window.PixelCast.mount(canvas, id, opts);
-  }
   function catDot(c) { return '<span class="cat-dot ' + hue(c) + '" aria-hidden="true"></span>'; }
 
   function statusChip(s) { return '<span class="chip chip--' + s + '">' + esc(L.q.statusLabel(s)) + '</span>'; }
@@ -434,7 +429,6 @@
 
   L.ui = {
     esc: esc, icon: icon, $: $, $$: $$, plural: plural, NB: NB, typo: typo, typoString: typoString,
-    castMount: castMount,
     PALETTE: PALETTE, hue: hue, catChip: catChip, catDot: catDot, statusChip: statusChip, prio: prio, tags: tags,
     progress: progress, due: due, dueBadge: dueBadge,
     pixelURL: pixelURL, pixelImg: pixelImg, px: px, MOODS: MOODS, moodLabel: moodLabel,

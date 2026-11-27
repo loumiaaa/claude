@@ -2809,10 +2809,7 @@ body::before { display: none !important; }
 .focus-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-track); }
 .focus-dot.is-on { background: var(--accent); }
 .focus__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
-.focus__memeow { display: grid; justify-items: center; gap: 6px; margin-top: var(--space-2); }
-.focus__say { margin: 0; white-space: nowrap; }
-.focus__cat { display: block; }
-.focus__memeow-text { margin: 0; font-size: var(--fs-sm); color: var(--color-text-muted); max-width: 34ch; }
+.focus__tip { margin: var(--space-2) 0 0; font-size: var(--fs-sm); color: var(--color-text-muted); max-width: 34ch; text-align: center; }
 .focus-presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
 .focus-preset { position: relative; display: block; cursor: pointer; }
 .focus-preset input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
@@ -3174,3 +3171,27 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--space-2); }
   .notes-editor__title { font-size: 1.3rem; }
   .notes-editor__body { min-height: 280px; }
 }
+
+
+/* ==========================================================================
+   Sans personnages : phrase du jour, initiale de l'avatar, célébration
+   ========================================================================== */
+.hero-quote { position: relative; flex: 1; display: grid; align-content: center; gap: var(--space-2); min-height: 200px; margin: 0; padding: var(--space-6) var(--space-8); border-radius: 24px; background: var(--color-surface); color: var(--color-text); }
+.hero-quote__mark { font-family: var(--font-display); font-size: 72px; line-height: .55; color: var(--accent); opacity: .45; }
+.hero-quote__text { margin: 0; max-width: 34ch; font-family: var(--font-display); font-size: var(--fs-xl, 22px); font-weight: var(--fw-semibold); line-height: 1.35; letter-spacing: var(--ls-tight); }
+.hero-quote.is-new { animation: quote-in .4s var(--ease-out) both; }
+@keyframes quote-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .hero-quote { min-height: 0; padding: var(--space-5); } .hero-quote__mark { font-size: 56px; } .hero-quote__text { font-size: var(--fs-lg); } }
+
+.mini-quote { display: flex; align-items: flex-start; gap: var(--space-3); margin: 0; padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); }
+.mini-quote__mark { flex: none; font-family: var(--font-display); font-size: 44px; line-height: .7; color: var(--accent); opacity: .45; }
+.mini-quote__text { margin: 0; font-size: var(--fs-md, 15px); line-height: 1.55; color: var(--color-text); }
+
+.avatar-initials { display: grid; place-items: center; width: 100%; height: 100%; background: var(--accent-soft); font-family: var(--font-display); font-weight: var(--fw-bold, 700); line-height: 1; color: var(--accent); }
+.brand__mark--avatar .avatar-initials { font-size: 18px; }
+.avatar--xl .avatar-initials { font-size: 72px; }
+.avatar-initials .icon { width: 55%; height: 55%; }
+
+.celebrate { align-items: center; }
+.celebrate__icon { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); }
+.celebrate__text { padding-bottom: 0; }

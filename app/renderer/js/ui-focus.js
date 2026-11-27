@@ -4,8 +4,8 @@
    défaut) entrecoupées de pauses (5 min, et 15 min toutes les 4 sessions).
    Il n'ajoute aucune heure : les heures se notent à la main dans les
    compteurs (carte « Heures de la semaine », ui-hours.js).
-   Pendant la concentration, Memeow fait la sieste ; à la pause, elle se
-   réveille et miaule pour te rappeler de souffler (notification + petit son).
+   À la fin de chaque session, une notification (et un petit son) rappelle de
+   souffler ; à la pause, un conseil pour se détendre.
    L'état du minuteur reste sur l'appareil (localStorage) : il survit à un
    rechargement. Les sessions terminées sont enregistrées (badges, récap).
    ========================================================================== */
@@ -24,7 +24,7 @@
 
   // { phase, endsAt (ms), left (ms, si en pause), waiting (prête pour la suite), cycle, taskId }
   var st = read();
-  var ov = null, cast = null, ticker = null, lastPhaseKey = '';
+  var ov = null, ticker = null;
 
   function read() { try { var x = JSON.parse(localStorage.getItem(KEY) || 'null'); return x && PHASES[x.phase] ? x : null; } catch (e) { return null; } }
   function write() { try { if (st) localStorage.setItem(KEY, JSON.stringify(st)); else localStorage.removeItem(KEY); } catch (e) { /* stockage indisponible */ } }
@@ -83,8 +83,8 @@
       st.left = null; st.waiting = false;
       if (!skipped) {
         chime(false);
-        notify('Pause ! Memeow te réclame', 'Session terminée. Étire-toi, bois un verre d’eau : ' + phaseMin(st.phase) + ' minutes rien que pour toi.');
-        U.toast({ kind: 'success', icon: 'coffee', title: 'Session terminée, place à la pause', text: 'Memeow s’étire : fais comme elle pendant ' + phaseMin(st.phase) + NB + 'min.', duration: 6000 });
+        notify('Pause !', 'Session terminée. Étire-toi, bois un verre d’eau : ' + phaseMin(st.phase) + ' minutes rien que pour toi.');
+        U.toast({ kind: 'success', icon: 'coffee', title: 'Session terminée, place à la pause', text: 'Étire-toi et souffle pendant ' + phaseMin(st.phase) + NB + 'min.', duration: 6000 });
       }
     } else {
       // Fin de pause : on attend que tu sois prête pour relancer
@@ -150,18 +150,18 @@
   }
 
   /* --- Grand écran ------------------------------------------------------------------------- */
-  function memeowLine() {
-    if (!st) return { say: '', text: '' };
-    if (st.waiting) return { say: 'Meew ?', icon: 'star', anim: 'meow', text: 'Memeow t’attend pour la session suivante.' };
-    if (st.phase === 'work') return { say: 'Mrrr… zzz', icon: 'zzz', anim: 'sleep', text: 'Memeow fait la sieste pendant que tu te concentres. Chut…' };
-    return { say: 'Meew ! Meew !', icon: 'heart', anim: 'meow', text: st.phase === 'long' ? 'Grande pause : lève-toi, marche un peu, regarde au loin.' : 'Petite pause : étire-toi et bois un verre d’eau.' };
+  // Petit conseil sous le minuteur
+  function tipLine() {
+    if (!st) return '';
+    if (st.waiting) return 'Prends ton temps : la session suivante démarre quand tu veux.';
+    if (st.phase === 'work') return 'Une seule chose à la fois. Le reste attendra la pause.';
+    return st.phase === 'long' ? 'Grande pause : lève-toi, marche un peu, regarde au loin.' : 'Petite pause : étire-toi et bois un verre d’eau.';
   }
   function drawOverlay() {
-    var t = task(), p = PHASES[st.phase], m = memeowLine(), every = cfg().every;
+    var t = task(), p = PHASES[st.phase], every = cfg().every;
     var dots = '';
     for (var i = 0; i < every; i++) dots += '<span class="focus-dot' + (i < st.cycle % every || (st.cycle && st.cycle % every === 0 && st.phase === 'long') ? ' is-on' : '') + '"></span>';
     var paused = st.left != null;
-    var key = st.phase + (st.waiting ? 'w' : '');
     var box = ov.querySelector('.focus');
     box.className = 'focus focus--' + st.phase + (st.waiting ? ' focus--waiting' : '');
     box.querySelector('.focus__phase').innerHTML = U.px(p.emoji, 2) + '<span>' + esc(st.waiting ? 'Prête pour la suite ?' : p.label + (paused ? ' (en pause)' : '')) + '</span>';
@@ -169,7 +169,7 @@
     box.querySelector('.focus__dots').innerHTML = dots;
     box.querySelector('.focus__dots').setAttribute('aria-label', (st.cycle % every) + ' session' + (st.cycle % every > 1 ? 's' : '') + ' sur ' + every + ' avant la grande pause');
     box.querySelector('[data-focus-time]').textContent = clock(left());
-    box.querySelector('.focus__memeow-text').textContent = m.text;
+    box.querySelector('.focus__tip').textContent = tipLine();
     box.querySelector('.focus__actions').innerHTML =
       (st.waiting
         ? '<button type="button" class="btn btn--primary" data-focus-act="resume">' + icon('play') + 'C’est reparti</button>'
@@ -177,17 +177,6 @@
           : '<button type="button" class="btn btn--primary" data-focus-act="pause">' + icon('pause') + 'Pause</button>') +
       (st.waiting ? '' : '<button type="button" class="btn btn--secondary" data-focus-act="skip">' + icon('chevron-right') + (st.phase === 'work' ? 'Passer à la pause' : 'Écourter la pause') + '</button>') +
       '<button type="button" class="btn btn--ghost" data-focus-act="stop">' + icon('stop') + 'Terminer</button>';
-    if (key !== lastPhaseKey) {
-      lastPhaseKey = key;
-      var say = box.querySelector('.focus__say');
-      say.innerHTML = esc(m.say) + U.pixelImg(m.icon, 2, 'pixel-bubble__icon', '');
-      say.classList.remove('pixel-bubble--pop'); void say.offsetWidth; say.classList.add('pixel-bubble--pop');
-      if (window.PixelCast) {
-        if (cast) { try { cast.destroy(); } catch (e) { /* rien */ } }
-        cast = L.ui.castMount(box.querySelector('.focus__cat'), 'memeow', { scale: 4, animation: m.anim === 'sleep' ? 'sleep' : 'idle', extras: L.badgesUI ? L.badgesUI.extras('memeow') : [] });
-        if (m.anim !== 'sleep' && !U.reducedMotion()) setTimeout(function () { if (cast) cast.play(m.anim); }, 300);
-      }
-    }
     tick();
   }
   function ensureOverlay() {
@@ -200,7 +189,7 @@
       '<div class="focus-ring"><span class="focus__time num" role="timer" data-focus-time>00:00</span></div>' +
       '<div class="focus__dots" role="img"></div>' +
       '<div class="focus__actions"></div>' +
-      '<div class="focus__memeow"><p class="pixel-bubble pixel-bubble--tail-bottom pixel-bubble--pop focus__say" aria-hidden="true"></p><canvas class="focus__cat" aria-hidden="true"></canvas><p class="focus__memeow-text"></p></div>' +
+      '<p class="focus__tip"></p>' +
       '</div>';
     ov.addEventListener('click', function (e) {
       if (e.target === ov) { close(); return; }
@@ -217,9 +206,8 @@
   function open(returnTo) {
     if (!st) return;
     ensureOverlay();
-    lastPhaseKey = '';
     drawOverlay();
-    U.openLayer(ov, { returnTo: returnTo, initialFocus: '[data-focus-act="pause"], [data-focus-act="resume"]', onClose: function () { if (cast) { try { cast.destroy(); } catch (e) { /* rien */ } cast = null; } } });
+    U.openLayer(ov, { returnTo: returnTo, initialFocus: '[data-focus-act="pause"], [data-focus-act="resume"]' });
   }
   function close() { if (ov && !ov.hidden) U.closeLayer(ov, 'cancel'); }
 
@@ -233,7 +221,7 @@
     var preset = PRESETS.map(function (p) { return p[0] === c.work && p[1] === c.short && p[2] === c.long; }).indexOf(true);
     U.dialog({
       title: 'Mode focus',
-      desc: 'Concentration, puis pause. Memeow veille sur toi.',
+      desc: 'Concentration, puis pause.',
       size: 'md', returnTo: returnTo,
       confirmLabel: 'Lancer le focus',
       body: '<div class="form-grid">' +
@@ -279,7 +267,7 @@
   function widgetHTML() {
     if (!st) {
       return '<div class="chrono__head"><span class="chrono__icon">' + icon('target') + '</span><span class="chrono__eyebrow">Concentration</span></div>' +
-        '<p class="chrono__idle">Une session de ' + phaseMin('work') + NB + 'min, puis une pause. Memeow veille sur toi.</p>' +
+        '<p class="chrono__idle">Une session de ' + phaseMin('work') + NB + 'min, puis une pause.</p>' +
         '<button type="button" class="btn btn--soft btn--sm btn--block" data-focus-start data-focus-key="w-focus">' + icon('play') + 'Lancer un focus</button>';
     }
     var t = task(), p = PHASES[st.phase], paused = st.left != null;

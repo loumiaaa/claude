@@ -10,7 +10,7 @@
 
   var D = L.dates, S = L.store, U = L.ui;
   var esc = U.esc, icon = U.icon, NB = U.NB;
-  var el = null, avatarCtrl = {};
+  var el = null;
 
   var BUCKET_KINDS = [['voyage', 'Voyage', 'planning'], ['concert', 'Concert', 'note'], ['experience', 'Expérience', 'sparkle']];
   var FAVS = [['music', 'Musique', 'note'], ['game', 'Jeu', 'sparkle'], ['series', 'Série', 'eye'], ['book', 'Livre', 'note']];
@@ -61,19 +61,16 @@
     });
   }
 
-  /* --- Avatar : la photo, sinon le personnage pixel choisi ------------------------ */
-  var CHARACTERS = [['lamia', 'Cheveux bruns bouclés aux pointes caramel, couettes, lunettes rose gold'], ['garcon', 'Cheveux bruns, raie au milieu, lunettes argent, barbe']];
-  function avatarHTML(cls) {
-    var ph = P().photo;
-    var inner = ph ? '<img class="avatar-img" src="' + ph + '" alt="">' : '<canvas class="avatar-pixel" data-avatar-pixel aria-hidden="true"></canvas>';
-    return cls ? '<span class="avatar-frame ' + cls + '">' + inner + '</span>' : inner;
+  /* --- Avatar : la photo, sinon l'initiale du prénom -------------------------------- */
+  function initial() {
+    var n = (P().name || S.me().name || '').trim();
+    return n ? n.charAt(0).toUpperCase() : '';
   }
-  function mountPixelAvatars(root, key) {
-    root.querySelectorAll('[data-avatar-pixel]').forEach(function (c, i) {
-      var k = key + i;
-      if (avatarCtrl[k]) { try { avatarCtrl[k].destroy(); } catch (e) { /* rien */ } }
-      if (window.PixelCast) avatarCtrl[k] = L.ui.castMount(c, S.me().character, { scale: c.closest('.avatar--xl') ? 5 : 2, animation: 'idle', extras: L.fun.wearing('me') });
-    });
+  function avatarHTML(cls) {
+    var ph = P().photo, ini = initial();
+    var inner = ph ? '<img class="avatar-img" src="' + ph + '" alt="">'
+      : '<span class="avatar-initials" aria-hidden="true">' + (ini ? esc(ini) : icon('user')) + '</span>';
+    return cls ? '<span class="avatar-frame ' + cls + '">' + inner + '</span>' : inner;
   }
   // Pastille de la barre latérale et de la barre du haut
   function refreshBrand() {
@@ -82,11 +79,6 @@
       m.innerHTML = avatarHTML('');
     });
     document.querySelectorAll('a.brand').forEach(function (a) { a.setAttribute('href', '#profil'); a.setAttribute('aria-label', 'Mon profil'); });
-    mountPixelAvatars(document.querySelector('.sidebar') || document, 'brand-side');
-    var top = document.querySelector('.topbar');
-    if (top) mountPixelAvatars(top, 'brand-top');
-    var head = document.querySelector('.shell-head');
-    if (head) mountPixelAvatars(head, 'brand-head');
   }
 
   /* --- Objectifs reliés au suivi des tâches ------------------------------------------ */
@@ -174,7 +166,7 @@
 
     var pets = '<div class="pet-grid">' + pr.pets.map(function (p) {
       var age = petAge(p.birth);
-      var pic = p.photo ? '<img class="pet-card__photo" src="' + p.photo + '" alt="' + esc(p.name) + '">' : (/memeow/i.test(p.name) ? '<canvas class="pet-card__pixel" data-pet-pixel aria-hidden="true"></canvas>' : '<span class="pet-card__placeholder">' + icon('heart') + '</span>');
+      var pic = p.photo ? '<img class="pet-card__photo" src="' + p.photo + '" alt="' + esc(p.name) + '">' : '<span class="pet-card__placeholder">' + icon('heart') + '</span>';
       return '<article class="glass glass--nested pet-card"><div class="pet-card__pic">' + pic + '</div><div class="pet-card__body">' +
         '<div class="pet-card__head"><strong>' + esc(p.name) + '</strong>' + edDel('pets', p.id, p.name) + '</div>' +
         '<p class="pet-card__meta">' + esc(p.species || '') + (age ? ' · ' + age : '') + '</p>' + (p.traits ? '<p class="pet-card__traits">' + esc(p.traits) + '</p>' : '') +
@@ -203,11 +195,6 @@
         card('p-pets', 'Mes animaux', '', pets, 'profile-card--wide') +
         card('p-gallery', 'Galerie', 'Quelques photos que j’aime', gallery, 'profile-card--wide') +
       '</div>';
-    mountPixelAvatars(el, 'profile');
-    el.querySelectorAll('[data-pet-pixel]').forEach(function (c, i) {
-      if (avatarCtrl['pet' + i]) avatarCtrl['pet' + i].destroy();
-      if (window.PixelCast) avatarCtrl['pet' + i] = L.ui.castMount(c, 'memeow', { scale: 3, animation: 'idle', extras: L.fun.wearing('memeow') });
-    });
   }
 
   function chips(kind, list, ph) {
@@ -294,11 +281,10 @@
         field('i-name', 'Nom', pr.name, { name: 'name' }) + field('i-nick', 'Pseudo', pr.nickname, { name: 'nickname', ph: 'facultatif' }) +
         field('i-jobs', 'Métier(s)', pr.jobs, { name: 'jobs', full: true, max: 200 }) +
         field('i-city', 'Ville', pr.city, { name: 'city' }) + field('i-astro', 'Signe astro', pr.astro, { name: 'astro', ph: 'ex. Sagittaire ascendant Lion' }) +
-        field('i-word', 'Mot de l’année ou intention', pr.word, { name: 'word', full: true, max: 60 }) +
-        select('i-char', 'Personnage pixel (si pas de photo)', 'character', CHARACTERS, pr.character || 'lamia') + '</div>',
+        field('i-word', 'Mot de l’année ou intention', pr.word, { name: 'word', full: true, max: 60 }) + '</div>',
       onConfirm: function (form) {
         var v = fd(form);
-        S.setProfile({ name: v.name, nickname: v.nickname, jobs: v.jobs, city: v.city, astro: v.astro, word: v.word, character: v.character === 'garcon' ? 'garcon' : 'lamia' });
+        S.setProfile({ name: v.name, nickname: v.nickname, jobs: v.jobs, city: v.city, astro: v.astro, word: v.word });
         U.toast({ icon: 'check', title: 'Profil mis à jour', duration: 2500 });
       }
     });
@@ -384,8 +370,8 @@
       }
     });
     S.subscribe(function (type) {
-      if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type !== 'wardrobe' && type.indexOf('task') !== 0) return;
-      if (type === 'profile' || type === 'reset' || type === 'setup' || type === 'wardrobe') refreshBrand();
+      if (type !== 'profile' && type !== 'reset' && type !== 'setup' && type.indexOf('task') !== 0) return;
+      if (type === 'profile' || type === 'reset' || type === 'setup') refreshBrand();
       if (L.app.view() !== 'profile') { el.dataset.stale = '1'; return; }
       U.keepFocus(el, render);
     });

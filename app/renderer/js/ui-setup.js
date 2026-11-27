@@ -1,7 +1,7 @@
 /* ==========================================================================
    Plateforme de suivi — accueil d'un nouveau compte
    Quatre étapes, au premier lancement d'un compte tout neuf :
-   1. prénom et personnage pixel ; 2. travail principal (nom, heures, jours) ;
+   1. prénom ; 2. travail principal (nom, heures, jours) ;
    3. projets perso ou freelance (facultatif) ; 4. espaces Santé et Budget.
    Rien n'est enregistré avant « C'est parti ! » : fermer l'accueil le fait
    revenir à la prochaine ouverture. Tout reste modifiable ensuite (Profil,
@@ -12,12 +12,8 @@
 
   var D = L.dates, S = L.store, U = L.ui;
   var esc = U.esc, icon = U.icon, NB = U.NB;
-  var ov = null, step = 0, done = null, casts = {};
+  var ov = null, step = 0, done = null;
   var STEPS = ['Bienvenue', 'Ton travail', 'Tes projets à côté', 'Tes espaces'];
-  var CHARACTERS = [
-    ['garcon', 'Cheveux bruns, raie au milieu, lunettes argent, barbe courte'],
-    ['lamia', 'Cheveux noirs bouclés, lunettes rose gold']
-  ];
   var o = null;
 
   function defaults() {
@@ -56,13 +52,7 @@
           field('s-jobs', 'Ton métier (facultatif)', o.jobs, { ph: 'ex. Développeur web', max: 120, full: true }) +
           field('s-city', 'Ta ville (facultatif)', o.city, { max: 60 }) +
         '</div>' +
-        '<fieldset class="setup__chars"><legend class="label">Ton personnage pixel</legend>' +
-          '<div class="setup__char-list">' + CHARACTERS.map(function (c) {
-            return '<button type="button" class="glass glass--nested setup__char" data-s-char="' + c[0] + '" aria-pressed="' + (o.character === c[0]) + '">' +
-              '<canvas data-s-cast="' + c[0] + '" aria-hidden="true"></canvas><span>' + esc(c[1]) + '</span></button>';
-          }).join('') + '</div>' +
-          '<p class="hint">Il te salue sur le dashboard et fête tes réussites. Tu pourras aussi mettre une photo dans ton profil.</p>' +
-        '</fieldset>';
+        '';
     }
     if (step === 1) {
       return '<p class="setup__lead">Ton travail principal a son propre compteur d’heures, avec un objectif par semaine.</p>' +
@@ -108,18 +98,8 @@
         '</form>' +
       '</div>';
     U.typo(ov);
-    mountCasts();
     var f = ov.querySelector('input:not([type="checkbox"]), select');
     if (f) setTimeout(function () { f.focus(); }, 30);
-  }
-
-  function mountCasts() {
-    Object.keys(casts).forEach(function (k) { try { casts[k].destroy(); } catch (e) { /* rien */ } delete casts[k]; });
-    if (!window.PixelCast) return;
-    ov.querySelectorAll('[data-s-cast]').forEach(function (c) {
-      var id = c.getAttribute('data-s-cast');
-      casts[id] = L.ui.castMount(c, id, { scale: 3, animation: 'idle' });
-    });
   }
 
   // Lit l'étape affichée ; renvoie un message si un champ manque
@@ -185,12 +165,6 @@
       ov.addEventListener('click', function (e) {
         var b;
         if (e.target.closest('[data-s-back]')) { read(); step = Math.max(0, step - 1); render(); return; }
-        if ((b = e.target.closest('[data-s-char]'))) {
-          o.character = b.getAttribute('data-s-char');
-          ov.querySelectorAll('[data-s-char]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-          if (casts[o.character]) casts[o.character].play('wave');
-          return;
-        }
         if ((b = e.target.closest('[data-s-day]'))) {
           var key = b.getAttribute('data-s-days'), d = +b.getAttribute('data-s-day'), list = o[key];
           var i = list.indexOf(d);
@@ -207,7 +181,6 @@
     U.openLayer(ov, {
       initialFocus: '#s-name',
       onClose: function (reason) {
-        Object.keys(casts).forEach(function (k) { try { casts[k].destroy(); } catch (e) { /* rien */ } delete casts[k]; });
         // Fermé sans finir : l'accueil reviendra à la prochaine ouverture
         if (reason !== 'done' && done) { var cb = done; done = null; cb(); }
       }
