@@ -9,7 +9,7 @@
 //   main/assets/icon.ico    fenêtre et zone de notification (Windows)
 //   main/assets/icon.png    fenêtre et notifications (Linux), 256 px
 //   build/icon-mac.png      Mac, 1024 px
-//   web/icons/icon-180.png, icon-192.png, icon-512.png, icon-maskable-512.png (site, iPhone)
+//   web/icons/spark-180.png, spark-192.png, spark-512.png, spark-maskable-512.png (site, iPhone)
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -163,8 +163,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   writeFileSync(resolve(appDir, 'main', 'assets', 'icon.png'), icons.find((i) => i.size === 256).png);
   const master = rgba(decodePng(readFileSync(MASTER))), mask = rgba(decodePng(readFileSync(MASKABLE)));
   writeFileSync(resolve(appDir, 'build', 'icon-mac.png'), encodePng(master));
-  for (const n of [180, 192, 512]) writeFileSync(resolve(appDir, 'web', 'icons', 'icon-' + n + '.png'), encodePng(downscale(master, n)));
-  writeFileSync(resolve(appDir, 'web', 'icons', 'icon-maskable-512.png'), encodePng(downscale(mask, 512)));
+  for (const n of [180, 192, 512]) writeFileSync(resolve(appDir, 'web', 'icons', 'spark-' + n + '.png'), encodePng(downscale(master, n)));
+  writeFileSync(resolve(appDir, 'web', 'icons', 'spark-maskable-512.png'), encodePng(downscale(mask, 512)));
   if (process.argv.includes('--preview')) writeFileSync(resolve(process.argv[process.argv.indexOf('--preview') + 1] || resolve(appDir, 'build', 'icon-preview.png')), preview(icons));
   console.log(`[make-icon] icon.ico (${SIZES.join(', ')} px, ${(ico.length / 1024).toFixed(1)} Ko) et icon.png 256 px générés`);
 }

@@ -45,8 +45,8 @@ html = html.replace(/<meta http-equiv="Content-Security-Policy" content="[^"]*">
 html = html.replace('</title>', `</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1764F2">
-  <link rel="icon" type="image/png" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" type="image/png" href="icons/spark-192.png">
+  <link rel="apple-touch-icon" href="icons/spark-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Suivi">`);
 html = html.replace('<script src="js/bridge.js"></script>',

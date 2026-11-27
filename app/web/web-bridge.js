@@ -444,7 +444,7 @@
     if (notifOn()) {
       var n = R.notification(list, today);
       try {
-        var note = new Notification(n.title, { body: n.body, icon: 'icons/icon-192.png', tag: 'lamia-' + today });
+        var note = new Notification(n.title, { body: n.body, icon: 'icons/spark-192.png', tag: 'lamia-' + today });
         note.onclick = function () { window.focus(); if (ids.length === 1) emit('open-task', ids[0]); };
       } catch (e) { /* notifications indisponibles */ }
     }
@@ -500,12 +500,12 @@
       },
       notify: function (o) {
         if (!notifOn() || !o) return Promise.resolve({ shown: false });
-        try { new Notification(String(o.title || ''), { body: String(o.body || ''), icon: 'icons/icon-192.png', tag: 'lamia-focus' }); return Promise.resolve({ shown: true }); }
+        try { new Notification(String(o.title || ''), { body: String(o.body || ''), icon: 'icons/spark-192.png', tag: 'lamia-focus' }); return Promise.resolve({ shown: true }); }
         catch (e) { return Promise.resolve({ shown: false }); }
       },
       testNotification: function () {
         if (!notifOn()) return Promise.resolve({ shown: false });
-        try { new Notification('Les rappels sont prêts', { body: 'Tu recevras ici les rappels d’échéance. À très vite !', icon: 'icons/icon-192.png' }); return Promise.resolve({ shown: true }); }
+        try { new Notification('Les rappels sont prêts', { body: 'Tu recevras ici les rappels d’échéance. À très vite !', icon: 'icons/spark-192.png' }); return Promise.resolve({ shown: true }); }
         catch (e) { return Promise.resolve({ shown: false }); }
       }
     },
